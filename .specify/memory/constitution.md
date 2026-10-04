@@ -9,14 +9,19 @@ reason this app exists, so it outranks Material defaults whenever the two disagr
 
 - Typography is the interface: Segoe-style light/semilight sans (Open Sans or Selawik as the
   licensed stand-in), oversized lowercase page titles, and a strict type ramp
-  (header 46sp light, subheader 20sp semilight, body 15sp, caption 12sp).
+  (defined in the plan's research notes, R2).
 - Content over chrome: no drop shadows, no gradients, no rounded cards, no elevation, no
   Material ripple. Flat color fills only.
-- Navigation uses the Pivot (swipeable lowercase headers that bleed off the right edge) and
-  Hub patterns, plus a bottom Application Bar with round outlined icon buttons and an
-  ellipsis (`•••`) that expands labels and a menu.
-- One user-chosen accent color (the 20 WP8.1 accents) drives highlights, checkboxes and tiles.
-  Dark and light themes MUST both be supported; dark (pure black) is the default.
+- The chosen look is **Light Panorama** (design C, picked 2026-10-04): the home screen is a
+  Panorama hub with an oversized "due north" title that scrolls sideways more slowly than the
+  sections under it ("today", "lists", "done"), like the WP8.1 Calendar and People hubs. The next
+  section always peeks in from the right edge. Secondary pages use the Pivot where they need tabs.
+  Every screen has a bottom Application Bar with round outlined icon buttons and an ellipsis
+  (`•••`) that expands labels and a menu.
+- Light theme (white background, near-black text) is the default; dark (pure black) MUST also be
+  supported. One accent color drives highlights, list tiles and due captions: magenta by
+  default, `#B0005E` on light and the brighter `#F0389A` on dark so text stays readable. The
+  user may pick another WP8.1 accent; every accent has a light-theme and a dark-theme value.
 - Motion is part of the language: turnstile page transitions, tilt-on-press, continuum
   (item flies into the next page), and slide-in list stagger. Animations MUST respect the
   system "remove animations" setting.
@@ -87,4 +92,4 @@ PATCH for wording) and states the reason. Plans and reviews MUST check the Const
 gates in `plan.md` against the principles above; any violation is listed in that plan's
 Complexity Tracking table with a justification.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
+**Version**: 1.1.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04

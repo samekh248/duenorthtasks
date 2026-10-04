@@ -20,9 +20,11 @@ Phase 0 output for [plan.md](plan.md). Each entry is Decision / Rationale / Alte
 
   | Token | Use | Size / weight |
   |---|---|---|
-  | `pageTitle` | app name above pivot ("DUE NORTH TASKS") | 14sp Semibold, uppercase |
-  | `pivotHeader` | list names in the pivot | 48sp Light, lowercase |
-  | `header` | page titles ("settings") | 46sp Light, lowercase |
+  | `panoramaTitle` | "due north" across the home panorama | 118sp Light, tracking -4% |
+  | `sectionHeader` | panorama sections ("today", "lists", "done") | 40sp Light, lowercase |
+  | `pageTitle` | small app name above a page title ("DUE NORTH") | 13sp Semibold, uppercase, +6% tracking |
+  | `header` | page titles ("sync account", list names) | 52sp Light, lowercase |
+  | `listName` | list names next to their tiles | 24sp Light |
   | `subheader` | section titles, task titles in lists | 20sp Semilight |
   | `body` | notes, settings rows | 15sp Regular |
   | `caption` | due dates, secondary text | 12sp Regular, 60% opacity |
@@ -35,8 +37,9 @@ Phase 0 output for [plan.md](plan.md). Each entry is Decision / Rationale / Alte
 
 | Metro control | Our Compose component | Notes |
 |---|---|---|
+| Panorama (home) | `MetroPanorama` | one wide horizontal scroller; title layer moves at about 1/3 the speed of the sections (parallax); sections 310dp wide with 40dp gaps so the next one peeks; snaps per section |
+| List tile | `MetroListTile` | 64dp flat accent square, open-task count bottom-right in white 22sp Light, grey square for undated lists |
 | Pivot | `MetroPivot` | `HorizontalPager` + header row that scrolls with the pager, inactive headers at 40% opacity, next header bleeds off screen |
-| Hub (panorama) | `MetroHub` | used only on the welcome screen |
 | Application Bar | `MetroAppBar` | 72dp tall, up to 4 round 48dp outlined icon buttons, `•••` expands to labels + menu items |
 | CheckBox | `MetroCheckBox` | square, 2dp border, accent fill when checked |
 | ToggleSwitch | `MetroToggle` | rectangular track + rectangular thumb |
@@ -45,7 +48,8 @@ Phase 0 output for [plan.md](plan.md). Each entry is Decision / Rationale / Alte
 | Progress dots | `MetroProgressDots` | five accent dots sliding across the top edge (sync indicator) |
 | Message dialog | `MetroDialog` | full-width band across the top, title + body + two flat buttons |
 | Date picker | `MetroDatePicker` | WP8.1 looping day/month/year columns |
-| Accent picker | `MetroAccentGrid` | 4 x 5 grid of flat squares |
+| Accent picker | `MetroAccentGrid` | grid of flat squares |
+| Radio button | `MetroRadio` | 28dp circle, 2dp border, filled 12dp dot when selected (sync account page) |
 
 ## R4. Motion
 
@@ -59,15 +63,28 @@ Phase 0 output for [plan.md](plan.md). Each entry is Decision / Rationale / Alte
 - **Accessibility**: All four read `Settings.Global.ANIMATOR_DURATION_SCALE`; at 0 they become
   instant.
 
-## R5. Accent palette (WP8.1)
+## R5. Colors (Light Panorama)
 
+Chosen design: **Light Panorama**, light theme by default, magenta accent.
+
+| Token | Light (default) | Dark |
+|---|---|---|
+| background | `#FFFFFF` | `#000000` |
+| foreground | `#111111` | `#FFFFFF` |
+| secondary text | `#5C5C5C` | `#A6A6A6` |
+| app bar | `#E5E5E5` | `#1F1F1F` |
+| accent (magenta, default) | `#B0005E` | `#F0389A` |
+| overdue | `#C40000` | `#FF6B6B` |
+
+The WP8.1 magenta `#D80073` is too light for small text on white, so the light-theme accent is
+darkened and the dark-theme accent brightened. Every other accent the user can pick gets the same
+treatment: a light-theme and a dark-theme value, each checked for 4.5:1 caption contrast.
+
+The WP8.1 accents the picker offers (base values):
 lime `#A4C400`, green `#60A917`, emerald `#008A00`, teal `#00ABA9`, cyan `#1BA1E2`,
-cobalt `#0050EF` (default), indigo `#6A00FF`, violet `#AA00FF`, pink `#F472D0`, magenta `#D80073`,
+cobalt `#0050EF`, indigo `#6A00FF`, violet `#AA00FF`, pink `#F472D0`, magenta `#D80073` (default),
 crimson `#A20025`, red `#E51400`, orange `#FA6800`, amber `#F0A30A`, yellow `#E3C800`,
 brown `#825A2C`, olive `#6D8764`, steel `#647687`, mauve `#76608A`, taupe `#87794E`.
-
-Dark theme background `#000000`, foreground `#FFFFFF`. Light theme background `#FFFFFF`,
-foreground `#000000`. Secondary text is foreground at 60% opacity.
 
 ## R6. Google Tasks API
 

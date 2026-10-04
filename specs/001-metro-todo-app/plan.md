@@ -12,16 +12,20 @@ and runs a background sync engine against exactly one remote: Google Tasks or Mi
 Both remotes sit behind one `TaskProvider` interface, so the UI and sync engine never know which
 one is connected.
 
+**Visual design**: Light Panorama (design C), chosen 2026-10-04. The home screen is a panorama
+with "today", "lists" and "done" sections under a huge "due north" title; light theme with a
+magenta accent by default, dark theme as an option. See [contracts/ui-screens.md](contracts/ui-screens.md).
+
 ## Architecture
 
 ```mermaid
 flowchart TB
     subgraph app["app module"]
-        UI["Compose screens<br/>pivot, detail, settings"]
+        UI["Compose screens<br/>panorama, list, detail, settings"]
         VM["ViewModels<br/>StateFlow&lt;UiState&gt;"]
     end
     subgraph design["core:design"]
-        DS["Metro components<br/>type ramp, accents, motion"]
+        DS["Metro components<br/>panorama, type ramp, accents, motion"]
     end
     subgraph data["core:data"]
         Repo["TaskRepository"]
@@ -57,7 +61,7 @@ handed exactly one `TaskProvider`, chosen from the single `Account` row.
 ```mermaid
 sequenceDiagram
     actor You
-    participant UI as Pivot screen
+    participant UI as Home panorama
     participant Repo as TaskRepository
     participant DB as Room (tasks + outbox)
     participant W as SyncWorker
@@ -161,7 +165,7 @@ settings.gradle.kts
 gradle/libs.versions.toml
 app/                                  # Activity, navigation, screens, ViewModels
   src/main/kotlin/app/duenorth/tasks/
-    ui/pivot/  ui/detail/  ui/lists/  ui/settings/  ui/welcome/
+    ui/home/  ui/list/  ui/detail/  ui/search/  ui/settings/  ui/sync/
 core/design/                          # Metro theme, type ramp, components, motion
   src/main/kotlin/.../design/{theme,components,motion}/
   src/main/res/font/selawik_*.ttf
@@ -190,14 +194,14 @@ flowchart LR
         M0["M0<br/>skeleton + CI"] --> M1["M1<br/>Metro design system"]
     end
     subgraph P1["P1 stories"]
-        M2["M2<br/>local tasks in Metro UI<br/>(US1)"] --> M3["M3<br/>Google Tasks sync<br/>(US2)"]
+        M2["M2<br/>home panorama + lists<br/>offline (US1)"] --> M3["M3<br/>Google Tasks sync<br/>(US2)"]
     end
     subgraph P2["P2 stories"]
         M4["M4<br/>Microsoft To Do sync<br/>(US3)"] --> M5["M5<br/>provider switching<br/>(US4)"]
     end
     M1 --> M2
     M3 --> M4
-    M2 --> M6["M6<br/>theme + accent<br/>(US5, P3)"]
+    M2 --> M6["M6<br/>dark theme + accents<br/>(US5, P3)"]
     M5 --> M7["M7<br/>polish + release"]
     M6 --> M7
 ```
@@ -205,12 +209,12 @@ flowchart LR
 | Milestone | You can try | Spec stories |
 |---|---|---|
 | M0 | An empty black app that builds in CI | none |
-| M1 | A "component gallery" screen showing every Metro control, dark and light | FR-001..005 |
-| M2 | A working todo app on the debug demo account, fully offline | US1 |
+| M1 | A "component gallery" screen showing every Metro control, including the panorama, light and dark | FR-001..005 |
+| M2 | The home panorama (today, lists, done) and list pages on the debug demo account, fully offline | US1 |
 | M3 | Your real Google Tasks, both ways | US2 |
 | M4 | Your real Microsoft To Do, both ways | US3 |
 | M5 | Switch between them from settings | US4 |
-| M6 | Pick light/dark and an accent | US5 |
+| M6 | Switch to dark and pick another accent | US5 |
 | M7 | Play Store internal-testing build | SC-001..006 |
 
 ## External setup you will need

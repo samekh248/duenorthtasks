@@ -1,123 +1,130 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 1600 810" width="1600" height="810"><rect x="-20" y="-20" width="1600" height="810" fill="#F2F2F2"/><g>
-<rect x="0" y="0" width="360" height="740" fill="#000" fill-opacity="1"/>
-<text x="300" y="18" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="12" font-weight="400" fill="#FFF" fill-opacity="0.8" >18:35</text>
-<text x="0" y="770" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="600" fill="#333" fill-opacity="1" class="cap">1. choose a service</text>
-<text x="12" y="60" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="600" fill="#FFF" fill-opacity="1" >DUE NORTH TASKS</text>
-<text x="10" y="130" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="46" font-weight="300" fill="#FFF" fill-opacity="1" >sync with</text>
-<rect x="12" y="210" width="72" height="72" fill="#0050EF" fill-opacity="1"/>
-<text x="48" y="258" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="30" font-weight="400" fill="#FFF" fill-opacity="1" text-anchor="middle">✓</text>
-<text x="100" y="240" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFF" fill-opacity="1" >google tasks</text>
-<text x="100" y="264" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="12" font-weight="400" fill="#FFF" fill-opacity="0.6" >Gmail, Calendar and Google Tasks</text>
-<rect x="12" y="310" width="72" height="72" fill="#0050EF" fill-opacity="1"/>
-<text x="48" y="358" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="30" font-weight="400" fill="#FFF" fill-opacity="1" text-anchor="middle">◆</text>
-<text x="100" y="340" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFF" fill-opacity="1" >microsoft to do</text>
-<text x="100" y="364" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="12" font-weight="400" fill="#FFF" fill-opacity="0.6" >Outlook and Microsoft To Do</text>
-<text x="12" y="450" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#FFF" fill-opacity="0.6" >one service at a time. you can switch</text>
-<text x="12" y="472" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#FFF" fill-opacity="0.6" >later in settings.</text>
-</g>
-<g>
-<rect x="400" y="0" width="360" height="740" fill="#000" fill-opacity="1"/>
-<text x="700" y="18" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="12" font-weight="400" fill="#FFF" fill-opacity="0.8" >18:35</text>
-<text x="400" y="770" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="600" fill="#333" fill-opacity="1" class="cap">2. lists pivot</text>
-<circle cx="520" cy="28" r="2" fill="#0050EF"/>
-<circle cx="534" cy="28" r="2" fill="#0050EF"/>
-<circle cx="548" cy="28" r="2" fill="#0050EF"/>
-<circle cx="562" cy="28" r="2" fill="#0050EF"/>
-<circle cx="576" cy="28" r="2" fill="#0050EF"/>
-<text x="412" y="60" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="600" fill="#FFF" fill-opacity="1" >DUE NORTH TASKS</text>
-<svg x="400" y="0" width="360" height="740" overflow="hidden">
-<text x="10" y="124" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="52" font-weight="300" fill="#FFF" fill-opacity="1" >groceries</text>
-<text x="275" y="124" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="52" font-weight="300" fill="#FFF" fill-opacity="0.4" >work</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 1752 928" width="1752" height="928"><rect x="-24" y="-24" width="1752" height="928" fill="#F2F2F2"/><svg x="0" y="0" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
+<text x="-8" y="116" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="118" font-weight="300" fill="#111111" letter-spacing="-4.7">due north</text>
+<text x="20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#111111" >today</text>
+<text x="20" y="240" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >Sunday, October 4</text>
+<rect x="21" y="268" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="284" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >Renew car registration</text>
+<text x="58" y="306" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#C40000" >Errands · overdue since Friday</text>
+<rect x="21" y="334" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="350" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >Pick up dry cleaning</text>
+<text x="58" y="372" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#B0005E" >Errands · today</text>
+<rect x="21" y="400" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="416" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >Call Mom about dinner</text>
+<text x="58" y="438" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#B0005E" >Personal · today</text>
+<rect x="21" y="466" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="482" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >Oat milk, 2 cartons</text>
+<text x="58" y="504" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >Groceries</text>
+<text x="20" y="542" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >tomorrow</text>
+<rect x="21" y="566" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="582" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >Book dentist cleaning</text>
+<text x="58" y="604" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >Personal</text>
+<text x="370" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#111111" >lists</text>
+<rect x="0" y="772" width="390" height="72" fill="#E5E5E5"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.92)"><path d="M12 4v16M4 12h16" fill="none" stroke="#111111" stroke-width="2"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.92)"><path d="M19.5 10A8 8 0 0 0 5 7.5M4.5 14A8 8 0 0 0 19 16.5M5 3v5h5M19 21v-5h-5" fill="none" stroke="#111111" stroke-width="2"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.92)"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0 -12 0M14.5 14.5L20 20" fill="none" stroke="#111111" stroke-width="2"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#111111" >···</text>
 </svg>
-<rect x="414" y="170" width="22" height="22" fill="none" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<text x="452" y="188" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="21" font-weight="350" fill="#FFF" fill-opacity="1" >buy milk</text>
-<text x="452" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#0050EF" fill-opacity="1" >due tomorrow</text>
-<rect x="414" y="232" width="22" height="22" fill="none" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<text x="452" y="250" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="21" font-weight="350" fill="#FFF" fill-opacity="1" >eggs, a dozen</text>
-<rect x="414" y="284" width="22" height="22" fill="none" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<text x="452" y="302" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="21" font-weight="350" fill="#FFF" fill-opacity="1" >coffee beans</text>
-<text x="452" y="324" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#0050EF" fill-opacity="1" >due fri 10/9</text>
-<rect x="414" y="346" width="22" height="22" fill="none" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<text x="452" y="364" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="21" font-weight="350" fill="#FFF" fill-opacity="1" >olive oil</text>
-<text x="412" y="422" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#FFF" fill-opacity="0.6" >completed (2)</text>
-<rect x="414" y="442" width="22" height="22" fill="#0050EF" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<path d="M419 453 l4 5 l8 -10" stroke="#FFF" stroke-width="2.5" fill="none"/>
-<text x="452" y="460" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="21" font-weight="350" fill="#FFF" fill-opacity="0.5" text-decoration="line-through">bread</text>
-<rect x="414" y="494" width="22" height="22" fill="#0050EF" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<path d="M419 505 l4 5 l8 -10" stroke="#FFF" stroke-width="2.5" fill="none"/>
-<text x="452" y="512" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="21" font-weight="350" fill="#FFF" fill-opacity="0.5" text-decoration="line-through">bananas</text>
-<rect x="400" y="668" width="360" height="72" fill="#1F1F1F" fill-opacity="1"/>
-<circle cx="516.0" cy="698" r="19" fill="none" stroke="#FFF" stroke-width="2"/>
-<text x="516.0" y="705" text-anchor="middle" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" fill="#FFF">+</text>
-<circle cx="580.0" cy="698" r="19" fill="none" stroke="#FFF" stroke-width="2"/>
-<text x="580.0" y="705" text-anchor="middle" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" fill="#FFF">⟳</text>
-<circle cx="644.0" cy="698" r="19" fill="none" stroke="#FFF" stroke-width="2"/>
-<text x="644.0" y="705" text-anchor="middle" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" fill="#FFF">⇅</text>
-<text x="726" y="688" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#FFF" fill-opacity="1" letter-spacing="1">•••</text>
-</g>
-<g>
-<rect x="800" y="0" width="360" height="740" fill="#000" fill-opacity="1"/>
-<text x="1100" y="18" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="12" font-weight="400" fill="#FFF" fill-opacity="0.8" >18:35</text>
-<text x="800" y="770" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="600" fill="#333" fill-opacity="1" class="cap">3. task detail</text>
-<text x="812" y="60" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="600" fill="#FFF" fill-opacity="1" >GROCERIES</text>
-<text x="810" y="120" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="46" font-weight="300" fill="#FFF" fill-opacity="1" >buy milk</text>
-<text x="812" y="170" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#FFF" fill-opacity="0.6" >notes</text>
-<rect x="812" y="180" width="336" height="64" fill="#FFF" fill-opacity="0.12"/>
-<text x="822" y="206" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#FFF" fill-opacity="1" >2%, the big one</text>
-<text x="812" y="280" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#FFF" fill-opacity="0.6" >due</text>
-<rect x="812" y="290" width="336" height="40" fill="none" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<text x="822" y="317" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="17" font-weight="400" fill="#FFF" fill-opacity="1" >monday, october 5</text>
-<text x="812" y="370" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#FFF" fill-opacity="0.6" >steps</text>
-<rect x="814" y="384" width="22" height="22" fill="#0050EF" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<path d="M819 395 l4 5 l8 -10" stroke="#FFF" stroke-width="2.5" fill="none"/>
-<text x="852" y="402" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="17" font-weight="400" fill="#FFF" fill-opacity="0.5" >check the fridge first</text>
-<rect x="814" y="428" width="22" height="22" fill="none" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<text x="852" y="446" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="17" font-weight="400" fill="#FFF" fill-opacity="1" >bring a bag</text>
-<text x="852" y="490" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="17" font-weight="400" fill="#0050EF" fill-opacity="1" >+ add step</text>
-<rect x="800" y="668" width="360" height="72" fill="#1F1F1F" fill-opacity="1"/>
-<circle cx="916.0" cy="698" r="19" fill="none" stroke="#FFF" stroke-width="2"/>
-<text x="916.0" y="705" text-anchor="middle" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" fill="#FFF">✓</text>
-<text x="916.0" y="732" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="10" font-weight="400" fill="#FFF" fill-opacity="1" text-anchor="middle">complete</text>
-<circle cx="980.0" cy="698" r="19" fill="none" stroke="#FFF" stroke-width="2"/>
-<text x="980.0" y="705" text-anchor="middle" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" fill="#FFF">💾</text>
-<text x="980.0" y="732" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="10" font-weight="400" fill="#FFF" fill-opacity="1" text-anchor="middle">save</text>
-<circle cx="1044.0" cy="698" r="19" fill="none" stroke="#FFF" stroke-width="2"/>
-<text x="1044.0" y="705" text-anchor="middle" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" fill="#FFF">🗑</text>
-<text x="1044.0" y="732" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="10" font-weight="400" fill="#FFF" fill-opacity="1" text-anchor="middle">delete</text>
-<text x="1126" y="688" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#FFF" fill-opacity="1" letter-spacing="1">•••</text>
-</g>
-<g>
-<rect x="1200" y="0" width="360" height="740" fill="#000" fill-opacity="1"/>
-<text x="1500" y="18" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="12" font-weight="400" fill="#FFF" fill-opacity="0.8" >18:35</text>
-<text x="1200" y="770" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="600" fill="#333" fill-opacity="1" class="cap">4. settings: theme</text>
-<text x="1212" y="60" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="600" fill="#FFF" fill-opacity="1" >SETTINGS</text>
-<svg x="1200" y="0" width="360" height="740" overflow="hidden">
-<text x="10" y="124" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="52" font-weight="300" fill="#FFF" fill-opacity="1" >theme</text>
-<text x="180" y="124" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="52" font-weight="300" fill="#FFF" fill-opacity="0.4" >account</text>
+<text x="0" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >1. home panorama: today</text>
+<svg x="438" y="0" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
+<text x="-196" y="116" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="118" font-weight="300" fill="#111111" letter-spacing="-4.7">due north</text>
+<text x="-20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#111111" text-anchor="end">today</text>
+<text x="20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#111111" >lists</text>
+<rect x="20" y="240" width="64" height="64" fill="#B0005E"/>
+<text x="78" y="298" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">2</text>
+<text x="98" y="270" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Errands</text>
+<text x="98" y="292" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >next: Renew car registration</text>
+<rect x="20" y="320" width="64" height="64" fill="#B0005E"/>
+<text x="78" y="378" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">7</text>
+<text x="98" y="350" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Groceries</text>
+<text x="98" y="372" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >next: Oat milk, 2 cartons</text>
+<rect x="20" y="400" width="64" height="64" fill="#B0005E"/>
+<text x="78" y="458" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">12</text>
+<text x="98" y="430" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Work</text>
+<text x="98" y="452" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >next: Q4 budget review, Thu</text>
+<rect x="20" y="480" width="64" height="64" fill="#B0005E"/>
+<text x="78" y="538" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">3</text>
+<text x="98" y="510" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Personal</text>
+<text x="98" y="532" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >next: Call Mom about dinner</text>
+<rect x="20" y="560" width="64" height="64" fill="#5C5C5C"/>
+<text x="78" y="618" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">9</text>
+<text x="98" y="590" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Someday</text>
+<text x="98" y="612" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >no dates</text>
+<rect x="21" y="641" width="62" height="62" fill="none" stroke="#111111" stroke-width="2"/>
+<path d="M52 658v28M38 672h28" stroke="#111111" stroke-width="2"/>
+<text x="98" y="679" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >new list</text>
+<text x="370" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#111111" >done</text>
+<rect x="0" y="772" width="390" height="72" fill="#E5E5E5"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.92)"><path d="M12 4v16M4 12h16" fill="none" stroke="#111111" stroke-width="2"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.92)"><path d="M19.5 10A8 8 0 0 0 5 7.5M4.5 14A8 8 0 0 0 19 16.5M5 3v5h5M19 21v-5h-5" fill="none" stroke="#111111" stroke-width="2"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.92)"><path d="M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M12 3v3M12 18v3M3 12h3M18 12h3" fill="none" stroke="#111111" stroke-width="2"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#111111" >···</text>
 </svg>
-<text x="1212" y="170" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#FFF" fill-opacity="0.6" >background</text>
-<rect x="1212" y="180" width="336" height="40" fill="none" fill-opacity="1" stroke="#FFF" stroke-width="2"/>
-<text x="1222" y="207" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="17" font-weight="400" fill="#FFF" fill-opacity="1" >dark</text>
-<text x="1212" y="260" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#FFF" fill-opacity="0.6" >accent color</text>
-<rect x="1212" y="272" width="76" height="76" fill="#A4C400" fill-opacity="1"/>
-<rect x="1296" y="272" width="76" height="76" fill="#60A917" fill-opacity="1"/>
-<rect x="1380" y="272" width="76" height="76" fill="#008A00" fill-opacity="1"/>
-<rect x="1464" y="272" width="76" height="76" fill="#00ABA9" fill-opacity="1"/>
-<rect x="1212" y="356" width="76" height="76" fill="#1BA1E2" fill-opacity="1"/>
-<rect x="1296" y="356" width="76" height="76" fill="#0050EF" fill-opacity="1"/>
-<rect x="1299" y="359" width="70" height="70" fill="none" fill-opacity="1" stroke="#FFF" stroke-width="3"/>
-<rect x="1380" y="356" width="76" height="76" fill="#6A00FF" fill-opacity="1"/>
-<rect x="1464" y="356" width="76" height="76" fill="#AA00FF" fill-opacity="1"/>
-<rect x="1212" y="440" width="76" height="76" fill="#F472D0" fill-opacity="1"/>
-<rect x="1296" y="440" width="76" height="76" fill="#D80073" fill-opacity="1"/>
-<rect x="1380" y="440" width="76" height="76" fill="#A20025" fill-opacity="1"/>
-<rect x="1464" y="440" width="76" height="76" fill="#E51400" fill-opacity="1"/>
-<rect x="1212" y="524" width="76" height="76" fill="#FA6800" fill-opacity="1"/>
-<rect x="1296" y="524" width="76" height="76" fill="#F0A30A" fill-opacity="1"/>
-<rect x="1380" y="524" width="76" height="76" fill="#E3C800" fill-opacity="1"/>
-<rect x="1464" y="524" width="76" height="76" fill="#825A2C" fill-opacity="1"/>
-<rect x="1212" y="608" width="76" height="76" fill="#6D8764" fill-opacity="1"/>
-<rect x="1296" y="608" width="76" height="76" fill="#647687" fill-opacity="1"/>
-<rect x="1380" y="608" width="76" height="76" fill="#76608A" fill-opacity="1"/>
-<rect x="1464" y="608" width="76" height="76" fill="#87794E" fill-opacity="1"/>
-</g></svg>
+<text x="438" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >2. home panorama: lists</text>
+<svg x="876" y="0" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
+<text x="20" y="48" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#111111" letter-spacing="0.8">GROCERIES</text>
+<text x="17" y="108" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="52" font-weight="300" fill="#111111" >oat milk</text>
+<text x="20" y="160" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >notes</text>
+<rect x="20" y="170" width="350" height="64" fill="#E5E5E5"/>
+<text x="30" y="198" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#111111" >2 cartons, the barista kind</text>
+<text x="20" y="272" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >due</text>
+<rect x="21" y="283" width="348" height="42" fill="none" stroke="#5C5C5C" stroke-width="2"/>
+<text x="32" y="310" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="18" font-weight="400" fill="#111111" >sunday, october 4</text>
+<text x="20" y="366" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >steps</text>
+<rect x="20" y="383" width="24" height="24" fill="#B0005E" stroke="#B0005E" stroke-width="2"/>
+<path d="M25 395 l5 5 l9 -11" stroke="#FFF" stroke-width="2.5" fill="none"/>
+<text x="58" y="400" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" text-decoration="line-through" fill-opacity="0.55">check the fridge first</text>
+<rect x="21" y="430" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="446" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >bring a bag</text>
+<text x="58" y="494" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="18" font-weight="400" fill="#B0005E" >+ add step</text>
+<rect x="0" y="772" width="390" height="72" fill="#E5E5E5"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.92)"><path d="M5 12l5 5l9-11" fill="none" stroke="#111111" stroke-width="2"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.92)"><path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6" fill="none" stroke="#111111" stroke-width="2"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.92)"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" fill="none" stroke="#111111" stroke-width="2"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#111111" >···</text>
+</svg>
+<text x="876" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >3. task detail</text>
+<svg x="1314" y="0" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#000000"/>
+<text x="-8" y="116" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="118" font-weight="300" fill="#FFFFFF" letter-spacing="-4.7">due north</text>
+<text x="20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#FFFFFF" >today</text>
+<text x="20" y="240" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >Sunday, October 4</text>
+<rect x="21" y="268" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="58" y="284" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >Renew car registration</text>
+<text x="58" y="306" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#FF6B6B" >Errands · overdue since Friday</text>
+<rect x="21" y="334" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="58" y="350" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >Pick up dry cleaning</text>
+<text x="58" y="372" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#F0389A" >Errands · today</text>
+<rect x="21" y="400" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="58" y="416" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >Call Mom about dinner</text>
+<text x="58" y="438" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#F0389A" >Personal · today</text>
+<rect x="21" y="466" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="58" y="482" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >Oat milk, 2 cartons</text>
+<text x="58" y="504" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >Groceries</text>
+<text x="20" y="542" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >tomorrow</text>
+<rect x="21" y="566" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="58" y="582" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >Book dentist cleaning</text>
+<text x="58" y="604" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >Personal</text>
+<text x="370" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#FFFFFF" >lists</text>
+<rect x="0" y="772" width="390" height="72" fill="#1F1F1F"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.92)"><path d="M12 4v16M4 12h16" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.92)"><path d="M19.5 10A8 8 0 0 0 5 7.5M4.5 14A8 8 0 0 0 19 16.5M5 3v5h5M19 21v-5h-5" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.92)"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0 -12 0M14.5 14.5L20 20" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#FFFFFF" >···</text>
+</svg>
+<text x="1314" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >4. today, dark theme</text></svg>

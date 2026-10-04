@@ -1,24 +1,47 @@
 # Contract: Screens and navigation
 
-The user-facing contract. Mockups: [`docs/design/metro-mockups.svg`](../../../docs/design/metro-mockups.svg).
+The user-facing contract for the chosen **Light Panorama** design. Mockups:
+[`docs/design/metro-mockups.svg`](../../../docs/design/metro-mockups.svg) and the
+[design canvas](https://claude.ai/artifact/UchFxrZaZuaB9Aq82iuQDE) (rows C and C dark).
+
+## The home panorama
+
+One wide surface you swipe across. The title layer moves slower than the sections, and the
+next section always peeks in from the right.
+
+```mermaid
+flowchart LR
+    subgraph Title["title layer (moves at ~1/3 speed)"]
+        T["due north"]
+    end
+    subgraph Sections["sections (move with your finger, snap per section)"]
+        direction LR
+        S1["today<br/>overdue (red)<br/>due today<br/>tomorrow"] --> S2["lists<br/>accent tile + count<br/>name + next task<br/>+ new list"] --> S3["done<br/>recently completed"]
+    end
+    Title ~~~ Sections
+```
+
+## Screen flow
 
 ```mermaid
 flowchart TD
     Launch([app opens]) --> HasAcct{account connected?}
-    HasAcct -- no --> Welcome["welcome hub<br/>'due north' panorama"]
-    Welcome --> Pick["choose a service<br/>google tasks / microsoft to do"]
+    HasAcct -- no --> Pick["sync account<br/>choose Google Tasks or Microsoft To Do"]
     Pick --> SignIn[provider sign-in]
     SignIn --> FirstSync["first sync<br/>progress dots"]
-    FirstSync --> Pivot
-    HasAcct -- yes --> Pivot["lists pivot<br/>swipe between lists"]
+    FirstSync --> Home
+    HasAcct -- yes --> Home["home panorama<br/>today · lists · done"]
 
-    Pivot -- "tap task (continuum)" --> Detail["task detail<br/>title, notes, due, steps"]
-    Pivot -- "app bar +" --> Add["new task<br/>keyboard up"]
-    Pivot -- "••• > manage lists" --> Lists["all lists<br/>add, rename, delete"]
-    Pivot -- "••• > settings" --> Settings["settings pivot<br/>theme / account / about"]
-    Settings -- "switch service" --> Confirm["metro dialog<br/>disconnect and clear?"]
-    Confirm -- yes --> Pick
-    Settings -- "theme" --> Accent["accent grid<br/>20 colors"]
+    Home -- "tap list tile" --> List["list page<br/>tasks + completed group"]
+    Home -- "tap task (continuum)" --> Detail["task detail<br/>title, notes, due, steps"]
+    List -- "tap task (continuum)" --> Detail
+    Home -- "app bar +" --> Add["new task<br/>keyboard up"]
+    Home -- "app bar search" --> Search["search<br/>all lists"]
+    Home -- "••• > settings" --> Settings["settings pivot<br/>theme · sync account · about"]
+    Settings -- "sync account" --> Sync["sync account<br/>radio: one service"]
+    Sync -- "pick the other service" --> Confirm["metro dialog<br/>sign out and switch?"]
+    Confirm -- yes --> SignIn
+    Settings -- "theme" --> Accent["light/dark + accent"]
     Settings -- "sync log" --> Log[sync log]
 ```
 
@@ -26,18 +49,24 @@ flowchart TD
 
 | Screen | Layout | App bar buttons (labels on `•••`) | Overflow menu |
 |---|---|---|---|
-| Welcome hub | Panorama, giant "due north" title, background parallax | none | none |
-| Choose a service | Two large text rows, one per service, with a one-line description | none | none |
-| Lists pivot | Page title "DUE NORTH TASKS", pivot headers = list names, task rows (checkbox, title, due caption, accent dot if important) | add, sync, sort | manage lists, show/hide completed, settings |
-| Task detail | Header = list name (small caps), title in `header` style, then notes, due, steps, important (To Do only) | save, delete, complete | move to list |
-| All lists | Header "lists", one row per list with task count | add | none |
-| Settings | Pivot: "theme", "account", "about" | none | none |
+| Home panorama, "today" | "due north" title; "today" header, date caption, task rows (square checkbox, 20sp title, 13sp caption "List · when", red if overdue); "tomorrow" group | new task, sync, search | settings, sync log |
+| Home panorama, "lists" | One row per list: 64dp accent tile with count, 24sp name, "next: ..." caption; grey tile for undated lists; "new list" row with outlined + tile | new list, sync, settings | rename/reorder lists |
+| Home panorama, "done" | Completed tasks, newest first, struck through, with "undo" on tap | sync, search | clear done |
+| List page | "DUE NORTH" small caps, list name as 52sp header, open tasks, collapsible "completed" group | new task, sync, sort | rename list, delete list |
+| Task detail | List name small caps, title as header, then notes, due, steps, important (To Do only) | complete, save, delete | move to list |
+| Search | Header "search", text field focused, results grouped by list | none | none |
+| Sync account | "DUE NORTH" small caps, "sync account" header, one-line explanation, radio group (Google Tasks / Microsoft To Do, with "signed in as ..." or "not connected"), switching note, "sync every" picker, "sync on Wi-Fi only" toggle | sync now, sign out | none |
+| Settings | Pivot: "theme", "sync account", "about" | none | none |
 | Sync log | Header "sync log", rows by time | clear | none |
 
 ## Interaction rules
 
-- Back from any secondary page uses the turnstile-out transition.
+- Back from any secondary page uses the turnstile-out transition and returns to the panorama
+  section you left.
+- Picking the other service on the sync account page opens a Metro dialog: "Switching signs out of
+  Google Tasks. Your tasks stay in that account and come back when you switch again." It warns
+  first if there are unsynced changes.
 - Long-press on a task opens a Metro context menu (the item scales down slightly, menu drops
   below it): "edit", "delete", "move to".
-- Pull down on a list triggers sync and shows progress dots across the top edge.
-- The status bar is tinted with the theme background; system bars are edge-to-edge.
+- Pull down on a section or list triggers sync and shows progress dots across the top edge.
+- The status bar matches the theme background; system bars are edge-to-edge.

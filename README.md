@@ -5,6 +5,10 @@ Microsoft To Do**, one at a time.
 
 ![Metro mockups](docs/design/metro-mockups.svg)
 
+The chosen look is **Light Panorama**: a white home screen with a huge "due north" title you
+swipe across (today, lists, done), one magenta accent, and a dark mode. The full set of design
+options is on the [design canvas](https://claude.ai/artifact/UchFxrZaZuaB9Aq82iuQDE).
+
 ```mermaid
 flowchart LR
     You((You)) --> App["Due North Tasks<br/>Metro UI · works offline"]
@@ -24,7 +28,7 @@ Planning. The app is specified with [GitHub Spec Kit](https://github.com/github/
 | [research](specs/001-metro-todo-app/research.md) | Decisions: fonts, Metro components, Google/Microsoft API facts |
 | [data model](specs/001-metro-todo-app/data-model.md) | Local database, task states, provider field mapping |
 | [contracts](specs/001-metro-todo-app/contracts/) | The `TaskProvider` seam and the screen map |
-| [tasks](specs/001-metro-todo-app/tasks.md) | 58 ordered build tasks, grouped by milestone |
+| [tasks](specs/001-metro-todo-app/tasks.md) | 60 ordered build tasks, grouped by milestone |
 
 ## Building it with Spec Kit
 

@@ -24,7 +24,7 @@ description: "Task list for Due North Tasks v1"
 ```mermaid
 flowchart LR
     P1[Phase 1<br/>Setup] --> P2[Phase 2<br/>Foundation:<br/>design system,<br/>Room, provider API]
-    P2 --> US1[US1 Metro UI<br/>offline]
+    P2 --> US1[US1 home panorama<br/>offline]
     US1 --> US2[US2 Google sync<br/>+ sync engine]
     US2 --> US3[US3 Microsoft sync]
     US3 --> US4[US4 Switch provider]
@@ -56,15 +56,15 @@ flowchart LR
 ### Metro design system (`core:design`)
 
 - [ ] T006 Bundle Selawik fonts in `core/design/src/main/res/font/` and define type ramp `MetroTypography.kt` (research R2)
-- [ ] T007 [P] `MetroColors.kt`: dark/light palettes and the 20 accents (research R5); `MetroTheme` composable with `LocalMetroColors`, `LocalAccent`
+- [ ] T007 [P] `MetroColors.kt`: light (default) and dark palettes, accents with a light and a dark value each, magenta default (research R5); `MetroTheme` composable with `LocalMetroColors`, `LocalAccent`
 - [ ] T008 [P] Motion: `motion/Turnstile.kt`, `motion/Tilt.kt` (Modifier.metroTilt), `motion/SlideInStagger.kt`, `motion/Continuum.kt`; all honor animator duration scale
-- [ ] T009 `components/MetroPivot.kt` (HorizontalPager + synced lowercase headers, inactive 40% opacity, next header bleeds off edge)
+- [ ] T009 `components/MetroPanorama.kt` (wide snapping scroller, 310dp sections that peek, title layer with ~1/3 speed parallax) and `components/MetroPivot.kt` for settings
 - [ ] T010 [P] `components/MetroAppBar.kt` (round outlined icon buttons, `•••` expand with labels + menu)
 - [ ] T011 [P] `components/MetroCheckBox.kt`, `MetroToggle.kt`, `MetroTextField.kt`, `MetroListItem.kt`
 - [ ] T012 [P] `components/MetroProgressDots.kt`, `MetroDialog.kt`, `MetroContextMenu.kt`
-- [ ] T013 [P] `components/MetroDatePicker.kt` (looping columns), `MetroAccentGrid.kt`, `MetroHub.kt`
+- [ ] T013 [P] `components/MetroDatePicker.kt` (looping columns), `MetroAccentGrid.kt`, `MetroListTile.kt` (accent square + count), `MetroRadio.kt`
 - [ ] T014 Component gallery screen `app/src/debug/.../GalleryScreen.kt`
-- [ ] T015 Roborazzi screenshot tests for every component, dark + light, in `core/design/src/test/`
+- [ ] T015 Roborazzi screenshot tests for every component, light + dark, in `core/design/src/test/`
 
 ### Local data (`core:data`)
 
@@ -89,14 +89,16 @@ flowchart LR
 
 **Independent Test**: spec.md US1; quickstart V1, V2, V8.
 
-- [ ] T023 [P] [US1] Compose UI test: add, complete, edit, delete a task on the pivot in `app/src/androidTest/.../PivotFlowTest.kt`
+- [ ] T023 [P] [US1] Compose UI test: swipe the panorama, add, complete, edit, delete a task in `app/src/androidTest/.../HomeFlowTest.kt`
 - [ ] T024 [US1] Navigation graph with turnstile transitions in `app/.../nav/NavGraph.kt`
-- [ ] T025 [US1] `PivotViewModel` + `PivotScreen` (lists as pivot items, completed group, sort, pull-to-refresh hook)
-- [ ] T026 [US1] Quick add from app bar `+` (inline Metro text field, keyboard up, enter adds)
-- [ ] T027 [US1] `TaskDetailViewModel` + `TaskDetailScreen` with continuum entry, notes, due date picker, steps editor
-- [ ] T028 [P] [US1] `ListsScreen`: add, rename, delete lists
-- [ ] T029 [P] [US1] Long-press context menu (edit, delete, move to)
-- [ ] T030 [US1] Debug-only "demo account" option on welcome screen, backed by `FakeProvider` with sample data
+- [ ] T025 [US1] `HomeViewModel` + `HomeScreen` panorama: "today" (overdue first in red, today, tomorrow across all lists), "lists" (tiles with counts and next task, new list row), "done" (recent completions); pull-to-refresh hook
+- [ ] T026 [US1] `ListViewModel` + `ListScreen`: one list's tasks, collapsible completed group, sort
+- [ ] T027 [US1] Quick add from app bar `+` (inline Metro text field, keyboard up, enter adds; on "today" it defaults the due date to today)
+- [ ] T028 [US1] `TaskDetailViewModel` + `TaskDetailScreen` with continuum entry, notes, due date picker, steps editor
+- [ ] T029 [P] [US1] Add, rename, delete lists (from the "lists" section and the list page menu)
+- [ ] T030 [P] [US1] `SearchScreen`: search titles and notes across lists (FR-015), with a Room FTS table
+- [ ] T031 [P] [US1] Long-press context menu (edit, delete, move to)
+- [ ] T032 [US1] Debug-only "demo account" option on the sync account screen, backed by `FakeProvider` with sample data
 
 **Checkpoint**: US1 acceptance scenarios pass in airplane mode.
 
@@ -110,19 +112,19 @@ flowchart LR
 
 ### Sync engine (`core:sync`)
 
-- [ ] T031 [US2] `SyncEngine`: push outbox in `seq` order, then pull per list with cursor; map `ProviderError` to actions (contract table)
-- [ ] T032 [US2] Conflict resolver (remote wins unless newer pending local edit; loser to `SyncLogEntity`)
-- [ ] T033 [US2] `SyncWorker` + `SyncScheduler` (unique work, network constraint, debounce 5s after edits, on foreground, periodic 30 min unmetered)
-- [ ] T034 [P] [US2] Sync engine tests against `FakeProvider`: offline queue, conflict both directions, cursor expired, auth required, recovered-list edge case
-- [ ] T035 [P] [US2] Soak test `SyncSoakTest.kt`: 200 random ops with random failures, zero duplicates/losses (SC-004)
+- [ ] T033 [US2] `SyncEngine`: push outbox in `seq` order, then pull per list with cursor; map `ProviderError` to actions (contract table)
+- [ ] T034 [US2] Conflict resolver (remote wins unless newer pending local edit; loser to `SyncLogEntity`)
+- [ ] T035 [US2] `SyncWorker` + `SyncScheduler` (unique work, network constraint, debounce 5s after edits, on foreground, periodic at the user's "sync every" interval, default 15 min, Wi-Fi only if set)
+- [ ] T036 [P] [US2] Sync engine tests against `FakeProvider`: offline queue, conflict both directions, cursor expired, auth required, recovered-list edge case
+- [ ] T037 [P] [US2] Soak test `SyncSoakTest.kt`: 200 random ops with random failures, zero duplicates/losses (SC-004)
 
 ### Google provider (`provider:google`)
 
-- [ ] T036 [P] [US2] Retrofit `GoogleTasksApi` + DTOs (research R6)
-- [ ] T037 [US2] `GoogleAuth`: Credential Manager sign-in + `AuthorizationClient` for the `tasks` scope, silent token refresh
-- [ ] T038 [US2] `GoogleTasksProvider` mapping per data-model.md (subtasks <-> steps, `updatedMin` cursor, `move` for order)
-- [ ] T039 [P] [US2] MockWebServer fixtures and `GoogleTasksProviderContractTest`
-- [ ] T040 [US2] Welcome hub + "choose a service" + first-sync progress screens
+- [ ] T038 [P] [US2] Retrofit `GoogleTasksApi` + DTOs (research R6)
+- [ ] T039 [US2] `GoogleAuth`: Credential Manager sign-in + `AuthorizationClient` for the `tasks` scope, silent token refresh
+- [ ] T040 [US2] `GoogleTasksProvider` mapping per data-model.md (subtasks <-> steps, `updatedMin` cursor, `move` for order)
+- [ ] T041 [P] [US2] MockWebServer fixtures and `GoogleTasksProviderContractTest`
+- [ ] T042 [US2] Sync account screen (radio choice, "signed in as", sync interval, Wi-Fi only toggle) + first-sync progress
 
 **Checkpoint**: Daily-drivable with a Google account.
 
@@ -132,11 +134,11 @@ flowchart LR
 
 **Independent Test**: spec.md US3; quickstart V6.
 
-- [ ] T041 [P] [US3] Retrofit `GraphTodoApi` + DTOs including `$batch` (research R7)
-- [ ] T042 [US3] `MicrosoftAuth` with MSAL single-account mode, `common` authority, `Tasks.ReadWrite`
-- [ ] T043 [US3] `MicrosoftTodoProvider` mapping (checklistItems <-> steps, importance, deltaLink cursors, raw status preserved)
-- [ ] T044 [P] [US3] MockWebServer fixtures and `MicrosoftTodoProviderContractTest`
-- [ ] T045 [US3] Importance star in pivot rows and detail, shown only when `capabilities.importance`
+- [ ] T043 [P] [US3] Retrofit `GraphTodoApi` + DTOs including `$batch` (research R7)
+- [ ] T044 [US3] `MicrosoftAuth` with MSAL single-account mode, `common` authority, `Tasks.ReadWrite`
+- [ ] T045 [US3] `MicrosoftTodoProvider` mapping (checklistItems <-> steps, importance, deltaLink cursors, raw status preserved)
+- [ ] T046 [P] [US3] MockWebServer fixtures and `MicrosoftTodoProviderContractTest`
+- [ ] T047 [US3] Importance star in task rows and detail, shown only when `capabilities.importance`
 
 **Checkpoint**: Daily-drivable with a Microsoft account.
 
@@ -146,10 +148,10 @@ flowchart LR
 
 **Independent Test**: spec.md US4; quickstart V7.
 
-- [ ] T046 [P] [US4] Test: switch with pending ops shows warning; confirm clears all tables; no provider write calls recorded on the fake
-- [ ] T047 [US4] `AccountManager.switchProvider()`: cancel unique sync work, sign out, delete Account row, return to "choose a service"
-- [ ] T048 [US4] Settings "account" pivot item: connected service, sign out, switch service, sync log entry point
-- [ ] T049 [P] [US4] `SyncLogScreen`
+- [ ] T048 [P] [US4] Test: switch with pending ops shows warning; confirm clears all tables; no provider write calls recorded on the fake
+- [ ] T049 [US4] `AccountManager.switchProvider()`: cancel unique sync work, sign out, delete Account row, return to "choose a service"
+- [ ] T050 [US4] Picking the other service on the sync account screen: Metro confirm dialog with the "your tasks stay in that account" note and the unsynced-changes warning; sign out button
+- [ ] T051 [P] [US4] `SyncLogScreen`
 
 ---
 
@@ -157,20 +159,20 @@ flowchart LR
 
 **Independent Test**: spec.md US5.
 
-- [ ] T050 [P] [US5] `ThemePreferences` in DataStore (dark default, cobalt default)
-- [ ] T051 [US5] Settings "theme" pivot item with background toggle and `MetroAccentGrid`; live update without restart
-- [ ] T052 [P] [US5] Screenshot tests for three accents in both themes
+- [ ] T052 [P] [US5] `ThemePreferences` in DataStore (light default, magenta default)
+- [ ] T053 [US5] Settings "theme" pivot item with light/dark toggle and `MetroAccentGrid`; live update without restart
+- [ ] T054 [P] [US5] Screenshot tests for three accents in both themes
 
 ---
 
 ## Phase 8: Polish and release (M7)
 
-- [ ] T053 [P] Accessibility pass: TalkBack labels on app bar buttons and checkboxes, 48dp targets, contrast check for every accent on both backgrounds (some, like yellow on white, need a darker variant for text)
-- [ ] T054 [P] Performance: baseline profile, 1,000-task list benchmark (SC-005)
-- [ ] T055 [P] Metro launcher icon (flat white glyph on accent square) and splash
-- [ ] T056 Privacy policy and Google OAuth verification submission for the `tasks` scope
-- [ ] T057 Play Console internal testing track and release signing via CI secrets
-- [ ] T058 Run every quickstart.md scenario and record results
+- [ ] T055 [P] Accessibility pass: TalkBack labels on app bar buttons and checkboxes, 48dp targets, panorama sections announced as headings, contrast check for every accent's light and dark value
+- [ ] T056 [P] Performance: baseline profile, 1,000-task list benchmark (SC-005)
+- [ ] T057 [P] Metro launcher icon (flat white glyph on accent square) and splash
+- [ ] T058 Privacy policy and Google OAuth verification submission for the `tasks` scope
+- [ ] T059 Play Console internal testing track and release signing via CI secrets
+- [ ] T060 Run every quickstart.md scenario and record results
 
 ---
 

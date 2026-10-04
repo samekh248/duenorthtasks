@@ -28,11 +28,14 @@ not using.
 
 ### User Story 1 - Manage tasks in a Metro interface (Priority: P1)
 
-A person opens the app and sees their task lists as a Windows Phone style Pivot: each list name is
-a large lowercase header they can swipe between. They add a task from the bottom app bar, tick it
-off with a tap, open it to edit the title, notes, due date and steps, and delete it. Everything
-looks and moves like a Windows Phone 8.1 app: black background, one accent color, big thin type,
-flat squares, turnstile transitions.
+A person opens the app and lands on a Windows Phone style Panorama (the "Light Panorama" design):
+a huge thin "due north" title runs across the top, and they swipe sideways through three
+sections. **today** shows what is due today or overdue across all lists, then tomorrow. **lists**
+shows each list as a magenta square with its open-task count, its name and the next task due.
+**done** shows recently completed tasks. Tapping a list opens it as its own page. They add a task
+from the bottom app bar, tick it off with a tap, open it to edit the title, notes, due date and
+steps, and delete it. Everything looks and moves like a Windows Phone 8.1 app: white background,
+one accent color, big thin type, flat squares, turnstile transitions.
 
 **Why this priority**: The Metro experience is the whole reason for the app. Without it, any
 existing Google Tasks or To Do client already exists.
@@ -43,15 +46,20 @@ Metro reference mockups in `docs/design/`.
 
 **Acceptance Scenarios**:
 
-1. **Given** two lists exist, **When** the user swipes left on the list pivot, **Then** the next
-   list header slides into place and its tasks appear with a staggered slide-in.
-2. **Given** a list is showing, **When** the user taps the `+` app bar button, types a title and
+1. **Given** the home panorama is on "today", **When** the user swipes left, **Then** the "lists"
+   section slides in, the "due north" title moves more slowly than the content (parallax), and the
+   "done" header peeks in from the right edge.
+2. **Given** tasks due today and one overdue task exist in different lists, **When** the user opens
+   the app, **Then** "today" lists all of them, the overdue one first with its due caption in red.
+3. **Given** the user taps a list tile, **When** the list page opens, **Then** its tasks appear with
+   a staggered slide-in.
+4. **Given** a list is showing, **When** the user taps the `+` app bar button, types a title and
    confirms, **Then** the task appears at the top of the list immediately.
-3. **Given** an open task, **When** the user taps its checkbox, **Then** it is shown struck through
-   in the "completed" section and the change survives an app restart.
-4. **Given** any screen, **When** the user taps the app bar ellipsis (`•••`), **Then** the app bar
+5. **Given** an open task, **When** the user taps its checkbox, **Then** it moves to the list's
+   "completed" group and to the panorama's "done" section, and the change survives an app restart.
+6. **Given** any screen, **When** the user taps the app bar ellipsis (`•••`), **Then** the app bar
    expands to show button labels and the overflow menu, as on Windows Phone.
-5. **Given** the device has no network, **When** the user does any of the above, **Then** every
+7. **Given** the device has no network, **When** the user does any of the above, **Then** every
    action still succeeds locally.
 
 ---
@@ -130,21 +138,23 @@ shows.
 
 ### User Story 5 - Make it mine: theme and accent (Priority: P3)
 
-Like Windows Phone's "start + theme" settings, the person picks dark or light background and one of
-the 20 Windows Phone accent colors. The whole app, including checkboxes, the progress dots and the
+Like Windows Phone's "start + theme" settings, the person picks light or dark background and one of
+the Windows Phone accent colors. The whole app, including checkboxes, the progress dots and the
 launcher icon tint where Android allows, follows that choice.
 
-**Why this priority**: It is a signature Windows Phone touch but the app works without it (dark +
-cobalt default).
+**Why this priority**: It is a signature Windows Phone touch but the app works without it (light +
+magenta default).
 
-**Independent Test**: Change to light theme and lime accent; every screen reflects it after one
+**Independent Test**: Change to dark theme and cobalt accent; every screen reflects it after one
 tap, with no restart.
 
 **Acceptance Scenarios**:
 
-1. **Given** default settings, **When** the app first opens, **Then** it is dark with the cobalt
-   accent.
-2. **Given** the user picks an accent, **When** they go back, **Then** every accent-colored element
+1. **Given** default settings, **When** the app first opens, **Then** it is light (white
+   background) with the magenta accent.
+2. **Given** the user switches to dark, **When** any screen shows, **Then** the background is pure
+   black and the accent uses its brighter dark-theme value (magenta becomes `#F0389A`).
+3. **Given** the user picks an accent, **When** they go back, **Then** every accent-colored element
    uses the new color.
 
 ### Edge Cases
@@ -174,11 +184,19 @@ tap, with no restart.
 
 - **FR-001**: Every screen MUST use the Windows Phone 8.1 Metro design language defined in the
   constitution (Principle I) and the reference mockups in `docs/design/`.
-- **FR-002**: Task lists MUST be presented as a Pivot with lowercase list-name headers that can be
-  swiped; the next header MUST be partly visible at the right edge.
+- **FR-002**: The home screen MUST be a Panorama with an oversized "due north" title and three
+  sections, "today", "lists" and "done", swiped sideways with parallax; the next section MUST be
+  partly visible at the right edge.
+- **FR-002a**: "today" MUST show open tasks that are overdue or due today across all lists
+  (overdue first, captioned in red), followed by tasks due tomorrow.
+- **FR-002b**: "lists" MUST show each list as an accent square with its open-task count, the list
+  name and its next task, plus a "new list" row. Lists with no due dates use a grey square.
+- **FR-002c**: "done" MUST show recently completed tasks, newest first.
 - **FR-003**: Primary actions MUST live in a bottom Application Bar with circular outlined icon
   buttons and an ellipsis that reveals labels and an overflow menu.
-- **FR-004**: The app MUST support dark and light themes and the 20 Windows Phone accent colors.
+- **FR-004**: The app MUST support light (default) and dark themes and the Windows Phone accent
+  colors, magenta by default. Each accent MUST have a light-theme and a dark-theme value that
+  meets 4.5:1 contrast for caption text.
 - **FR-005**: Page transitions MUST use turnstile animations, pressable items MUST tilt on press,
   and all motion MUST be disabled when the system "remove animations" setting is on.
 
@@ -191,6 +209,8 @@ tap, with no restart.
   list.
 - **FR-013**: Users MUST be able to sort a list by "my order", due date, or title.
 - **FR-014**: When Microsoft To Do is connected, users MUST be able to mark tasks important.
+- **FR-015**: Users MUST be able to search task titles and notes across all lists from the app
+  bar.
 
 **Sync**
 
@@ -205,6 +225,9 @@ tap, with no restart.
   device before connecting the new one, and MUST NOT write anything to either remote as part of
   the switch.
 - **FR-026**: Users MUST be able to sign out, which clears all synced data from the device.
+- **FR-027**: The sync account page MUST show both services as a single choice (radio), say
+  which account is signed in, and let the user set how often background sync runs and whether
+  it runs on Wi-Fi only.
 
 **Privacy**
 
@@ -242,7 +265,10 @@ tap, with no restart.
   account exists only in debug builds for development and testing).
 - Switching provider does not copy tasks from one service to the other. A one-time "copy my
   lists" import is a candidate for a later feature.
-- Due dates are date-only in v1; reminders, recurrence, attachments and live tiles / home-screen
+- The chosen visual design is "Light Panorama" (design C), picked 2026-10-04. Its mockups are in
+  `docs/design/` and the design canvas linked from there.
+- Due dates are date-only in v1, because Google Tasks drops the time of day. The design mockups
+  show times ("5:00 pm"); those appear only if timed due dates are added later for To Do; reminders, recurrence, attachments and live tiles / home-screen
   widgets are out of scope for v1.
 - The Segoe fonts are not licensed for redistribution, so an open-licensed look-alike is used.
 - Phone portrait layout only in v1.
