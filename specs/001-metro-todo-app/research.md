@@ -81,11 +81,40 @@ The WP8.1 magenta `#D80073` is too light for small text on white, so the light-t
 darkened and the dark-theme accent brightened. Every other accent the user can pick gets the same
 treatment: a light-theme and a dark-theme value, each checked for 4.5:1 caption contrast.
 
-The WP8.1 accents the picker offers (base values):
-lime `#A4C400`, green `#60A917`, emerald `#008A00`, teal `#00ABA9`, cyan `#1BA1E2`,
-cobalt `#0050EF`, indigo `#6A00FF`, violet `#AA00FF`, pink `#F472D0`, magenta `#D80073` (default),
-crimson `#A20025`, red `#E51400`, orange `#FA6800`, amber `#F0A30A`, yellow `#E3C800`,
-brown `#825A2C`, olive `#6D8764`, steel `#647687`, mauve `#76608A`, taupe `#87794E`.
+### Accent choices
+
+The user picks one accent at a time from 22 choices: the 20 WP8.1 accents plus **light orange**
+and **coral**, which Dustin asked for. Each has a light-theme value (used on white) and a
+dark-theme value (used on black). The ratios are text contrast against the background, and all
+meet 4.5:1 for 13sp captions. Fills (list tiles, checked boxes, picker swatches) use the same
+value, except that light orange and coral keep their bright color as a fill on white too, so they
+still look light; there the darker value is used only for text. On a tile, the count is drawn in
+white or black, whichever contrasts more with the tile.
+
+| Accent | Light theme text | Dark theme | Source |
+|---|---|---|---|
+| magenta (default) | `#B0005E` (7.0:1) | `#F0389A` (5.7:1) | WP8.1 |
+| light orange | `#A85400` (5.3:1), fill `#FFA552` | `#FFA552` (10.8:1) | added |
+| coral | `#B8402A` (5.5:1), fill `#FF8A6E` | `#FF8A6E` (9.1:1) | added |
+| lime | `#5A6E00` (5.7:1) | `#A4C400` (10.5:1) | WP8.1 |
+| green | `#3C7A0E` (5.3:1) | `#60A917` (7.2:1) | WP8.1 |
+| emerald | `#007A00` (5.5:1) | `#2DB52D` (7.8:1) | WP8.1 |
+| teal | `#00787A` (5.3:1) | `#00ABA9` (7.4:1) | WP8.1 |
+| cyan | `#0B6FA4` (5.5:1) | `#1BA1E2` (7.2:1) | WP8.1 |
+| cobalt | `#0050EF` (6.2:1) | `#4D8BFF` (6.5:1) | WP8.1 |
+| indigo | `#6A00FF` (6.9:1) | `#9A5CFF` (5.3:1) | WP8.1 |
+| violet | `#8A00D4` (6.9:1) | `#C25CFF` (6.3:1) | WP8.1 |
+| pink | `#B0308F` (5.7:1) | `#F472D0` (8.2:1) | WP8.1 |
+| crimson | `#A20025` (8.2:1) | `#FF5C7A` (7.1:1) | WP8.1 |
+| red | `#C41100` (6.1:1) | `#FF5C4D` (6.9:1) | WP8.1 |
+| orange | `#B34A00` (5.4:1) | `#FA6800` (7.0:1) | WP8.1 |
+| amber | `#8F5F00` (5.5:1) | `#F0A30A` (9.9:1) | WP8.1 |
+| yellow | `#7A6A00` (5.4:1) | `#E3C800` (12.5:1) | WP8.1 |
+| brown | `#825A2C` (6.1:1) | `#C8955A` (7.9:1) | WP8.1 |
+| olive | `#566B4F` (5.8:1) | `#93AD89` (8.6:1) | WP8.1 |
+| steel | `#576778` (5.8:1) | `#8EA2B8` (8.0:1) | WP8.1 |
+| mauve | `#76608A` (5.5:1) | `#A891BE` (7.5:1) | WP8.1 |
+| taupe | `#6E6240` (6.0:1) | `#B5A577` (8.6:1) | WP8.1 |
 
 ## R6. Google Tasks API
 

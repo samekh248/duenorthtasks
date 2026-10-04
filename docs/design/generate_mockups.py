@@ -152,13 +152,63 @@ def detail(i, c, label):
     end_phone(ox, c, label)
 
 
+ACCENTS = [
+    ("magenta", "#B0005E", "#F0389A"),
+    ("light orange", "#A85400", "#FFA552"),
+    ("coral", "#B8402A", "#FF8A6E"),
+    ("lime", "#5A6E00", "#A4C400"),
+    ("green", "#3C7A0E", "#60A917"),
+    ("emerald", "#007A00", "#2DB52D"),
+    ("teal", "#00787A", "#00ABA9"),
+    ("cyan", "#0B6FA4", "#1BA1E2"),
+    ("cobalt", "#0050EF", "#4D8BFF"),
+    ("indigo", "#6A00FF", "#9A5CFF"),
+    ("violet", "#8A00D4", "#C25CFF"),
+    ("pink", "#B0308F", "#F472D0"),
+    ("crimson", "#A20025", "#FF5C7A"),
+    ("red", "#C41100", "#FF5C4D"),
+    ("orange", "#B34A00", "#FA6800"),
+    ("amber", "#8F5F00", "#F0A30A"),
+    ("yellow", "#7A6A00", "#E3C800"),
+    ("brown", "#825A2C", "#C8955A"),
+    ("olive", "#566B4F", "#93AD89"),
+    ("steel", "#576778", "#8EA2B8"),
+    ("mauve", "#76608A", "#A891BE"),
+    ("taupe", "#6E6240", "#B5A577"),
+]
+
+
+def theme(i, c, label, dark):
+    ox = phone(i, c, label)
+    text(20, 48, "SETTINGS", 13, 600, c["fg"], 'letter-spacing="0.8"')
+    text(17, 108, "theme", 52, 300, c["fg"])
+    text(200, 108, "sync account", 52, 300, c["sub"])
+    text(20, 160, "background", 14, 400, c["sub"])
+    rect(21, 171, W - 42, 42, "none", c["sub"])
+    text(32, 198, "follow phone", 18, 400, c["fg"])
+    text(20, 250, "accent color", 14, 400, c["sub"])
+    size, gap = 62, 8
+    for k, (name, light, darkv) in enumerate(ACCENTS):
+        col, row = k % 5, k // 5
+        x, y = 20 + col * (size + gap), 262 + row * (size + gap)
+        fill = darkv if dark or name in ("light orange", "coral") else light
+        rect(x, y, size, size, fill)
+        if name == "light orange":
+            rect(x + 3, y + 3, size - 6, size - 6, "none", c["fg"], 3)
+    y = 262 + 5 * (size + gap) + 26
+    text(20, y, "light orange", 20, 300, c["fg"])
+    text(20, y + 24, "new: light orange and coral sit next to magenta", 13, 400, c["sub"])
+    end_phone(ox, c, label)
+
+
 for row, (c, mode) in enumerate([(LIGHT, "light"), (DARK, "dark")]):
     ROW = row * (H + 80)
     today(0, c, f"home: today ({mode})")
     lists(1, c, f"home: lists ({mode})")
     detail(2, c, f"task detail ({mode})")
+    theme(3, c, f"settings: theme ({mode})", mode == "dark")
 
-TW = 3 * W + 2 * GAP
+TW = 4 * W + 3 * GAP
 TH = 2 * H + 80
 svg = (
     f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 {TW+48} {TH+84}" width="{TW+48}" height="{TH+84}">'

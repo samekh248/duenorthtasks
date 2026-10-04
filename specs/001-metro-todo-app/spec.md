@@ -151,7 +151,7 @@ shows.
 ### User Story 5 - Make it mine: theme and accent (Priority: P3)
 
 Like Windows Phone's "start + theme" settings, the person picks light or dark background and one of
-the Windows Phone accent colors. The whole app, including checkboxes, the progress dots and the
+22 accent colors: the Windows Phone set plus light orange and coral. The whole app, including checkboxes, the progress dots and the
 launcher icon tint where Android allows, follows that choice.
 
 **Why this priority**: It is a signature Windows Phone touch but the app works without it (light +
@@ -207,8 +207,8 @@ tap, with no restart.
 - **FR-003**: Primary actions MUST live in a bottom Application Bar with circular outlined icon
   buttons and an ellipsis that reveals labels and an overflow menu.
 - **FR-004**: The app MUST support light and dark themes, following the phone's setting by
-  default with a manual light/dark override, and the Windows Phone accent
-  colors, magenta by default. Each accent MUST have a light-theme and a dark-theme value that
+  default with a manual light/dark override, and 22 accent colors (the 20 Windows Phone accents
+  plus light orange and coral), magenta by default. Each accent MUST have a light-theme and a dark-theme value that
   meets 4.5:1 contrast for caption text. Every screen MUST be designed, mocked up and screenshot-tested in
   both light and dark modes.
 - **FR-005**: Page transitions MUST use turnstile animations, pressable items MUST tilt on press,
