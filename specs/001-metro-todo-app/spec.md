@@ -214,6 +214,20 @@ tap, with no restart.
 - **FR-005**: Page transitions MUST use turnstile animations, pressable items MUST tilt on press,
   and all motion MUST be disabled when the system "remove animations" setting is on.
 
+**Speed and smoothness (top priority, constitution Principle II)**
+
+- **FR-006**: Every tap MUST show visible feedback within 100 ms, and every task change MUST
+  appear on screen immediately, before the provider confirms it.
+- **FR-007**: Scrolling, swiping the panorama and page transitions MUST stay smooth (no dropped
+  frames on a mid-range phone), including while a sync is running.
+- **FR-008**: Sync MUST NOT block input, show a full-screen spinner, or move items the user is
+  looking at or touching. Remote changes MUST fade in place; a list the user is scrolling or
+  dragging is updated when they stop.
+- **FR-009**: On launch the app MUST show the last known tasks at once; anything still loading
+  MUST use task-shaped placeholders, never a blank screen or a layout that jumps.
+- **FR-009a**: The first sync of a large account MUST show lists as soon as each arrives, newest
+  and today's tasks first, with the progress dots as the only indicator.
+
 **Tasks and lists**
 
 - **FR-010**: Users MUST be able to create, rename and delete task lists.
@@ -274,8 +288,15 @@ tap, with no restart.
   online; a change made on the web appears on the phone within 1 minute of opening the app.
 - **SC-004**: Zero duplicated or lost tasks across a scripted 200-operation sync soak test with
   random offline periods, for each provider.
-- **SC-005**: Screens scroll at a steady 60 frames per second with 1,000 tasks in a list on a
-  mid-range phone.
+- **SC-005**: Screens scroll at a steady 60 frames per second (90/120 on high-refresh phones)
+  with 1,000 tasks in a list on a mid-range phone, with under 1% janky frames, including while
+  a sync of 500 changed tasks is applied.
+- **SC-007**: Cold start to a usable home screen takes at most 1 second; warm start at most
+  300 ms (mid-range phone, Pixel 6a class).
+- **SC-008**: Tap-to-feedback is at most 100 ms and a completed or added task appears on screen
+  within one frame of the tap, online or offline.
+- **SC-009**: In usability testing, no participant reports the app "freezing" or "jumping"
+  during sync.
 - **SC-006**: In a side-by-side review against Windows Phone 8.1 reference screenshots, a person
   who used Windows Phone identifies the app as "Metro" on every core screen.
 

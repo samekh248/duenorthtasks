@@ -33,7 +33,30 @@ reason this app exists, so it outranks Material defaults whenever the two disagr
 Rationale: a "Metro skin" over Material widgets would fail the brief. The design system is built
 first, as its own module, and every feature consumes it.
 
-### II. One Provider at a Time (NON-NEGOTIABLE)
+### II. Fast and Fluid (NON-NEGOTIABLE)
+
+UX performance is a top priority, equal to the Metro look. The app MUST feel instant, and sync
+MUST never make it feel slow.
+
+- Every tap gets visible feedback within 100 ms (tilt, state change, or the result itself). Task
+  edits apply to the screen immediately (optimistic, from the local database) and never wait for
+  the network.
+- Animations and scrolling hold 60 fps, and 90/120 fps on high-refresh phones, with no dropped
+  frames during transitions. Sync, database and network work never run on the main thread.
+- Sync is invisible unless the user asks: it runs in the background, applies remote changes in
+  small batches without moving what the user is looking at or touching, and shows only the Metro
+  progress dots. A sync never blocks input, never shows a full-screen spinner, and never
+  reorders a list under the user's finger.
+- Loading is graceful: cached content shows at once on launch; anything still loading uses
+  content-shaped placeholders that fade in, never blank screens or jumping layouts.
+- Cold start to usable home screen is at most 1 second on a mid-range phone (Pixel 6a class).
+- Performance budgets are tested: macrobenchmarks for startup, scrolling, transitions and
+  scrolling during sync run in CI, and a change that breaks a budget is a failing build.
+
+Rationale: Windows Phone was remembered for feeling fast on modest hardware. A Metro look that
+stutters fails the brief as much as a Material look would.
+
+### III. One Provider at a Time (NON-NEGOTIABLE)
 
 The app syncs with exactly one backend: Google Tasks OR Microsoft To Do, never both.
 
@@ -46,14 +69,14 @@ The app syncs with exactly one backend: Google Tasks OR Microsoft To Do, never b
 Rationale: two-way sync with one remote is hard enough; two remotes means conflict resolution
 across systems with different data models, which is out of scope by design.
 
-### III. Offline First, Remote Is the Source of Truth
+### IV. Offline First, Remote Is the Source of Truth
 
 - The UI reads only from the local Room database, so every action works with no network.
 - Local changes are queued as pending operations and pushed by a background sync worker.
 - When local and remote disagree after a sync, the remote copy wins unless the local change is
   newer and still pending. Conflicts MUST be logged, never silently dropped.
 
-### IV. Test the Seams
+### V. Test the Seams
 
 - The `TaskProvider` contract has one shared test suite that both provider implementations and a
   fake MUST pass.
@@ -61,7 +84,7 @@ across systems with different data models, which is out of scope by design.
   provider-switch scenarios.
 - Each Metro component has a Compose screenshot test in dark and light themes.
 
-### V. Small and Simple
+### VI. Small and Simple
 
 - One Android app module plus a small number of library modules (`design`, `data`, `sync`,
   `provider-google`, `provider-microsoft`). No module exists just for organization.
@@ -83,7 +106,8 @@ across systems with different data models, which is out of scope by design.
 
 - Features follow Spec Kit: `/speckit-specify` then `/speckit-plan` then `/speckit-tasks` then
   `/speckit-implement`, one branch and one PR per feature.
-- Every PR MUST pass build, lint (ktlint + Android Lint), unit tests and screenshot tests in CI.
+- Every PR MUST pass build, lint (ktlint + Android Lint), unit tests, screenshot tests and the
+  performance budgets (Principle II) in CI.
 - Every UI PR includes before/after screenshots in dark theme.
 
 ## Governance
@@ -94,4 +118,4 @@ PATCH for wording) and states the reason. Plans and reviews MUST check the Const
 gates in `plan.md` against the principles above; any violation is listed in that plan's
 Complexity Tracking table with a justification.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
+**Version**: 1.2.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04

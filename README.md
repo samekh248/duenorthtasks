@@ -22,13 +22,13 @@ Planning. The app is specified with [GitHub Spec Kit](https://github.com/github/
 
 | Read this | For |
 |---|---|
-| [constitution](.specify/memory/constitution.md) | The non-negotiables: Metro design rules, one provider at a time, offline first |
+| [constitution](.specify/memory/constitution.md) | The non-negotiables: Metro design rules, fast and fluid UX, one provider at a time, offline first |
 | [spec](specs/001-metro-todo-app/spec.md) | What the app does, as user stories with acceptance tests |
 | [plan](specs/001-metro-todo-app/plan.md) | Architecture, sync flow, modules and milestone roadmap (diagrams) |
 | [research](specs/001-metro-todo-app/research.md) | Decisions: fonts, Metro components, Google/Microsoft API facts |
 | [data model](specs/001-metro-todo-app/data-model.md) | Local database, task states, provider field mapping |
 | [contracts](specs/001-metro-todo-app/contracts/) | The `TaskProvider` seam and the screen map |
-| [tasks](specs/001-metro-todo-app/tasks.md) | 61 ordered build tasks, grouped by milestone |
+| [tasks](specs/001-metro-todo-app/tasks.md) | 67 ordered build tasks, grouped by milestone |
 
 ## Building it with Spec Kit
 

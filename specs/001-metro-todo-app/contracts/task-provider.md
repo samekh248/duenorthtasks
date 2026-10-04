@@ -1,6 +1,6 @@
 # Contract: `TaskProvider`
 
-The only seam between the app and a remote service (constitution Principle II). Lives in
+The only seam between the app and a remote service (constitution Principle III). Lives in
 `provider:api`. Implemented by `provider:google`, `provider:microsoft` and `provider:fake`. Nothing
 outside the `provider:*` modules imports Google or Microsoft types.
 

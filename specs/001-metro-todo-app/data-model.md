@@ -76,7 +76,7 @@ erDiagram
 ## Rules
 
 - **One account**: `ACCOUNT.id` is fixed to 1, so a second provider cannot be stored. Switching
-  provider deletes the row, which cascades to every other table (constitution Principle II).
+  provider deletes the row, which cascades to every other table (constitution Principle III).
 - **Validation**: list title 1-256 chars; task title 1-1024 chars (Google's limit is the
   tighter one); notes up to 8,192 chars; steps up to 100 per task.
 - **Soft delete**: a local delete sets `deletedLocally` and enqueues `DELETE`; the row is removed

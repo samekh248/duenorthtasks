@@ -85,6 +85,37 @@ sequenceDiagram
     DB-->>UI: Flow emits web changes
 ```
 
+## Keeping it fast
+
+Speed is a top priority (constitution Principle II). The rule that makes it work: **the screen
+only ever talks to the local database, and sync only ever talks to the database too.** Neither
+waits for the other.
+
+```mermaid
+flowchart LR
+    subgraph Main["main thread: only drawing and input"]
+        Tap([tap]) --> VM["ViewModel<br/>optimistic state"]
+        VM --> Frame["next frame<br/>(&lt;16 ms)"]
+    end
+    subgraph IO["background threads"]
+        DB[("Room")]
+        Sync["SyncWorker<br/>network + mapping"]
+    end
+    VM -- "write (async)" --> DB
+    DB -- "Flow, diffed off main thread" --> VM
+    Sync -- "small batches,<br/>one transaction each" --> DB
+    Sync -. "progress dots only" .-> Frame
+```
+
+| Moment | What the user sees | How |
+|---|---|---|
+| Tap a checkbox | Ticked in the same frame, strike-through animates | ViewModel updates state first, Room write follows on a background dispatcher |
+| Open the app | Last tasks show at once | Room read starts in `Application.onCreate`; Baseline Profile; no network on the launch path |
+| First sync, big account | Lists appear one by one, today first | Pull pages per list, today's tasks first, commit each page in its own transaction |
+| Sync while scrolling | No jumps; new items fade in when the scroll stops | Stable keys in lazy lists, `animateItem()`, updates to the touched list held while a gesture is active |
+| Something is slow | Task-shaped placeholders fade into real rows | Placeholders sized like real rows so nothing shifts |
+| Page change | Turnstile at full frame rate | Next page's data preloaded on press-down; animations use `graphicsLayer` only |
+
 ## Switching provider (one at a time)
 
 ```mermaid
@@ -119,7 +150,8 @@ tests
 
 **Project Type**: mobile app (single Android app, multi-module Gradle)
 
-**Performance Goals**: 60fps scrolling with 1,000 tasks; cold start under 1.5s on a mid-range phone
+**Performance Goals** (top priority): cold start ≤ 1s, warm start ≤ 300ms, tap feedback ≤ 100ms,
+60fps (90/120 where available) with <1% janky frames while scrolling, swiping and syncing
 
 **Constraints**: offline-capable; one provider at a time; minimal OAuth scopes; no backend server
 of our own
@@ -133,10 +165,11 @@ of our own
 | Principle | Gate | Status |
 |---|---|---|
 | I. Metro is the product | Design system module built before features; no Material components; mockups exist | Pass (`core:design` is Phase 2; mockups in `docs/design/`) |
-| II. One provider at a time | Single `Account` row; providers behind `TaskProvider`; switch clears data | Pass (see data model and state diagram above) |
-| III. Offline first | UI reads Room only; outbox; remote-wins rule with logged conflicts | Pass (research R9) |
-| IV. Test the seams | Shared provider contract tests; sync engine against fake; screenshot tests | Pass (research R10) |
-| V. Small and simple | Module count justified below; v1 excludes reminders, recurrence, widgets | Pass with note (see Complexity Tracking) |
+| II. Fast and fluid | Optimistic local writes; sync off the main thread in small batches; macrobenchmark budgets in CI from M1 | Pass (see "Keeping it fast" below and research R12) |
+| III. One provider at a time | Single `Account` row; providers behind `TaskProvider`; switch clears data | Pass (see data model and state diagram above) |
+| IV. Offline first | UI reads Room only; outbox; remote-wins rule with logged conflicts | Pass (research R9) |
+| V. Test the seams | Shared provider contract tests; sync engine against fake; screenshot tests | Pass (research R10) |
+| VI. Small and simple | Module count justified below; v1 excludes reminders, recurrence, widgets | Pass with note (see Complexity Tracking) |
 
 Post-design re-check: still passing after data-model and contracts.
 
@@ -178,7 +211,7 @@ provider/fake/                        # in-memory provider for debug and tests
 docs/design/                          # mockups and Metro reference notes
 ```
 
-**Structure Decision**: Multi-module single app. The `provider:*` split enforces Principle II at
+**Structure Decision**: Multi-module single app. The `provider:*` split enforces Principle III at
 compile time (the app module depends only on `provider:api`; the concrete providers are wired in
 by Hilt). `core:design` is separate so it can be built, previewed and screenshot-tested before any
 feature exists. The package name `app.duenorth.tasks` is a placeholder until the Play listing is
@@ -209,13 +242,13 @@ flowchart LR
 | Milestone | You can try | Spec stories |
 |---|---|---|
 | M0 | An empty black app that builds in CI | none |
-| M1 | A "component gallery" screen showing every Metro control, including the panorama, light and dark | FR-001..005 |
+| M1 | A "component gallery" screen showing every Metro control, including the panorama, light and dark; performance benchmarks running in CI | FR-001..005 |
 | M2 | The home panorama (today, lists, done) and list pages on the debug demo account, fully offline | US1 |
 | M3 | Your real Google Tasks, both ways | US2 |
 | M4 | Your real Microsoft To Do, both ways | US3 |
 | M5 | Switch between them from settings | US4 |
 | M6 | Override light/dark by hand and pick another accent | US5 |
-| M7 | Play Store internal-testing build | SC-001..006 |
+| M7 | Play Store internal-testing build | SC-001..009 |
 
 ## External setup you will need
 
