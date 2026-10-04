@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.ui.AppRoot
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -15,7 +16,7 @@ class MainActivity : ComponentActivity() {
         DebugTools.trackJank(this)
         setContent {
             MetroTheme {
-                StartScreen()
+                AppRoot()
             }
         }
     }

@@ -29,13 +29,18 @@ jobs:
         run: ./gradlew test
       - name: Android Lint
         run: ./gradlew lint
-      - name: Record component screenshots (light and dark)
-        run: ./gradlew :core:design:recordRoborazziDebug
+      - name: Record component and screen screenshots (light and dark)
+        run: ./gradlew :core:design:recordRoborazziDebug :app:recordRoborazziDebug
       - name: Upload component screenshots
         uses: actions/upload-artifact@v4
         with:
           name: component-screenshots
           path: core/design/build/outputs/roborazzi/
+      - name: Upload screen screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screen-screenshots
+          path: app/build/outputs/roborazzi/
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v4

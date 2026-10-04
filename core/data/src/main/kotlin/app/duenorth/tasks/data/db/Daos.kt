@@ -115,6 +115,18 @@ interface TaskDao {
     )
     fun observeRecentlyCompleted(limit: Int): Flow<List<TaskWithList>>
 
+    /** Titles and details containing [pattern] (a LIKE pattern escaped with a backslash), grouped by list. */
+    @Query(
+        """
+        SELECT t.*, l.title AS listTitle FROM task t JOIN task_list l ON l.localId = t.listId
+        WHERE t.deletedLocally = 0 AND l.deletedLocally = 0
+            AND (t.title LIKE :pattern ESCAPE '\' OR t.notes LIKE :pattern ESCAPE '\')
+        ORDER BY l.isDefault DESC, l.title COLLATE NOCASE, t.completed, t.title COLLATE NOCASE
+        LIMIT :limit
+        """
+    )
+    fun observeSearch(pattern: String, limit: Int): Flow<List<TaskWithList>>
+
     @Query("SELECT * FROM task WHERE localId = :localId")
     suspend fun get(localId: String): TaskEntity?
 
