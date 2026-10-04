@@ -15,6 +15,9 @@ kotlin {
 
 dependencies {
     api(project(":provider:api"))
+
+    testImplementation(testFixtures(project(":provider:api")))
+    testImplementation(libs.coroutines.test)
     testImplementation(platform(libs.junit5.bom))
     testImplementation(libs.junit5.jupiter)
     testRuntimeOnly(libs.junit5.launcher)

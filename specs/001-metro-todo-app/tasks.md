@@ -75,9 +75,9 @@ flowchart LR
 
 ### Provider seam (`provider:api`, `provider:fake`)
 
-- [ ] T020 `TaskProvider`, `ProviderCapabilities`, models, `TaskPatch`, `ProviderError` per contracts/task-provider.md
-- [ ] T021 Abstract `TaskProviderContractTest` in `provider/api/src/testFixtures/`
-- [ ] T022 `FakeProvider` (in-memory, injectable failures and latency) passing the contract test
+- [X] T020 `TaskProvider`, `ProviderCapabilities`, models, `TaskPatch`, `ProviderError` per contracts/task-provider.md (sign-in takes a `SignInHost` so the module stays Android-free)
+- [X] T021 Abstract `TaskProviderContractTest` in `provider/api/src/testFixtures/`
+- [X] T022 `FakeProvider` (in-memory, injectable failures and latency) passing the contract test
 - [ ] T023 Hilt `ProviderRegistry` that returns the single provider for the `Account` row
 
 - [ ] T024 [P] Benchmarks for the gallery: panorama swipe and turnstile transition hold frame rate (FR-007)
