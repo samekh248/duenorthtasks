@@ -63,7 +63,7 @@ flowchart LR
 - [ ] T011 [P] `components/MetroAppBar.kt` (round outlined icon buttons, `•••` expand with labels + menu)
 - [ ] T012 [P] `components/MetroCheckBox.kt`, `MetroToggle.kt`, `MetroTextField.kt`, `MetroListItem.kt`
 - [ ] T013 [P] `components/MetroProgressDots.kt`, `MetroDialog.kt`, `MetroContextMenu.kt`
-- [ ] T014 [P] `components/MetroDatePicker.kt` (looping columns), `MetroAccentGrid.kt`, `MetroListTile.kt` (accent square + count), `MetroRadio.kt`
+- [ ] T014 [P] `components/MetroDatePicker.kt` (looping columns), `MetroAccentGrid.kt` (used for app accent and list colors), `MetroListTile.kt` (accent square + count), `MetroRadio.kt`
 - [ ] T015 Component gallery screen `app/src/debug/.../GalleryScreen.kt`
 - [ ] T016 Roborazzi screenshot tests for every component, light + dark, in `core/design/src/test/`
 
@@ -171,17 +171,19 @@ flowchart LR
 - [ ] T059 [P] [US5] `ThemePreferences` in DataStore (theme: system / light / dark, default system; accent default magenta)
 - [ ] T060 [US5] Settings "theme" pivot item with a "follow phone / light / dark" choice and `MetroAccentGrid`; live update without restart
 - [ ] T061 [P] [US5] Screenshot tests for three accents in both themes
+- [ ] T062 [US5] Per-list colors: `ListColorStore` in DataStore keyed by provider + remote list id (backed up, survives sign-out and switching back); "list color" page with "app accent" + grid from the tile long-press and list page menu; `LocalAccent` provided per list for tiles, list page and task captions
+- [ ] T063 [P] [US5] Tests: default follows app accent, override and reset, key moves from local to remote id after first push, color survives switching service and back
 
 ---
 
 ## Phase 8: Polish and release (M7)
 
-- [ ] T062 [P] Accessibility pass: TalkBack labels on app bar buttons and checkboxes, 48dp targets, panorama sections announced as headings, contrast check for every accent's light and dark value
-- [ ] T063 [P] Performance pass on real mid-range and low-end phones: review benchmark trends, JankStats logs and startup traces; fix anything over budget
-- [ ] T064 [P] Metro launcher icon (flat white glyph on accent square) and splash
-- [ ] T065 Privacy policy and Google OAuth verification submission for the `tasks` scope
-- [ ] T066 Play Console internal testing track and release signing via CI secrets
-- [ ] T067 Run every quickstart.md scenario and record results
+- [ ] T064 [P] Accessibility pass: TalkBack labels on app bar buttons and checkboxes, 48dp targets, panorama sections announced as headings, contrast check for every accent's light and dark value
+- [ ] T065 [P] Performance pass on real mid-range and low-end phones: review benchmark trends, JankStats logs and startup traces; fix anything over budget
+- [ ] T066 [P] Metro launcher icon (flat white glyph on accent square) and splash
+- [ ] T067 Privacy policy and Google OAuth verification submission for the `tasks` scope
+- [ ] T068 Play Console internal testing track and release signing via CI secrets
+- [ ] T069 Run every quickstart.md scenario and record results
 
 ---
 

@@ -73,6 +73,14 @@ erDiagram
     }
 ```
 
+## List colors (phone only)
+
+Per-list colors are a display preference, not task data, so they are not in the Room tables that
+are cleared on sign-out. They live in DataStore as a map from `"<provider>:<remote list id>"` to an
+accent name (missing key = app accent). That keeps a list's color through a switch to the other
+service and back, and Android Auto Backup carries it to a new phone. Lists not yet created
+remotely use `"local:<localId>"` until the first push, then the key is moved.
+
 ## Rules
 
 - **One account**: `ACCOUNT.id` is fixed to 1, so a second provider cannot be stored. Switching

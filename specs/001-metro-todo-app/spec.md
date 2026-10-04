@@ -31,7 +31,7 @@ not using.
 A person opens the app and lands on a Windows Phone style Panorama (the "Light Panorama" design):
 a huge thin "due north" title runs across the top, and they swipe sideways through three
 sections. **today** shows what is due today or overdue across all lists, then tomorrow. **lists**
-shows each list as a magenta square with its open-task count, its name and the next task due.
+shows each list as a colored square (the app accent, unless the person gave that list its own color) with its open-task count, its name and the next task due.
 **done** shows recently completed tasks. Tapping a list opens it as its own page. They add a task
 by typing a title in the "add a task" box at the top of today and pressing enter. If they want
 more, an "add details" link appears under the box as soon as they type, and tapping it grows the
@@ -167,7 +167,12 @@ tap, with no restart.
 2. **Given** the app is dark (from the phone or the user's choice), **When** any screen shows, **Then** the background is pure
    black and the accent uses its brighter dark-theme value (magenta becomes `#F0389A`).
 3. **Given** the user picks an accent, **When** they go back, **Then** every accent-colored element
-   uses the new color.
+   uses the new color, except lists that have their own color.
+4. **Given** all lists use the app accent, **When** the user long-presses the Errands tile and picks
+   coral under "list color", **Then** the Errands tile, its list page and its tasks' due captions
+   turn coral, and every other list keeps the app accent.
+5. **Given** Errands is coral, **When** the user picks "app accent" for it, **Then** it follows the
+   app accent again.
 
 ### Edge Cases
 
@@ -201,8 +206,8 @@ tap, with no restart.
   partly visible at the right edge.
 - **FR-002a**: "today" MUST show open tasks that are overdue or due today across all lists
   (overdue first, captioned in red), followed by tasks due tomorrow.
-- **FR-002b**: "lists" MUST show each list as an accent square with its open-task count, the list
-  name and its next task, plus a "new list" row. Lists with no due dates use a grey square.
+- **FR-002b**: "lists" MUST show each list as a square in that list's color (the app accent unless
+  changed) with its open-task count, the list name and its next task, plus a "new list" row.
 - **FR-002c**: "done" MUST show recently completed tasks, newest first.
 - **FR-003**: Primary actions MUST live in a bottom Application Bar with circular outlined icon
   buttons and an ellipsis that reveals labels and an overflow menu.
@@ -231,6 +236,13 @@ tap, with no restart.
 **Tasks and lists**
 
 - **FR-010**: Users MUST be able to create, rename and delete task lists.
+- **FR-010a**: Every list MUST use the app accent by default. Users MUST be able to give any list
+  its own color from the same 22 accents, or reset it to "app accent". A list's color is used for
+  its tile, its list page and the due captions of its tasks everywhere (including "today");
+  app-wide controls (add box, links, buttons) keep the app accent.
+- **FR-010b**: List colors MUST be stored only on the phone (neither Google Tasks nor Microsoft To
+  Do can store them), keyed by service and list so they come back after switching services and
+  back, and included in Android backup.
 - **FR-011**: Users MUST be able to create, edit, complete, un-complete and delete tasks with a
   title, optional details (multi-line plain text, synced as the provider's notes), an optional
   due date and optional steps (title + done).

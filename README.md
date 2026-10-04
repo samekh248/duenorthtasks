@@ -28,7 +28,7 @@ Planning. The app is specified with [GitHub Spec Kit](https://github.com/github/
 | [research](specs/001-metro-todo-app/research.md) | Decisions: fonts, Metro components, Google/Microsoft API facts |
 | [data model](specs/001-metro-todo-app/data-model.md) | Local database, task states, provider field mapping |
 | [contracts](specs/001-metro-todo-app/contracts/) | The `TaskProvider` seam and the screen map |
-| [tasks](specs/001-metro-todo-app/tasks.md) | 67 ordered build tasks, grouped by milestone |
+| [tasks](specs/001-metro-todo-app/tasks.md) | 69 ordered build tasks, grouped by milestone |
 
 ## Building it with Spec Kit
 

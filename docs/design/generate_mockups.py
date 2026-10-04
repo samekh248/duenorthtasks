@@ -7,8 +7,10 @@ import sys
 W, H, GAP = 390, 844, 48
 FONT = "font-family=\"Selawik, 'Segoe UI', 'Open Sans', sans-serif\""
 
-LIGHT = dict(bg="#FFFFFF", fg="#111111", sub="#5C5C5C", bar="#E5E5E5", accent="#B0005E", overdue="#C40000")
-DARK = dict(bg="#000000", fg="#FFFFFF", sub="#A6A6A6", bar="#1F1F1F", accent="#F0389A", overdue="#FF6B6B")
+LIGHT = dict(bg="#FFFFFF", fg="#111111", sub="#5C5C5C", bar="#E5E5E5", accent="#B0005E", overdue="#C40000",
+             coral="#B8402A", coral_fill="#FF8A6E", orange="#A85400", orange_fill="#FFA552")
+DARK = dict(bg="#000000", fg="#FFFFFF", sub="#A6A6A6", bar="#1F1F1F", accent="#F0389A", overdue="#FF6B6B",
+            coral="#FF8A6E", coral_fill="#FF8A6E", orange="#FFA552", orange_fill="#FFA552")
 
 out = []
 
@@ -90,8 +92,8 @@ def today(i, c, label):
     y = 316
     for title, cap, col, det in [
         ("Renew car registration", "Errands · overdue since Friday", c["overdue"], ()),
-        ("Return library books", "Errands · today", c["accent"], ("Due back Tuesday. The two in the", "car, plus the one on the shelf…")),
-        ("Pick up dry cleaning", "Errands · today", c["accent"], ()),
+        ("Return library books", "Errands · today", c["coral"], ("Due back Tuesday. The two in the", "car, plus the one on the shelf…")),
+        ("Pick up dry cleaning", "Errands · today", c["coral"], ()),
         ("Oat milk, 2 cartons", "Groceries", c["sub"], ()),
     ]:
         y += task(20, y, c, title, cap, col, details=det)
@@ -109,15 +111,15 @@ def lists(i, c, label):
     text(-20, 210, "today", 40, 300, c["fg"], 'text-anchor="end"')
     text(20, 210, "lists", 40, 300, c["fg"])
     y = 240
-    for name, nxt, n, tile in [
-        ("Errands", "next: Renew car registration", 2, c["accent"]),
-        ("Groceries", "next: Oat milk, 2 cartons", 7, c["accent"]),
-        ("Work", "next: Q4 budget review, Thu", 12, c["accent"]),
-        ("Personal", "next: Call Mom about dinner", 3, c["accent"]),
-        ("Someday", "no dates", 9, c["sub"]),
+    for name, nxt, n, tile, ink in [
+        ("Errands", "next: Renew car registration", 2, c["coral_fill"], "#111111"),
+        ("Groceries", "next: Oat milk, 2 cartons", 7, c["accent"], "#FFFFFF"),
+        ("Work", "next: Q4 budget review, Thu", 12, c["accent"], "#FFFFFF"),
+        ("Personal", "next: Call Mom about dinner", 3, c["orange_fill"], "#111111"),
+        ("Someday", "no dates", 9, c["accent"], "#FFFFFF"),
     ]:
         rect(20, y, 64, 64, tile)
-        text(78, y + 58, str(n), 22, 300, "#FFFFFF", 'text-anchor="end"')
+        text(78, y + 58, str(n), 22, 300, ink, 'text-anchor="end"')
         text(98, y + 30, name, 24, 300, c["fg"])
         text(98, y + 52, nxt, 13, 400, c["sub"])
         y += 80
@@ -133,7 +135,7 @@ def detail(i, c, label):
     ox = phone(i, c, label)
     text(20, 48, "DUE NORTH · ERRANDS", 13, 600, c["fg"], 'letter-spacing="0.8"')
     text(18, 100, "return library books", 38, 300, c["fg"])
-    text(20, 132, "due tuesday, october 6", 16, 400, c["accent"])
+    text(20, 132, "due tuesday, october 6", 16, 400, c["coral"])
     text(20, 180, "details", 14, 400, c["sub"])
     for k, line in enumerate([
         "Due back Tuesday. The two in the car,",
@@ -193,11 +195,11 @@ def theme(i, c, label, dark):
         x, y = 20 + col * (size + gap), 262 + row * (size + gap)
         fill = darkv if dark or name in ("light orange", "coral") else light
         rect(x, y, size, size, fill)
-        if name == "light orange":
+        if name == "magenta":
             rect(x + 3, y + 3, size - 6, size - 6, "none", c["fg"], 3)
     y = 262 + 5 * (size + gap) + 26
-    text(20, y, "light orange", 20, 300, c["fg"])
-    text(20, y + 24, "new: light orange and coral sit next to magenta", 13, 400, c["sub"])
+    text(20, y, "magenta", 20, 300, c["fg"])
+    text(20, y + 24, "lists use this unless you give one its own color", 13, 400, c["sub"])
     end_phone(ox, c, label)
 
 

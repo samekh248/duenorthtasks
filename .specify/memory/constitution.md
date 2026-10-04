@@ -21,7 +21,8 @@ reason this app exists, so it outranks Material defaults whenever the two disagr
 - Light (white background, near-black text) and dark (pure black) themes MUST both be
   supported. By default the app follows the phone's light/dark setting; the user can override it
   with a manual light or dark choice. One accent color drives highlights, list tiles and due captions: magenta by
-  default, `#B0005E` on light and the brighter `#F0389A` on dark so text stays readable. The
+  default, `#B0005E` on light and the brighter `#F0389A` on dark so text stays readable. Every
+  list uses the app accent unless the user gives that list its own color. The
   user may pick another accent (the WP8.1 set plus light orange and coral); every accent has a
   light-theme and a dark-theme value.
 - Motion is part of the language: turnstile page transitions, tilt-on-press, continuum
@@ -88,7 +89,9 @@ across systems with different data models, which is out of scope by design.
 
 - One Android app module plus a small number of library modules (`design`, `data`, `sync`,
   `provider-google`, `provider-microsoft`). No module exists just for organization.
-- No feature is built that neither provider can store (for example, tags or attachments in v1).
+- No task data is built that neither provider can store (for example, tags or attachments in
+  v1). Display preferences that live only on the phone, such as theme and per-list colors, are
+  allowed and MUST NOT be sent to either provider.
 - YAGNI: no tablet layouts, widgets or wear support until the phone app ships.
 
 ## Technical Constraints
@@ -118,4 +121,4 @@ PATCH for wording) and states the reason. Plans and reviews MUST check the Const
 gates in `plan.md` against the principles above; any violation is listed in that plan's
 Complexity Tracking table with a justification.
 
-**Version**: 1.2.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
+**Version**: 1.3.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04

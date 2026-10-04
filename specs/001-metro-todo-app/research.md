@@ -66,7 +66,8 @@ Phase 0 output for [plan.md](plan.md). Each entry is Decision / Rationale / Alte
 ## R5. Colors (Light Panorama)
 
 Chosen design: **Light Panorama**, magenta accent. The theme follows the phone's light/dark
-setting by default (`isSystemInDarkTheme()`), with a manual override in settings.
+setting by default (`isSystemInDarkTheme()`), with a manual override in settings. Each list uses the app accent
+unless the user gives it its own color (data-model.md, "List colors").
 
 | Token | Light | Dark |
 |---|---|---|
@@ -83,7 +84,7 @@ treatment: a light-theme and a dark-theme value, each checked for 4.5:1 caption 
 
 ### Accent choices
 
-The user picks one accent at a time from 22 choices: the 20 WP8.1 accents plus **light orange**
+The user picks the app accent, and optionally a color for any list, from 22 choices: the 20 WP8.1 accents plus **light orange**
 and **coral**, which Dustin asked for. Each has a light-theme value (used on white) and a
 dark-theme value (used on black). The ratios are text contrast against the background, and all
 meet 4.5:1 for 13sp captions. Fills (list tiles, checked boxes, picker swatches) use the same
