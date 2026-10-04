@@ -53,10 +53,10 @@ flowchart TD
 | Screen | Layout | App bar buttons (labels on `•••`) | Overflow menu |
 |---|---|---|---|
 | Home panorama, "today" | "due north" title; "today" header, date caption, "add a task" box (with "add details" link once typing); task rows (square checkbox, 20sp title, up to two grey 14sp lines of details, 13sp caption "List · when", red if overdue); "tomorrow" group | new task, sync, search | settings, sync log |
-| Home panorama, "lists" | One row per list: 64dp tile in the list's color (app accent by default) with count, 24sp name, "next: ..." caption; "new list" row with outlined + tile. Long-press a tile: rename, list color, delete | new list, sync, settings | rename/reorder lists |
+| Home panorama, "lists" | One row per list: 64dp tile in the list's shade of the app accent (the accent itself by default) with count, 24sp name, "next: ..." caption; "new list" row with outlined + tile. Long-press a tile: rename, list shade, delete | new list, sync, settings | rename/reorder lists |
 | Home panorama, "done" | Completed tasks, newest first, struck through, with "undo" on tap | sync, search | clear done |
-| List page | "DUE NORTH" small caps, list name as 52sp header, open tasks with due captions in the list's color, collapsible "completed" group | new task, sync, sort | rename list, list color, delete list |
-| List color | Header "list color", "app accent" row (default, checked), then the 22-accent grid | none | none |
+| List page | "DUE NORTH" small caps, list name as 52sp header, open tasks with due captions in the list's shade, collapsible "completed" group | new task, sync, sort | rename list, list shade, delete list |
+| List shade | Header "list shade", a row of seven flat swatches from lightest to darkest shade of the app accent (middle one = the accent, default), with a live preview of the list's tile and a task caption | none | none |
 | Task detail | "DUE NORTH · LIST" small caps, title 38sp Light, "due <date>" in accent, "details" label with full text (links tappable), steps if any, then due and list pickers, important (To Do only) | mark done, edit, delete | move to list |
 | Search | Header "search", text field focused, results grouped by list | none | none |
 | Sync account | "DUE NORTH" small caps, "sync account" header, one-line explanation, radio group (Google Tasks / Microsoft To Do, with "signed in as ..." or "not connected"), switching note, "sync every" picker, "sync on Wi-Fi only" toggle | sync now, sign out | none |

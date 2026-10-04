@@ -63,7 +63,7 @@ flowchart LR
 - [ ] T011 [P] `components/MetroAppBar.kt` (round outlined icon buttons, `•••` expand with labels + menu)
 - [ ] T012 [P] `components/MetroCheckBox.kt`, `MetroToggle.kt`, `MetroTextField.kt`, `MetroListItem.kt`
 - [ ] T013 [P] `components/MetroProgressDots.kt`, `MetroDialog.kt`, `MetroContextMenu.kt`
-- [ ] T014 [P] `components/MetroDatePicker.kt` (looping columns), `MetroAccentGrid.kt` (used for app accent and list colors), `MetroListTile.kt` (accent square + count), `MetroRadio.kt`
+- [ ] T014 [P] `components/MetroDatePicker.kt` (looping columns), `MetroAccentGrid.kt`, `MetroShadeRow.kt` (seven shades of the accent), `MetroListTile.kt` (accent square + count), `MetroRadio.kt`
 - [ ] T015 Component gallery screen `app/src/debug/.../GalleryScreen.kt`
 - [ ] T016 Roborazzi screenshot tests for every component, light + dark, in `core/design/src/test/`
 
@@ -171,8 +171,8 @@ flowchart LR
 - [ ] T059 [P] [US5] `ThemePreferences` in DataStore (theme: system / light / dark, default system; accent default magenta)
 - [ ] T060 [US5] Settings "theme" pivot item with a "follow phone / light / dark" choice and `MetroAccentGrid`; live update without restart
 - [ ] T061 [P] [US5] Screenshot tests for three accents in both themes
-- [ ] T062 [US5] Per-list colors: `ListColorStore` in DataStore keyed by provider + remote list id (backed up, survives sign-out and switching back); "list color" page with "app accent" + grid from the tile long-press and list page menu; `LocalAccent` provided per list for tiles, list page and task captions
-- [ ] T063 [P] [US5] Tests: default follows app accent, override and reset, key moves from local to remote id after first push, color survives switching service and back
+- [ ] T062 [US5] Per-list shades: `ListShadeStore` in DataStore (step -3..+3) keyed by provider + remote list id (backed up, survives sign-out and switching back); `AccentShades.kt` computes the seven shades per theme with caption-contrast fallback; "list shade" page with `MetroShadeRow` and live preview, from the tile long-press and list page menu; `LocalAccent` provided per list for tiles, list page and task captions
+- [ ] T063 [P] [US5] Tests: default is step 0, pick and reset, shades follow an app accent change, caption fallback meets 4.5:1 for every accent and step in both themes, key moves from local to remote id after first push, shade survives switching service and back
 
 ---
 

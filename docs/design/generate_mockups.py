@@ -15,6 +15,41 @@ DARK = dict(bg="#000000", fg="#FFFFFF", sub="#A6A6A6", bar="#1F1F1F", accent="#F
 out = []
 
 
+def _rgb(h):
+    h = h.lstrip("#")
+    return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+
+
+def _lum(h):
+    f = lambda v: v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = [f(v / 255) for v in _rgb(h)]
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast(a, b):
+    hi, lo = sorted([_lum(a), _lum(b)], reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def shade(c, step):
+    """Step -3..+3 of the theme accent: mix with white (negative) or black (positive), 20% per step."""
+    target = "#FFFFFF" if step < 0 else "#000000"
+    t = abs(step) * 0.2
+    return "#%02X%02X%02X" % tuple(round(x + (y - x) * t) for x, y in zip(_rgb(c["accent"]), _rgb(target)))
+
+
+def caption_shade(c, step):
+    """Nearest shade to `step` whose text meets 4.5:1 on the background."""
+    for s in sorted(range(-3, 4), key=lambda k: (abs(k - step), k)):
+        if contrast(shade(c, s), c["bg"]) >= 4.5:
+            return shade(c, s)
+    return c["accent"]
+
+
+def ink(fill):
+    return "#FFFFFF" if contrast("#FFFFFF", fill) >= contrast("#111111", fill) else "#111111"
+
+
 def text(x, y, s, size, weight=400, fill="#111", extra=""):
     out.append(f'<text x="{x}" y="{y}" {FONT} font-size="{size}" font-weight="{weight}" fill="{fill}" {extra}>{s}</text>')
 
@@ -92,8 +127,8 @@ def today(i, c, label):
     y = 316
     for title, cap, col, det in [
         ("Renew car registration", "Errands · overdue since Friday", c["overdue"], ()),
-        ("Return library books", "Errands · today", c["coral"], ("Due back Tuesday. The two in the", "car, plus the one on the shelf…")),
-        ("Pick up dry cleaning", "Errands · today", c["coral"], ()),
+        ("Return library books", "Errands · today", caption_shade(c, -2), ("Due back Tuesday. The two in the", "car, plus the one on the shelf…")),
+        ("Pick up dry cleaning", "Errands · today", caption_shade(c, -2), ()),
         ("Oat milk, 2 cartons", "Groceries", c["sub"], ()),
     ]:
         y += task(20, y, c, title, cap, col, details=det)
@@ -111,15 +146,16 @@ def lists(i, c, label):
     text(-20, 210, "today", 40, 300, c["fg"], 'text-anchor="end"')
     text(20, 210, "lists", 40, 300, c["fg"])
     y = 240
-    for name, nxt, n, tile, ink in [
-        ("Errands", "next: Renew car registration", 2, c["coral_fill"], "#111111"),
-        ("Groceries", "next: Oat milk, 2 cartons", 7, c["accent"], "#FFFFFF"),
-        ("Work", "next: Q4 budget review, Thu", 12, c["accent"], "#FFFFFF"),
-        ("Personal", "next: Call Mom about dinner", 3, c["orange_fill"], "#111111"),
-        ("Someday", "no dates", 9, c["accent"], "#FFFFFF"),
+    for name, nxt, n, step in [
+        ("Errands", "next: Renew car registration", 2, -2),
+        ("Groceries", "next: Oat milk, 2 cartons", 7, 0),
+        ("Work", "next: Q4 budget review, Thu", 12, 2),
+        ("Personal", "next: Call Mom about dinner", 3, -1),
+        ("Someday", "no dates", 9, 1),
     ]:
+        tile = shade(c, step)
         rect(20, y, 64, 64, tile)
-        text(78, y + 58, str(n), 22, 300, ink, 'text-anchor="end"')
+        text(78, y + 58, str(n), 22, 300, ink(tile), 'text-anchor="end"')
         text(98, y + 30, name, 24, 300, c["fg"])
         text(98, y + 52, nxt, 13, 400, c["sub"])
         y += 80
@@ -135,7 +171,7 @@ def detail(i, c, label):
     ox = phone(i, c, label)
     text(20, 48, "DUE NORTH · ERRANDS", 13, 600, c["fg"], 'letter-spacing="0.8"')
     text(18, 100, "return library books", 38, 300, c["fg"])
-    text(20, 132, "due tuesday, october 6", 16, 400, c["coral"])
+    text(20, 132, "due tuesday, october 6", 16, 400, caption_shade(c, -2))
     text(20, 180, "details", 14, 400, c["sub"])
     for k, line in enumerate([
         "Due back Tuesday. The two in the car,",
@@ -199,7 +235,12 @@ def theme(i, c, label, dark):
             rect(x + 3, y + 3, size - 6, size - 6, "none", c["fg"], 3)
     y = 262 + 5 * (size + gap) + 26
     text(20, y, "magenta", 20, 300, c["fg"])
-    text(20, y + 24, "lists use this unless you give one its own color", 13, 400, c["sub"])
+    text(20, y + 24, "each list can use a lighter or darker shade:", 13, 400, c["sub"])
+    for k, step in enumerate(range(-3, 4)):
+        x = 20 + k * 50
+        rect(x, y + 40, 44, 44, shade(c, step))
+        if step == 0:
+            rect(x + 2, y + 42, 40, 40, "none", c["fg"], 3)
     end_phone(ox, c, label)
 
 

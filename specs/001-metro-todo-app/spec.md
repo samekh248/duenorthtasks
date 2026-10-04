@@ -31,7 +31,7 @@ not using.
 A person opens the app and lands on a Windows Phone style Panorama (the "Light Panorama" design):
 a huge thin "due north" title runs across the top, and they swipe sideways through three
 sections. **today** shows what is due today or overdue across all lists, then tomorrow. **lists**
-shows each list as a colored square (the app accent, unless the person gave that list its own color) with its open-task count, its name and the next task due.
+shows each list as a colored square (the app accent, or a lighter or darker shade of it that the person picked for that list) with its open-task count, its name and the next task due.
 **done** shows recently completed tasks. Tapping a list opens it as its own page. They add a task
 by typing a title in the "add a task" box at the top of today and pressing enter. If they want
 more, an "add details" link appears under the box as soon as they type, and tapping it grows the
@@ -167,12 +167,13 @@ tap, with no restart.
 2. **Given** the app is dark (from the phone or the user's choice), **When** any screen shows, **Then** the background is pure
    black and the accent uses its brighter dark-theme value (magenta becomes `#F0389A`).
 3. **Given** the user picks an accent, **When** they go back, **Then** every accent-colored element
-   uses the new color, except lists that have their own color.
+   uses the new color, and every list's shade moves with it (a light-magenta list becomes light
+   coral when the accent changes to coral).
 4. **Given** all lists use the app accent, **When** the user long-presses the Errands tile and picks
-   coral under "list color", **Then** the Errands tile, its list page and its tasks' due captions
-   turn coral, and every other list keeps the app accent.
-5. **Given** Errands is coral, **When** the user picks "app accent" for it, **Then** it follows the
-   app accent again.
+   the second-lightest shade under "list shade", **Then** the Errands tile, its list page and its
+   tasks' due captions use that shade, and every other list keeps the app accent.
+5. **Given** Errands has a shade, **When** the user picks the middle swatch ("app accent"),
+   **Then** it matches the app accent again.
 
 ### Edge Cases
 
@@ -236,11 +237,15 @@ tap, with no restart.
 **Tasks and lists**
 
 - **FR-010**: Users MUST be able to create, rename and delete task lists.
-- **FR-010a**: Every list MUST use the app accent by default. Users MUST be able to give any list
-  its own color from the same 22 accents, or reset it to "app accent". A list's color is used for
-  its tile, its list page and the due captions of its tasks everywhere (including "today");
-  app-wide controls (add box, links, buttons) keep the app accent.
-- **FR-010b**: List colors MUST be stored only on the phone (neither Google Tasks nor Microsoft To
+- **FR-010a**: Every list MUST use the app accent by default. For any list, users MUST be able to
+  pick one of seven shades of the current app accent: three lighter, the accent itself (default)
+  and three darker, shown as a row of flat swatches from light to dark. A list stores its shade
+  step, not a color, so changing the app accent recolors every list while keeping its relative
+  shade. A list's shade is used for its tile, its list page and the due captions of its tasks
+  everywhere (including "today"); app-wide controls (add box, links, buttons) keep the app
+  accent. Where a shade is too light or dark for readable caption text on the current
+  background, captions use the nearest shade that meets 4.5:1; tiles always use the exact shade.
+- **FR-010b**: List shades MUST be stored only on the phone (neither Google Tasks nor Microsoft To
   Do can store them), keyed by service and list so they come back after switching services and
   back, and included in Android backup.
 - **FR-011**: Users MUST be able to create, edit, complete, un-complete and delete tasks with a
