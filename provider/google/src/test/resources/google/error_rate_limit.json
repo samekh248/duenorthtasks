@@ -1,0 +1,14 @@
+{
+  "error": {
+    "code": 403,
+    "message": "Quota exceeded for quota metric 'Queries' and limit 'Queries per minute per user'.",
+    "errors": [
+      {
+        "message": "Quota exceeded for quota metric 'Queries' and limit 'Queries per minute per user'.",
+        "domain": "usageLimits",
+        "reason": "rateLimitExceeded"
+      }
+    ],
+    "status": "PERMISSION_DENIED"
+  }
+}
