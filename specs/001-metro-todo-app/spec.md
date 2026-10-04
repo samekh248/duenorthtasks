@@ -208,7 +208,8 @@ tap, with no restart.
   buttons and an ellipsis that reveals labels and an overflow menu.
 - **FR-004**: The app MUST support light (default) and dark themes and the Windows Phone accent
   colors, magenta by default. Each accent MUST have a light-theme and a dark-theme value that
-  meets 4.5:1 contrast for caption text.
+  meets 4.5:1 contrast for caption text. Every screen MUST be designed, mocked up and screenshot-tested in
+  both light and dark modes.
 - **FR-005**: Page transitions MUST use turnstile animations, pressable items MUST tilt on press,
   and all motion MUST be disabled when the system "remove animations" setting is on.
 

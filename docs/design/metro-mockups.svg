@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 1752 928" width="1752" height="928"><rect x="-24" y="-24" width="1752" height="928" fill="#F2F2F2"/><svg x="0" y="0" width="390" height="844" overflow="hidden">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 1314 1852" width="1314" height="1852"><rect x="-24" y="-24" width="1314" height="1852" fill="#F2F2F2"/><svg x="0" y="0" width="390" height="844" overflow="hidden">
 <rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
 <text x="-8" y="116" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="118" font-weight="300" fill="#111111" letter-spacing="-4.7">due north</text>
 <text x="20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#111111" >today</text>
@@ -33,7 +33,7 @@
 <g transform="translate(266.0,797) scale(0.92)"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0 -12 0M14.5 14.5L20 20" fill="none" stroke="#111111" stroke-width="2"/></g>
 <text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#111111" >···</text>
 </svg>
-<text x="0" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >1. home panorama: today</text>
+<text x="0" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >home: today (light)</text>
 <svg x="438" y="0" width="390" height="844" overflow="hidden">
 <rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
 <text x="-196" y="116" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="118" font-weight="300" fill="#111111" letter-spacing="-4.7">due north</text>
@@ -72,7 +72,7 @@
 <g transform="translate(266.0,797) scale(0.92)"><path d="M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M12 3v3M12 18v3M3 12h3M18 12h3" fill="none" stroke="#111111" stroke-width="2"/></g>
 <text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#111111" >···</text>
 </svg>
-<text x="438" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >2. home panorama: lists</text>
+<text x="438" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >home: lists (light)</text>
 <svg x="876" y="0" width="390" height="844" overflow="hidden">
 <rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
 <text x="20" y="48" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#111111" letter-spacing="0.8">DUE NORTH · ERRANDS</text>
@@ -98,8 +98,8 @@
 <g transform="translate(266.0,797) scale(0.92)"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" fill="none" stroke="#111111" stroke-width="2"/></g>
 <text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#111111" >···</text>
 </svg>
-<text x="876" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >3. task detail</text>
-<svg x="1314" y="0" width="390" height="844" overflow="hidden">
+<text x="876" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >task detail (light)</text>
+<svg x="0" y="924" width="390" height="844" overflow="hidden">
 <rect x="0" y="0" width="390" height="844" fill="#000000"/>
 <text x="-8" y="116" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="118" font-weight="300" fill="#FFFFFF" letter-spacing="-4.7">due north</text>
 <text x="20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#FFFFFF" >today</text>
@@ -134,4 +134,69 @@
 <g transform="translate(266.0,797) scale(0.92)"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0 -12 0M14.5 14.5L20 20" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
 <text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#FFFFFF" >···</text>
 </svg>
-<text x="1314" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >4. today, dark theme</text></svg>
+<text x="0" y="1802" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >home: today (dark)</text>
+<svg x="438" y="924" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#000000"/>
+<text x="-196" y="116" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="118" font-weight="300" fill="#FFFFFF" letter-spacing="-4.7">due north</text>
+<text x="-20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#FFFFFF" text-anchor="end">today</text>
+<text x="20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#FFFFFF" >lists</text>
+<rect x="20" y="240" width="64" height="64" fill="#F0389A"/>
+<text x="78" y="298" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">2</text>
+<text x="98" y="270" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Errands</text>
+<text x="98" y="292" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >next: Renew car registration</text>
+<rect x="20" y="320" width="64" height="64" fill="#F0389A"/>
+<text x="78" y="378" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">7</text>
+<text x="98" y="350" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Groceries</text>
+<text x="98" y="372" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >next: Oat milk, 2 cartons</text>
+<rect x="20" y="400" width="64" height="64" fill="#F0389A"/>
+<text x="78" y="458" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">12</text>
+<text x="98" y="430" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Work</text>
+<text x="98" y="452" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >next: Q4 budget review, Thu</text>
+<rect x="20" y="480" width="64" height="64" fill="#F0389A"/>
+<text x="78" y="538" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">3</text>
+<text x="98" y="510" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Personal</text>
+<text x="98" y="532" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >next: Call Mom about dinner</text>
+<rect x="20" y="560" width="64" height="64" fill="#A6A6A6"/>
+<text x="78" y="618" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">9</text>
+<text x="98" y="590" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Someday</text>
+<text x="98" y="612" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >no dates</text>
+<rect x="21" y="641" width="62" height="62" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<path d="M52 658v28M38 672h28" stroke="#FFFFFF" stroke-width="2"/>
+<text x="98" y="679" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >new list</text>
+<text x="370" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#FFFFFF" >done</text>
+<rect x="0" y="772" width="390" height="72" fill="#1F1F1F"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.92)"><path d="M12 4v16M4 12h16" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.92)"><path d="M19.5 10A8 8 0 0 0 5 7.5M4.5 14A8 8 0 0 0 19 16.5M5 3v5h5M19 21v-5h-5" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.92)"><path d="M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M12 3v3M12 18v3M3 12h3M18 12h3" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#FFFFFF" >···</text>
+</svg>
+<text x="438" y="1802" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >home: lists (dark)</text>
+<svg x="876" y="924" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#000000"/>
+<text x="20" y="48" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" letter-spacing="0.8">DUE NORTH · ERRANDS</text>
+<text x="18" y="100" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="38" font-weight="300" fill="#FFFFFF" >return library books</text>
+<text x="20" y="132" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#F0389A" >due tuesday, october 6</text>
+<text x="20" y="180" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >details</text>
+<text x="20" y="206" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#FFFFFF" >Due back Tuesday. The two in the car,</text>
+<text x="20" y="230" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#FFFFFF" >plus the one on the shelf by the door.</text>
+<text x="20" y="254" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#FFFFFF" >Renew online if not done:</text>
+<text x="20" y="278" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#F0389A" text-decoration="underline">library.example.org/renew</text>
+<text x="20" y="330" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >due</text>
+<rect x="21" y="341" width="348" height="42" fill="none" stroke="#A6A6A6" stroke-width="2"/>
+<text x="32" y="368" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" >tuesday, october 6</text>
+<text x="20" y="416" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >list</text>
+<rect x="21" y="427" width="348" height="42" fill="none" stroke="#A6A6A6" stroke-width="2"/>
+<text x="32" y="454" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" >Errands</text>
+<rect x="0" y="772" width="390" height="72" fill="#1F1F1F"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.92)"><path d="M5 12l5 5l9-11" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.92)"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.92)"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" fill="none" stroke="#FFFFFF" stroke-width="2"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#FFFFFF" >···</text>
+</svg>
+<text x="876" y="1802" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >task detail (dark)</text></svg>

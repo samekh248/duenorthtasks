@@ -54,16 +54,19 @@ def appbar(ox, c, icons):
     text(ox + W - 40, y + 22, "···", 22, fill=c["fg"])
 
 
+ROW = 0  # current row offset in px
+
+
 def phone(i, c, label):
     ox = i * (W + GAP)
-    out.append(f'<svg x="{ox}" y="0" width="{W}" height="{H}" overflow="hidden">')
+    out.append(f'<svg x="{ox}" y="{ROW}" width="{W}" height="{H}" overflow="hidden">')
     rect(0, 0, W, H, c["bg"])
     return ox
 
 
 def end_phone(ox, c, label):
     out.append("</svg>")
-    text(ox, H + 34, label, 16, 600, "#333")
+    text(ox, ROW + H + 34, label, 16, 600, "#333")
 
 
 def task(x, y, c, title, caption, cap_color, checked=False, details=()):
@@ -149,15 +152,17 @@ def detail(i, c, label):
     end_phone(ox, c, label)
 
 
-today(0, LIGHT, "1. home panorama: today")
-lists(1, LIGHT, "2. home panorama: lists")
-detail(2, LIGHT, "3. task detail")
-today(3, DARK, "4. today, dark theme")
+for row, (c, mode) in enumerate([(LIGHT, "light"), (DARK, "dark")]):
+    ROW = row * (H + 80)
+    today(0, c, f"home: today ({mode})")
+    lists(1, c, f"home: lists ({mode})")
+    detail(2, c, f"task detail ({mode})")
 
-TW = 4 * W + 3 * GAP
+TW = 3 * W + 2 * GAP
+TH = 2 * H + 80
 svg = (
-    f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 {TW+48} {H+84}" width="{TW+48}" height="{H+84}">'
-    f'<rect x="-24" y="-24" width="{TW+48}" height="{H+84}" fill="#F2F2F2"/>'
+    f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 {TW+48} {TH+84}" width="{TW+48}" height="{TH+84}">'
+    f'<rect x="-24" y="-24" width="{TW+48}" height="{TH+84}" fill="#F2F2F2"/>'
     + "\n".join(out)
     + "</svg>"
 )
