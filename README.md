@@ -6,7 +6,7 @@ Microsoft To Do**, one at a time.
 ![Metro mockups](docs/design/metro-mockups.svg)
 
 The chosen look is **Light Panorama**: a white home screen with a huge "due north" title you
-swipe across (today, lists, done), one magenta accent, and a dark mode. The full set of design
+swipe across (today, lists, done), one magenta accent, and light and dark modes that follow your phone. The full set of design
 options is on the [design canvas](https://claude.ai/artifact/UchFxrZaZuaB9Aq82iuQDE).
 
 ```mermaid

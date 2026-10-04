@@ -65,9 +65,10 @@ Phase 0 output for [plan.md](plan.md). Each entry is Decision / Rationale / Alte
 
 ## R5. Colors (Light Panorama)
 
-Chosen design: **Light Panorama**, light theme by default, magenta accent.
+Chosen design: **Light Panorama**, magenta accent. The theme follows the phone's light/dark
+setting by default (`isSystemInDarkTheme()`), with a manual override in settings.
 
-| Token | Light (default) | Dark |
+| Token | Light | Dark |
 |---|---|---|
 | background | `#FFFFFF` | `#000000` |
 | foreground | `#111111` | `#FFFFFF` |

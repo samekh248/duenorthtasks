@@ -155,16 +155,16 @@ the Windows Phone accent colors. The whole app, including checkboxes, the progre
 launcher icon tint where Android allows, follows that choice.
 
 **Why this priority**: It is a signature Windows Phone touch but the app works without it (light +
-magenta default).
+magenta default, theme following the phone).
 
-**Independent Test**: Change to dark theme and cobalt accent; every screen reflects it after one
+**Independent Test**: With the phone in light mode, choose dark in the app and the cobalt accent; every screen reflects it after one
 tap, with no restart.
 
 **Acceptance Scenarios**:
 
-1. **Given** default settings, **When** the app first opens, **Then** it is light (white
-   background) with the magenta accent.
-2. **Given** the user switches to dark, **When** any screen shows, **Then** the background is pure
+1. **Given** default settings, **When** the app first opens, **Then** it matches the phone's
+   light or dark setting, with the magenta accent, and changes with it.
+2. **Given** the app is dark (from the phone or the user's choice), **When** any screen shows, **Then** the background is pure
    black and the accent uses its brighter dark-theme value (magenta becomes `#F0389A`).
 3. **Given** the user picks an accent, **When** they go back, **Then** every accent-colored element
    uses the new color.
@@ -206,7 +206,8 @@ tap, with no restart.
 - **FR-002c**: "done" MUST show recently completed tasks, newest first.
 - **FR-003**: Primary actions MUST live in a bottom Application Bar with circular outlined icon
   buttons and an ellipsis that reveals labels and an overflow menu.
-- **FR-004**: The app MUST support light (default) and dark themes and the Windows Phone accent
+- **FR-004**: The app MUST support light and dark themes, following the phone's setting by
+  default with a manual light/dark override, and the Windows Phone accent
   colors, magenta by default. Each accent MUST have a light-theme and a dark-theme value that
   meets 4.5:1 contrast for caption text. Every screen MUST be designed, mocked up and screenshot-tested in
   both light and dark modes.

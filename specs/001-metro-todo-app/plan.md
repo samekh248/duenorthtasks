@@ -13,8 +13,8 @@ Both remotes sit behind one `TaskProvider` interface, so the UI and sync engine 
 one is connected.
 
 **Visual design**: Light Panorama (design C), chosen 2026-10-04. The home screen is a panorama
-with "today", "lists" and "done" sections under a huge "due north" title; light theme with a
-magenta accent by default, dark theme as an option. See [contracts/ui-screens.md](contracts/ui-screens.md).
+with "today", "lists" and "done" sections under a huge "due north" title; light and dark themes
+that follow the phone's setting by default (with a manual override), and a magenta accent. See [contracts/ui-screens.md](contracts/ui-screens.md).
 
 ## Architecture
 
@@ -201,7 +201,7 @@ flowchart LR
     end
     M1 --> M2
     M3 --> M4
-    M2 --> M6["M6<br/>dark theme + accents<br/>(US5, P3)"]
+    M2 --> M6["M6<br/>theme override + accents<br/>(US5, P3)"]
     M5 --> M7["M7<br/>polish + release"]
     M6 --> M7
 ```
@@ -214,7 +214,7 @@ flowchart LR
 | M3 | Your real Google Tasks, both ways | US2 |
 | M4 | Your real Microsoft To Do, both ways | US3 |
 | M5 | Switch between them from settings | US4 |
-| M6 | Switch to dark and pick another accent | US5 |
+| M6 | Override light/dark by hand and pick another accent | US5 |
 | M7 | Play Store internal-testing build | SC-001..006 |
 
 ## External setup you will need

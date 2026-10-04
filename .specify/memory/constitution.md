@@ -18,8 +18,9 @@ reason this app exists, so it outranks Material defaults whenever the two disagr
   section always peeks in from the right edge. Secondary pages use the Pivot where they need tabs.
   Every screen has a bottom Application Bar with round outlined icon buttons and an ellipsis
   (`•••`) that expands labels and a menu.
-- Light theme (white background, near-black text) is the default; dark (pure black) MUST also be
-  supported. One accent color drives highlights, list tiles and due captions: magenta by
+- Light (white background, near-black text) and dark (pure black) themes MUST both be
+  supported. By default the app follows the phone's light/dark setting; the user can override it
+  with a manual light or dark choice. One accent color drives highlights, list tiles and due captions: magenta by
   default, `#B0005E` on light and the brighter `#F0389A` on dark so text stays readable. The
   user may pick another WP8.1 accent; every accent has a light-theme and a dark-theme value.
 - Motion is part of the language: turnstile page transitions, tilt-on-press, continuum
