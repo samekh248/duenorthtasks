@@ -12,6 +12,9 @@ msal.clientId=00000000-0000-0000-0000-000000000000
 msal.signatureHash=...
 ```
 
+CI reads the same values from the environment variables `GOOGLE_WEBCLIENTID`, `MSAL_CLIENTID`
+and `MSAL_SIGNATUREHASH`. Builds without them still compile; sign-in just won't work.
+
 ## Commands
 
 ```bash

@@ -11,7 +11,7 @@ classDiagram
         <<interface>>
         +kind: ProviderKind
         +capabilities: ProviderCapabilities
-        +signIn(activity) AccountInfo
+        +signIn(host) AccountInfo
         +signOut()
         +getLists() List~RemoteList~
         +createList(title) RemoteList
@@ -50,7 +50,7 @@ interface TaskProvider {
     val kind: ProviderKind
     val capabilities: ProviderCapabilities
 
-    suspend fun signIn(activity: ComponentActivity): AccountInfo
+    suspend fun signIn(host: SignInHost): AccountInfo  // SignInHost wraps the Activity; keeps provider:api JVM-only
     suspend fun signOut()
 
     suspend fun getLists(): List<RemoteList>

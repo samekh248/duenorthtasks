@@ -39,12 +39,12 @@ flowchart LR
 
 **Purpose**: An empty app that builds in CI.
 
-- [ ] T001 Create Gradle multi-module project per plan.md: `settings.gradle.kts`, `app`, `core:design`, `core:data`, `core:sync`, `provider:api`, `provider:google`, `provider:microsoft`, `provider:fake`
-- [ ] T002 Add version catalog `gradle/libs.versions.toml` (Compose BOM, Hilt, Room, WorkManager, Retrofit, OkHttp, kotlinx.serialization, MSAL, Google Identity, Credential Manager, JUnit 5, Turbine, Robolectric, Roborazzi)
-- [ ] T003 [P] Configure ktlint, Android Lint baseline and a module-dependency rule that fails if `app` or `core:*` depends on `provider:google` / `provider:microsoft` types (only DI wiring in `app/di/ProviderModule.kt` may)
-- [ ] T004 [P] GitHub Actions workflow `.github/workflows/ci.yml`: build, unit tests, screenshot verify, lint
-- [ ] T005 [P] `:benchmark` module with Macrobenchmark + Baseline Profile generator; CI job on a Gradle Managed Device that fails when a budget in plan.md is exceeded; `StrictMode` (main-thread disk/network) and JankStats in debug builds
-- [ ] T006 [P] `local.properties` loading for client IDs into `BuildConfig`, with documented sample in quickstart.md
+- [X] T001 Create Gradle multi-module project per plan.md: `settings.gradle.kts`, `app`, `core:design`, `core:data`, `core:sync`, `provider:api`, `provider:google`, `provider:microsoft`, `provider:fake`
+- [X] T002 Add version catalog `gradle/libs.versions.toml` (Compose BOM, Hilt, Room, WorkManager, Retrofit, OkHttp, kotlinx.serialization, MSAL, Google Identity, Credential Manager, JUnit 5, Turbine, Robolectric, Roborazzi)
+- [X] T003 [P] Configure ktlint, Android Lint baseline and a module-dependency rule that fails if `app` or `core:*` depends on `provider:google` / `provider:microsoft` types (only DI wiring in `app/di/ProviderModule.kt` may)
+- [X] T004 [P] GitHub Actions workflow `.github/workflows/ci.yml`: build, unit tests, screenshot verify, lint
+- [X] T005 [P] `:benchmark` module with Macrobenchmark + Baseline Profile generator; CI job on a Gradle Managed Device that fails when a budget in plan.md is exceeded; `StrictMode` (main-thread disk/network) and JankStats in debug builds
+- [X] T006 [P] `local.properties` loading for client IDs into `BuildConfig`, with documented sample in quickstart.md
 
 **Checkpoint**: CI green on an empty black activity.
 
@@ -75,9 +75,9 @@ flowchart LR
 
 ### Provider seam (`provider:api`, `provider:fake`)
 
-- [ ] T020 `TaskProvider`, `ProviderCapabilities`, models, `TaskPatch`, `ProviderError` per contracts/task-provider.md
-- [ ] T021 Abstract `TaskProviderContractTest` in `provider/api/src/testFixtures/`
-- [ ] T022 `FakeProvider` (in-memory, injectable failures and latency) passing the contract test
+- [X] T020 `TaskProvider`, `ProviderCapabilities`, models, `TaskPatch`, `ProviderError` per contracts/task-provider.md (sign-in takes a `SignInHost` so the module stays Android-free)
+- [X] T021 Abstract `TaskProviderContractTest` in `provider/api/src/testFixtures/`
+- [X] T022 `FakeProvider` (in-memory, injectable failures and latency) passing the contract test
 - [ ] T023 Hilt `ProviderRegistry` that returns the single provider for the `Account` row
 
 - [ ] T024 [P] Benchmarks for the gallery: panorama swipe and turnstile transition hold frame rate (FR-007)
