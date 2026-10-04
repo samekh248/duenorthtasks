@@ -56,29 +56,29 @@ flowchart LR
 
 ### Metro design system (`core:design`)
 
-- [ ] T007 Bundle Selawik fonts in `core/design/src/main/res/font/` and define type ramp `MetroTypography.kt` (research R2)
-- [ ] T008 [P] `MetroColors.kt`: light and dark palettes (follow the system setting by default), 22 accents (WP8.1 set plus light orange and coral) with a light and a dark value each, magenta default (research R5); `MetroTheme` composable with `LocalMetroColors`, `LocalAccent`
-- [ ] T009 [P] Motion: `motion/Turnstile.kt`, `motion/Tilt.kt` (Modifier.metroTilt), `motion/SlideInStagger.kt`, `motion/Continuum.kt`; all honor animator duration scale
-- [ ] T010 `components/MetroPanorama.kt` (wide snapping scroller, 310dp sections that peek, title layer with ~1/3 speed parallax) and `components/MetroPivot.kt` for settings
-- [ ] T011 [P] `components/MetroAppBar.kt` (round outlined icon buttons, `•••` expand with labels + menu)
-- [ ] T012 [P] `components/MetroCheckBox.kt`, `MetroToggle.kt`, `MetroTextField.kt`, `MetroListItem.kt`
-- [ ] T013 [P] `components/MetroProgressDots.kt`, `MetroDialog.kt`, `MetroContextMenu.kt`
-- [ ] T014 [P] `components/MetroDatePicker.kt` (looping columns), `MetroAccentGrid.kt`, `MetroShadeRow.kt` (seven shades of the accent), `MetroListTile.kt` (accent square + count), `MetroRadio.kt`
-- [ ] T015 Component gallery screen `app/src/debug/.../GalleryScreen.kt`
-- [ ] T016 Roborazzi screenshot tests for every component, light + dark, in `core/design/src/test/`
+- [ ] T007 Bundle Selawik fonts in `core/design/src/main/res/font/` and define type ramp `MetroTypography.kt` (research R2). Type ramp done; fonts still to add (falls back to the platform sans-serif until then)
+- [X] T008 [P] `MetroColors.kt`: light and dark palettes (follow the system setting by default), 22 accents (WP8.1 set plus light orange and coral) with a light and a dark value each, magenta default (research R5); `MetroTheme` composable with `LocalMetroColors`, `LocalAccent`
+- [X] T009 [P] Motion: `motion/Turnstile.kt`, `motion/Tilt.kt` (Modifier.metroTilt), `motion/SlideInStagger.kt`, `motion/Continuum.kt`; all honor animator duration scale
+- [X] T010 `components/MetroPanorama.kt` (wide snapping scroller, 310dp sections that peek, title layer with ~1/3 speed parallax) and `components/MetroPivot.kt` for settings
+- [X] T011 [P] `components/MetroAppBar.kt` (round outlined icon buttons, `•••` expand with labels + menu)
+- [X] T012 [P] `components/MetroCheckBox.kt`, `MetroToggle.kt`, `MetroTextField.kt`, `MetroListItem.kt`
+- [X] T013 [P] `components/MetroProgressDots.kt`, `MetroDialog.kt`, `MetroContextMenu.kt`
+- [X] T014 [P] `components/MetroDatePicker.kt` (looping columns), `MetroAccentGrid.kt`, `MetroShadeRow.kt` (seven shades of the accent), `MetroListTile.kt` (accent square + count), `MetroRadio.kt`
+- [X] T015 Component gallery screen `app/src/debug/.../GalleryScreen.kt`
+- [X] T016 Roborazzi screenshot tests for every component, light + dark, in `core/design/src/test/` (CI records them as an artifact; golden-image verification starts once baselines are committed)
 
 ### Local data (`core:data`)
 
-- [ ] T017 Room entities and DAOs per data-model.md: `AccountEntity`, `TaskListEntity`, `TaskEntity`, `StepEntity`, `PendingOperationEntity`, `SyncLogEntity` with cascading FKs from Account
-- [ ] T018 `TaskRepository` with transactional write + outbox enqueue, outbox coalescing rules, `Flow` reads
-- [ ] T019 [P] Repository tests: coalescing, create-then-delete cancel, cascade on account delete
+- [X] T017 Room entities and DAOs per data-model.md: `AccountEntity`, `TaskListEntity`, `TaskEntity`, `StepEntity`, `PendingOperationEntity`, `SyncLogEntity` with cascading FKs from Account
+- [X] T018 `TaskRepository` with transactional write + outbox enqueue, outbox coalescing rules, `Flow` reads
+- [X] T019 [P] Repository tests: coalescing, create-then-delete cancel, cascade on account delete
 
 ### Provider seam (`provider:api`, `provider:fake`)
 
 - [X] T020 `TaskProvider`, `ProviderCapabilities`, models, `TaskPatch`, `ProviderError` per contracts/task-provider.md (sign-in takes a `SignInHost` so the module stays Android-free)
 - [X] T021 Abstract `TaskProviderContractTest` in `provider/api/src/testFixtures/`
 - [X] T022 `FakeProvider` (in-memory, injectable failures and latency) passing the contract test
-- [ ] T023 Hilt `ProviderRegistry` that returns the single provider for the `Account` row
+- [X] T023 Hilt `ProviderRegistry` that returns the single provider for the `Account` row
 
 - [ ] T024 [P] Benchmarks for the gallery: panorama swipe and turnstile transition hold frame rate (FR-007)
 

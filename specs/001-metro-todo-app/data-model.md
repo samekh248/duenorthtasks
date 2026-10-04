@@ -53,7 +53,8 @@ erDiagram
         string remoteId "Google child task id or To Do checklistItem id"
         string title
         bool done
-        int order
+        int sortOrder
+        bool deletedLocally
     }
     PENDING_OPERATION {
         long seq PK "push order"
