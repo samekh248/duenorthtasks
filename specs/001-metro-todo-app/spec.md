@@ -33,8 +33,11 @@ a huge thin "due north" title runs across the top, and they swipe sideways throu
 sections. **today** shows what is due today or overdue across all lists, then tomorrow. **lists**
 shows each list as a magenta square with its open-task count, its name and the next task due.
 **done** shows recently completed tasks. Tapping a list opens it as its own page. They add a task
-from the bottom app bar, tick it off with a tap, open it to edit the title, notes, due date and
-steps, and delete it. Everything looks and moves like a Windows Phone 8.1 app: white background,
+by typing a title in the "add a task" box at the top of today and pressing enter. If they want
+more, an "add details" link appears under the box as soon as they type, and tapping it grows the
+same box to hold free-text details, a due date and a list. Tasks with details show the first two
+lines of them in the list. They tick a task off with a tap, open it to read or edit everything, and
+delete it. Everything looks and moves like a Windows Phone 8.1 app: white background,
 one accent color, big thin type, flat squares, turnstile transitions.
 
 **Why this priority**: The Metro experience is the whole reason for the app. Without it, any
@@ -53,8 +56,17 @@ Metro reference mockups in `docs/design/`.
    the app, **Then** "today" lists all of them, the overdue one first with its due caption in red.
 3. **Given** the user taps a list tile, **When** the list page opens, **Then** its tasks appear with
    a staggered slide-in.
-4. **Given** a list is showing, **When** the user taps the `+` app bar button, types a title and
-   confirms, **Then** the task appears at the top of the list immediately.
+4. **Given** "today" is showing, **When** the user types a title in the "add a task" box and
+   presses enter, **Then** the task appears in today immediately, due today, in the default list.
+4a. **Given** the user has typed a title, **When** they tap "add details", **Then** the same box
+   expands in place with a details area, due date and list chips, "hide details" and "add"; a
+   hint says details sync as the task's notes in the connected service. Tapping "add" adds the
+   task with its details.
+4b. **Given** a task has details, **When** it appears in a list, **Then** the first two lines of
+   its details show in grey between the title and the caption; a task without details stays one
+   line.
+4c. **Given** the user taps a task with details, **When** the task page opens, **Then** it shows
+   the full details text with tappable links.
 5. **Given** an open task, **When** the user taps its checkbox, **Then** it moves to the list's
    "completed" group and to the panorama's "done" section, and the change survives an app restart.
 6. **Given** any screen, **When** the user taps the app bar ellipsis (`•••`), **Then** the app bar
@@ -204,12 +216,18 @@ tap, with no restart.
 
 - **FR-010**: Users MUST be able to create, rename and delete task lists.
 - **FR-011**: Users MUST be able to create, edit, complete, un-complete and delete tasks with a
-  title, notes, an optional due date and optional steps (title + done).
+  title, optional details (multi-line plain text, synced as the provider's notes), an optional
+  due date and optional steps (title + done).
+- **FR-011a**: "today" MUST start with an "add a task" box: enter adds the task with just a title.
+  Once the user types, an accent "add details" link MUST appear under the box; tapping it expands
+  the box in place with details, due date and list, without leaving the screen.
+- **FR-011b**: Task rows MUST show the first two lines of a task's details, if any, between the
+  title and the caption.
 - **FR-012**: Completed tasks MUST be shown in a collapsible "completed" group at the bottom of a
   list.
 - **FR-013**: Users MUST be able to sort a list by "my order", due date, or title.
 - **FR-014**: When Microsoft To Do is connected, users MUST be able to mark tasks important.
-- **FR-015**: Users MUST be able to search task titles and notes across all lists from the app
+- **FR-015**: Users MUST be able to search task titles and details across all lists from the app
   bar.
 
 **Sync**
@@ -239,7 +257,7 @@ tap, with no restart.
 - **Account**: the one connected provider (Google or Microsoft), the signed-in identity, and the
   sync state. At most one exists.
 - **Task list**: a named collection of tasks belonging to the account.
-- **Task**: title, notes, due date, completed state, importance (To Do only), position, and steps.
+- **Task**: title, details (the provider's notes), due date, completed state, importance (To Do only), position, and steps.
 - **Step**: a small checklist item inside a task (Google subtask or To Do checklist item).
 - **Pending change**: a local edit not yet confirmed by the provider.
 - **Sync log entry**: a record of a conflict or failure the user can review.

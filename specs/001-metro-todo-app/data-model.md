@@ -108,7 +108,7 @@ stateDiagram-v2
 | TaskList.title | `tasklist.title` | `todoTaskList.displayName` |
 | TaskList.isDefault | first list (`@default`) | `wellknownListName == defaultList` |
 | Task.title | `task.title` | `todoTask.title` |
-| Task.notes | `task.notes` | `todoTask.body.content` (`contentType=text`) |
+| Task.notes (shown as "details") | `task.notes` | `todoTask.body.content` (`contentType=text`) |
 | Task.dueDate | `task.due` (date part) | `todoTask.dueDateTime` (midnight, device zone) |
 | Task.completed | `status == completed` | `status == completed` |
 | Task.important | not supported, hidden | `importance == high` |

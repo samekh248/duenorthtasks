@@ -38,6 +38,7 @@ ICONS = {
     "check": "M5 12l5 5l9-11",
     "save": "M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6",
     "delete": "M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13",
+    "edit": "M4 20h4L19 9l-4-4L4 16zM13 7l4 4",
 }
 
 
@@ -65,12 +66,15 @@ def end_phone(ox, c, label):
     text(ox, H + 34, label, 16, 600, "#333")
 
 
-def task(x, y, c, title, caption, cap_color, checked=False):
+def task(x, y, c, title, caption, cap_color, checked=False, details=()):
     checkbox(x, y + 3, c, checked)
     deco = 'text-decoration="line-through" fill-opacity="0.55"' if checked else ""
     text(x + 38, y + 20, title, 20, 400, c["fg"], deco)
+    for k, line in enumerate(details):
+        text(x + 38, y + 42 + k * 19, line, 14, 400, c["sub"])
     if caption:
-        text(x + 38, y + 42, caption, 13, 400, cap_color)
+        text(x + 38, y + 42 + len(details) * 19, caption, 13, 400, cap_color)
+    return 66 + len(details) * 19
 
 
 def today(i, c, label):
@@ -78,15 +82,16 @@ def today(i, c, label):
     text(-8, 116, "due north", 118, 300, c["fg"], 'letter-spacing="-4.7"')
     text(20, 210, "today", 40, 300, c["fg"])
     text(20, 240, "Sunday, October 4", 14, 400, c["sub"])
-    y = 264
-    for title, cap, col in [
-        ("Renew car registration", "Errands · overdue since Friday", c["overdue"]),
-        ("Pick up dry cleaning", "Errands · today", c["accent"]),
-        ("Call Mom about dinner", "Personal · today", c["accent"]),
-        ("Oat milk, 2 cartons", "Groceries", c["sub"]),
+    rect(21, 257, 348, 40, "none", c["sub"])
+    text(32, 283, "add a task", 17, 400, c["sub"])
+    y = 316
+    for title, cap, col, det in [
+        ("Renew car registration", "Errands · overdue since Friday", c["overdue"], ()),
+        ("Return library books", "Errands · today", c["accent"], ("Due back Tuesday. The two in the", "car, plus the one on the shelf…")),
+        ("Pick up dry cleaning", "Errands · today", c["accent"], ()),
+        ("Oat milk, 2 cartons", "Groceries", c["sub"], ()),
     ]:
-        task(20, y, c, title, cap, col)
-        y += 66
+        y += task(20, y, c, title, cap, col, details=det)
     text(20, y + 14, "tomorrow", 14, 400, c["sub"])
     task(20, y + 34, c, "Book dentist cleaning", "Personal", c["sub"])
     # next section peeks in
@@ -123,19 +128,24 @@ def lists(i, c, label):
 
 def detail(i, c, label):
     ox = phone(i, c, label)
-    text(20, 48, "GROCERIES", 13, 600, c["fg"], 'letter-spacing="0.8"')
-    text(17, 108, "oat milk", 52, 300, c["fg"])
-    text(20, 160, "notes", 14, 400, c["sub"])
-    rect(20, 170, W - 40, 64, c["bar"])
-    text(30, 198, "2 cartons, the barista kind", 16, 400, c["fg"])
-    text(20, 272, "due", 14, 400, c["sub"])
-    rect(21, 283, W - 42, 42, "none", c["sub"])
-    text(32, 310, "sunday, october 4", 18, 400, c["fg"])
-    text(20, 366, "steps", 14, 400, c["sub"])
-    task(20, 380, c, "check the fridge first", "", c["sub"], checked=True)
-    task(20, 426, c, "bring a bag", "", c["sub"])
-    text(58, 494, "+ add step", 18, 400, c["accent"])
-    appbar(0, c, ["check", "save", "delete"])
+    text(20, 48, "DUE NORTH · ERRANDS", 13, 600, c["fg"], 'letter-spacing="0.8"')
+    text(18, 100, "return library books", 38, 300, c["fg"])
+    text(20, 132, "due tuesday, october 6", 16, 400, c["accent"])
+    text(20, 180, "details", 14, 400, c["sub"])
+    for k, line in enumerate([
+        "Due back Tuesday. The two in the car,",
+        "plus the one on the shelf by the door.",
+        "Renew online if not done:",
+    ]):
+        text(20, 206 + k * 24, line, 16, 400, c["fg"])
+    text(20, 278, "library.example.org/renew", 16, 400, c["accent"], 'text-decoration="underline"')
+    text(20, 330, "due", 14, 400, c["sub"])
+    rect(21, 341, W - 42, 42, "none", c["sub"])
+    text(32, 368, "tuesday, october 6", 18, 400, c["fg"])
+    text(20, 416, "list", 14, 400, c["sub"])
+    rect(21, 427, W - 42, 42, "none", c["sub"])
+    text(32, 454, "Errands", 18, 400, c["fg"])
+    appbar(0, c, ["check", "edit", "delete"])
     end_phone(ox, c, label)
 
 

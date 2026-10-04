@@ -33,9 +33,12 @@ flowchart TD
     HasAcct -- yes --> Home["home panorama<br/>today · lists · done"]
 
     Home -- "tap list tile" --> List["list page<br/>tasks + completed group"]
-    Home -- "tap task (continuum)" --> Detail["task detail<br/>title, notes, due, steps"]
+    Home -- "tap task (continuum)" --> Detail["task detail<br/>title, details, due, list, steps"]
     List -- "tap task (continuum)" --> Detail
-    Home -- "app bar +" --> Add["new task<br/>keyboard up"]
+    Home -- "type in 'add a task', enter" --> Home
+    Home -- "tap 'add details'" --> Expand["add box expands in place<br/>details, due chip, list chip<br/>hide details · add"]
+    Expand -- add --> Home
+    Home -- "app bar +" --> Focus["focuses the 'add a task' box"]
     Home -- "app bar search" --> Search["search<br/>all lists"]
     Home -- "••• > settings" --> Settings["settings pivot<br/>theme · sync account · about"]
     Settings -- "sync account" --> Sync["sync account<br/>radio: one service"]
@@ -49,15 +52,32 @@ flowchart TD
 
 | Screen | Layout | App bar buttons (labels on `•••`) | Overflow menu |
 |---|---|---|---|
-| Home panorama, "today" | "due north" title; "today" header, date caption, task rows (square checkbox, 20sp title, 13sp caption "List · when", red if overdue); "tomorrow" group | new task, sync, search | settings, sync log |
+| Home panorama, "today" | "due north" title; "today" header, date caption, "add a task" box (with "add details" link once typing); task rows (square checkbox, 20sp title, up to two grey 14sp lines of details, 13sp caption "List · when", red if overdue); "tomorrow" group | new task, sync, search | settings, sync log |
 | Home panorama, "lists" | One row per list: 64dp accent tile with count, 24sp name, "next: ..." caption; grey tile for undated lists; "new list" row with outlined + tile | new list, sync, settings | rename/reorder lists |
 | Home panorama, "done" | Completed tasks, newest first, struck through, with "undo" on tap | sync, search | clear done |
 | List page | "DUE NORTH" small caps, list name as 52sp header, open tasks, collapsible "completed" group | new task, sync, sort | rename list, delete list |
-| Task detail | List name small caps, title as header, then notes, due, steps, important (To Do only) | complete, save, delete | move to list |
+| Task detail | "DUE NORTH · LIST" small caps, title 38sp Light, "due <date>" in accent, "details" label with full text (links tappable), steps if any, then due and list pickers, important (To Do only) | mark done, edit, delete | move to list |
 | Search | Header "search", text field focused, results grouped by list | none | none |
 | Sync account | "DUE NORTH" small caps, "sync account" header, one-line explanation, radio group (Google Tasks / Microsoft To Do, with "signed in as ..." or "not connected"), switching note, "sync every" picker, "sync on Wi-Fi only" toggle | sync now, sign out | none |
 | Settings | Pivot: "theme", "sync account", "about" | none | none |
 | Sync log | Header "sync log", rows by time | clear | none |
+
+## Adding a task
+
+```text
+type + enter            tap "add details"           back on today             tap the task
+┌──────────────────┐    ┌──────────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│[Return library… ]│    │┌────────────────────┐│    │□ Return library  │    │DUE NORTH·ERRANDS │
+│ ≡+ add details   │ →  ││Return library…     ││ →  │  Due back Tuesday│ →  │return library    │
+│     enter adds it│    ││────────────────────││    │  The two in the… │    │due tuesday       │
+│□ Pick up dry…    │    ││details, steps, …   ││    │  Errands · today │    │details           │
+└──────────────────┘    │└[today]─[Errands]───┘│    │□ Pick up dry…    │    │full text, links  │
+                        │ ⌃ hide details  [add]│    └──────────────────┘    └──────────────────┘
+                        └──────────────────────┘
+```
+
+The hint under the expanded box names the connected service: "Details sync as the task's notes in
+Google Tasks" (or Microsoft To Do).
 
 ## Interaction rules
 
