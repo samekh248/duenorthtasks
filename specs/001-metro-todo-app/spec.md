@@ -1,0 +1,249 @@
+# Feature Specification: Due North Tasks v1 (Metro todo app with single-provider sync)
+
+**Feature Branch**: `001-metro-todo-app`
+
+**Created**: 2026-10-04
+
+**Status**: Draft
+
+**Input**: User description: "I want to build an android todo app that syncs with either google tasks
+or ms todo, but not both at the same time. I want to make sure it uses the Metro design language
+used in windows phone 8.1."
+
+## At a glance
+
+```mermaid
+flowchart LR
+    U((You)) --> App["Due North Tasks<br/>(Metro UI, works offline)"]
+    App <-->|"sync"| G[(Google Tasks)]
+    App <-.->|"or"| M[(Microsoft To Do)]
+    classDef off stroke-dasharray: 5 5
+    class M off
+```
+
+Exactly one of the two remotes is connected at any moment. The dashed line is the one you are
+not using.
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Manage tasks in a Metro interface (Priority: P1)
+
+A person opens the app and sees their task lists as a Windows Phone style Pivot: each list name is
+a large lowercase header they can swipe between. They add a task from the bottom app bar, tick it
+off with a tap, open it to edit the title, notes, due date and steps, and delete it. Everything
+looks and moves like a Windows Phone 8.1 app: black background, one accent color, big thin type,
+flat squares, turnstile transitions.
+
+**Why this priority**: The Metro experience is the whole reason for the app. Without it, any
+existing Google Tasks or To Do client already exists.
+
+**Independent Test**: Run a debug build with the built-in demo account (no network). Create two
+lists and five tasks, complete two, edit one, delete one, and compare each screen against the
+Metro reference mockups in `docs/design/`.
+
+**Acceptance Scenarios**:
+
+1. **Given** two lists exist, **When** the user swipes left on the list pivot, **Then** the next
+   list header slides into place and its tasks appear with a staggered slide-in.
+2. **Given** a list is showing, **When** the user taps the `+` app bar button, types a title and
+   confirms, **Then** the task appears at the top of the list immediately.
+3. **Given** an open task, **When** the user taps its checkbox, **Then** it is shown struck through
+   in the "completed" section and the change survives an app restart.
+4. **Given** any screen, **When** the user taps the app bar ellipsis (`•••`), **Then** the app bar
+   expands to show button labels and the overflow menu, as on Windows Phone.
+5. **Given** the device has no network, **When** the user does any of the above, **Then** every
+   action still succeeds locally.
+
+---
+
+### User Story 2 - Sync with Google Tasks (Priority: P1)
+
+On first launch the person chooses "google tasks", signs in with their Google account, and sees
+their existing Google task lists and tasks in the Metro UI. Changes they make on the phone show up
+in Gmail/Google Calendar's Tasks panel, and changes made there show up on the phone.
+
+**Why this priority**: The app is useless as a daily driver without a real backend, and Google
+Tasks is the first provider named.
+
+**Independent Test**: Sign in with a test Google account that already has lists. Verify they
+appear, add a task on the phone and see it in Google Tasks on the web, then complete a task on the
+web and see it complete on the phone after a refresh.
+
+**Acceptance Scenarios**:
+
+1. **Given** a fresh install, **When** the user picks Google Tasks and grants access, **Then** all of
+   their lists and open tasks appear within one sync.
+2. **Given** the user edits a task offline, **When** the network returns, **Then** the edit reaches
+   Google Tasks without the user doing anything.
+3. **Given** a task was changed on the web and on the phone since the last sync, **When** sync
+   runs, **Then** the most recent change wins and the other is recorded in the sync log.
+4. **Given** a Google subtask exists, **When** it is shown on the phone, **Then** it appears as a
+   step under its parent task.
+
+---
+
+### User Story 3 - Sync with Microsoft To Do (Priority: P2)
+
+Instead of Google, the person chooses "microsoft to do" and signs in with a personal Microsoft
+account or a work/school account. Lists, tasks, steps, importance and due dates sync both ways.
+
+**Why this priority**: It is the second provider the user asked for, and it reuses everything built
+for Story 2, so it lands after the sync engine is proven.
+
+**Independent Test**: Sign in with a test Microsoft account, then repeat Story 2's test against
+To Do on the web, plus starring a task as important on the phone.
+
+**Acceptance Scenarios**:
+
+1. **Given** a fresh install, **When** the user picks Microsoft To Do and signs in, **Then** their
+   lists (including the default "Tasks" list) appear.
+2. **Given** To Do is connected, **When** the user marks a task important, **Then** it shows as
+   important in To Do on the web.
+3. **Given** a task has checklist steps in To Do, **When** it is opened on the phone, **Then** the
+   steps appear and can be ticked off.
+
+---
+
+### User Story 4 - Switch provider, never both (Priority: P2)
+
+The person decides to move from Google Tasks to Microsoft To Do (or back). In settings they tap
+"switch service". The app explains that the current account will be disconnected and its tasks
+removed from this phone (they stay in the cloud), then lets them sign in to the other service.
+
+**Why this priority**: "Not both at the same time" is an explicit requirement, and the switch is
+the only place it is visible to the user.
+
+**Independent Test**: Connected to Google, switch to Microsoft. Confirm no Google data remains on
+the device, no data was written to either remote by the switch itself, and Microsoft data now
+shows.
+
+**Acceptance Scenarios**:
+
+1. **Given** Google is connected, **When** the user opens settings, **Then** there is no way to add
+   Microsoft without first disconnecting Google.
+2. **Given** the user confirms the switch, **When** it completes, **Then** Google tokens are revoked
+   locally, Google tasks are cleared from the device, and the Microsoft sign-in starts.
+3. **Given** there are local changes not yet synced, **When** the user starts a switch, **Then** the
+   app warns how many changes would be lost and offers "sync now" first.
+
+---
+
+### User Story 5 - Make it mine: theme and accent (Priority: P3)
+
+Like Windows Phone's "start + theme" settings, the person picks dark or light background and one of
+the 20 Windows Phone accent colors. The whole app, including checkboxes, the progress dots and the
+launcher icon tint where Android allows, follows that choice.
+
+**Why this priority**: It is a signature Windows Phone touch but the app works without it (dark +
+cobalt default).
+
+**Independent Test**: Change to light theme and lime accent; every screen reflects it after one
+tap, with no restart.
+
+**Acceptance Scenarios**:
+
+1. **Given** default settings, **When** the app first opens, **Then** it is dark with the cobalt
+   accent.
+2. **Given** the user picks an accent, **When** they go back, **Then** every accent-colored element
+   uses the new color.
+
+### Edge Cases
+
+- Remote list deleted on the web while the phone has unsynced tasks in it: the tasks are moved to
+  a local "recovered" list and the user is told once.
+- Token expired or access revoked on the web: sync stops, a Metro-style banner says "sign in
+  again", and local edits keep queuing.
+- Provider-only fields: Microsoft importance and reminders are shown only while To Do is connected;
+  Google has no equivalent, so the star is hidden in Google mode rather than faked.
+- Google stores due dates without a time; To Do stores date and time. The app edits due **dates**
+  only in v1 so nothing is silently truncated.
+- Deep Google subtask trees are not possible (Google allows one level), and To Do steps cannot have
+  their own notes or dates; steps are title + done only in v1.
+- Large accounts (thousands of tasks): first sync is paged and the UI shows lists as soon as they
+  arrive.
+- User switches provider while a sync is running: the switch waits for the sync to finish or
+  cancels it cleanly; it never leaves half of one account on the device.
+- Fields the app does not model (Google links, To Do categories, recurrence, attachments) are never
+  overwritten or erased by an edit from the app.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+**Design language**
+
+- **FR-001**: Every screen MUST use the Windows Phone 8.1 Metro design language defined in the
+  constitution (Principle I) and the reference mockups in `docs/design/`.
+- **FR-002**: Task lists MUST be presented as a Pivot with lowercase list-name headers that can be
+  swiped; the next header MUST be partly visible at the right edge.
+- **FR-003**: Primary actions MUST live in a bottom Application Bar with circular outlined icon
+  buttons and an ellipsis that reveals labels and an overflow menu.
+- **FR-004**: The app MUST support dark and light themes and the 20 Windows Phone accent colors.
+- **FR-005**: Page transitions MUST use turnstile animations, pressable items MUST tilt on press,
+  and all motion MUST be disabled when the system "remove animations" setting is on.
+
+**Tasks and lists**
+
+- **FR-010**: Users MUST be able to create, rename and delete task lists.
+- **FR-011**: Users MUST be able to create, edit, complete, un-complete and delete tasks with a
+  title, notes, an optional due date and optional steps (title + done).
+- **FR-012**: Completed tasks MUST be shown in a collapsible "completed" group at the bottom of a
+  list.
+- **FR-013**: Users MUST be able to sort a list by "my order", due date, or title.
+- **FR-014**: When Microsoft To Do is connected, users MUST be able to mark tasks important.
+
+**Sync**
+
+- **FR-020**: The app MUST connect to exactly one provider at a time: Google Tasks or Microsoft To Do.
+- **FR-021**: All task actions MUST work offline and sync automatically when a connection is
+  available, plus on pull-to-refresh and when the app is opened.
+- **FR-022**: Sync MUST be two-way and MUST NOT create duplicates when retried.
+- **FR-023**: When the same task changed on both sides, the most recent change MUST win and the
+  overwritten version MUST be kept in a viewable sync log.
+- **FR-024**: Edits from the app MUST change only the fields the user changed on the remote.
+- **FR-025**: Switching provider MUST disconnect and clear the previous provider's data from the
+  device before connecting the new one, and MUST NOT write anything to either remote as part of
+  the switch.
+- **FR-026**: Users MUST be able to sign out, which clears all synced data from the device.
+
+**Privacy**
+
+- **FR-030**: The app MUST request only the permission scope needed to read and write tasks.
+- **FR-031**: The app MUST NOT send task data anywhere except the connected provider.
+
+### Key Entities
+
+- **Account**: the one connected provider (Google or Microsoft), the signed-in identity, and the
+  sync state. At most one exists.
+- **Task list**: a named collection of tasks belonging to the account.
+- **Task**: title, notes, due date, completed state, importance (To Do only), position, and steps.
+- **Step**: a small checklist item inside a task (Google subtask or To Do checklist item).
+- **Pending change**: a local edit not yet confirmed by the provider.
+- **Sync log entry**: a record of a conflict or failure the user can review.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: A new user can go from install to seeing their existing tasks in under 2 minutes.
+- **SC-002**: Adding a task takes no more than 2 taps plus typing.
+- **SC-003**: A change made on the phone appears on the provider's website within 1 minute when
+  online; a change made on the web appears on the phone within 1 minute of opening the app.
+- **SC-004**: Zero duplicated or lost tasks across a scripted 200-operation sync soak test with
+  random offline periods, for each provider.
+- **SC-005**: Screens scroll at a steady 60 frames per second with 1,000 tasks in a list on a
+  mid-range phone.
+- **SC-006**: In a side-by-side review against Windows Phone 8.1 reference screenshots, a person
+  who used Windows Phone identifies the app as "Metro" on every core screen.
+
+## Assumptions
+
+- No local-only mode in v1: the person connects Google or Microsoft on first launch (a demo
+  account exists only in debug builds for development and testing).
+- Switching provider does not copy tasks from one service to the other. A one-time "copy my
+  lists" import is a candidate for a later feature.
+- Due dates are date-only in v1; reminders, recurrence, attachments and live tiles / home-screen
+  widgets are out of scope for v1.
+- The Segoe fonts are not licensed for redistribution, so an open-licensed look-alike is used.
+- Phone portrait layout only in v1.
+- Requires Android 8.0 or newer.
