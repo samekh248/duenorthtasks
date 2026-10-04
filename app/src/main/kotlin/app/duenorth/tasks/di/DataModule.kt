@@ -2,6 +2,7 @@ package app.duenorth.tasks.di
 
 import android.content.Context
 import app.duenorth.tasks.data.db.DueNorthDatabase
+import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskRepository
 import dagger.Module
 import dagger.Provides
@@ -25,4 +26,8 @@ object DataModule {
     @Provides
     @Singleton
     fun taskRepository(db: DueNorthDatabase, clock: Clock): TaskRepository = TaskRepository(db, clock)
+
+    @Provides
+    @Singleton
+    fun accountRepository(db: DueNorthDatabase): AccountRepository = AccountRepository(db)
 }

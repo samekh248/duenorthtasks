@@ -1,0 +1,85 @@
+package app.duenorth.tasks.nav
+
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import app.duenorth.tasks.DebugRoutes
+import app.duenorth.tasks.design.components.AppBarMenuItem
+import app.duenorth.tasks.design.motion.TURNSTILE_MS
+import app.duenorth.tasks.ui.detail.TaskDetailScreen
+import app.duenorth.tasks.ui.home.HomeActions
+import app.duenorth.tasks.ui.home.HomeScreen
+import app.duenorth.tasks.ui.list.ListScreen
+import app.duenorth.tasks.ui.search.SearchScreen
+
+object Routes {
+    const val HOME = "home"
+    const val LIST = "list/{id}"
+    const val TASK = "task/{id}"
+    const val SEARCH = "search"
+    const val GALLERY = "gallery"
+
+    fun list(id: String) = "list/$id"
+
+    fun task(id: String) = "task/$id"
+}
+
+/**
+ * Every page after the account gate (T026). Pages swing with the turnstile: the leaving page turns
+ * away first, then the new one swings in, so the NavHost keeps the old page on screen until then.
+ */
+@Composable
+fun DueNorthNavHost(onSwitchAccount: () -> Unit, nav: NavHostController = rememberNavController()) {
+    val keepOldPage = fadeOut(tween(1, delayMillis = TURNSTILE_MS))
+    NavHost(
+        navController = nav,
+        startDestination = Routes.HOME,
+        modifier = Modifier.fillMaxSize(),
+        enterTransition = { EnterTransition.None },
+        exitTransition = { keepOldPage },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { keepOldPage }
+    ) {
+        composable(Routes.HOME) {
+            val actions = HomeActions(
+                openTask = { nav.navigate(Routes.task(it)) },
+                openList = { nav.navigate(Routes.list(it)) },
+                search = { nav.navigate(Routes.SEARCH) },
+                switchAccount = onSwitchAccount,
+                menuItems = if (DebugRoutes.GALLERY_ENABLED) {
+                    listOf(AppBarMenuItem("component gallery") { nav.navigate(Routes.GALLERY) })
+                } else {
+                    emptyList()
+                }
+            )
+            Page(this) { HomeScreen(actions) }
+        }
+        composable(Routes.LIST) { entry ->
+            Page(this) {
+                ListScreen(onOpenTask = { nav.navigate(Routes.task(it)) }, onClosed = { nav.closeIfOn(entry) })
+            }
+        }
+        composable(Routes.TASK) { entry ->
+            Page(this) { TaskDetailScreen(onClosed = { nav.closeIfOn(entry) }, animatedScope = this) }
+        }
+        composable(Routes.SEARCH) {
+            Page(this) { SearchScreen(onOpenTask = { nav.navigate(Routes.task(it)) }) }
+        }
+        if (DebugRoutes.GALLERY_ENABLED) {
+            composable(Routes.GALLERY) { Page(this) { DebugRoutes.Gallery() } }
+        }
+    }
+}
+
+/** Closes [entry]'s page once, even if its content asks twice. */
+private fun NavHostController.closeIfOn(entry: NavBackStackEntry) {
+    if (currentBackStackEntry?.id == entry.id) popBackStack()
+}

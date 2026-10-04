@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * The app's only way to read or change tasks (constitution Principle IV).
@@ -68,15 +69,26 @@ class TaskRepository(
 
     fun steps(taskId: String): Flow<List<StepEntity>> = steps.observeForTask(taskId)
 
+    /** Tasks whose title or details contain [query], ignoring case; empty for a blank query. */
+    fun search(query: String, limit: Int = 200): Flow<List<TaskWithList>> {
+        val q = query.trim()
+        if (q.isEmpty()) return flowOf(emptyList())
+        val escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return tasks.observeSearch("%$escaped%", limit)
+    }
+
+    /** The default list, created as "Tasks" when the account has no lists yet. */
+    suspend fun defaultListIdOrCreate(): String = defaultListId() ?: createList(DEFAULT_LIST_TITLE, isDefault = true)
+
     suspend fun defaultListId(): String? = lists.defaultList()?.localId
 
     // Lists
 
-    suspend fun createList(title: String): String {
+    suspend fun createList(title: String, isDefault: Boolean = false): String {
         val clean = Validation.listTitle(title)
         val id = newId()
         write {
-            lists.insert(TaskListEntity(localId = id, title = clean, localUpdatedAt = now()))
+            lists.insert(TaskListEntity(localId = id, title = clean, isDefault = isDefault, localUpdatedAt = now()))
             outbox.enqueue(EntityType.LIST, id, OperationKind.CREATE, now())
         }
         return id
@@ -264,6 +276,7 @@ class TaskRepository(
 
     private companion object {
         const val CHUNK = 900
+        const val DEFAULT_LIST_TITLE = "Tasks"
     }
 }
 
