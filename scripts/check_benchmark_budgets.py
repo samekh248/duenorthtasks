@@ -47,7 +47,13 @@ def main(root: str) -> int:
             values = bench.get("metrics", {}).get(metric) or bench.get("sampledMetrics", {}).get(metric) or {}
             value = values.get(stat)
             if value is None:
-                failures.append(f"{name}: metric {metric} missing")
+                # Show what the run did report, so a missing metric can be diagnosed from the CI log.
+                reported = {
+                    key: stats.get(stat)
+                    for group in ("metrics", "sampledMetrics")
+                    for key, stats in bench.get(group, {}).items()
+                }
+                failures.append(f"{name}: metric {metric} missing (reported: {reported})")
                 continue
             limit = budget * factor
             checked += 1
