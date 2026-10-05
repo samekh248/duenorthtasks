@@ -51,6 +51,7 @@ import app.duenorth.tasks.design.components.MetroIcon
 import app.duenorth.tasks.design.components.MetroLink
 import app.duenorth.tasks.design.components.MetroLinkifiedText
 import app.duenorth.tasks.design.components.MetroPickerDialog
+import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.motion.continuumTarget
@@ -96,6 +97,11 @@ fun TaskDetailContent(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             MetroText("DUE NORTH · ${state.listTitle.uppercase()}", type.pageTitle, maxLines = 1)
+            if (state.loading) {
+                // Task-shaped placeholders until Room answers, never empty fields (FR-009).
+                MetroTaskPlaceholders(count = 2)
+                return@Column
+            }
             if (editing) {
                 EditForm(
                     title = state.title,
