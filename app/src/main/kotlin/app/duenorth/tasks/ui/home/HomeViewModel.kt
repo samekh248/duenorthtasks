@@ -12,6 +12,7 @@ import app.duenorth.tasks.ui.common.CompletionOverrides
 import app.duenorth.tasks.ui.common.HeldLists
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TaskRowUi
+import app.duenorth.tasks.ui.common.TickLinger
 import app.duenorth.tasks.ui.common.serviceName
 import app.duenorth.tasks.ui.common.toRow
 import app.duenorth.tasks.ui.common.todayFlow
@@ -61,6 +62,10 @@ class HomeViewModel @Inject constructor(
     clock: Clock
 ) : ViewModel() {
     private val overrides = CompletionOverrides()
+    private val linger = TickLinger(viewModelScope)
+
+    /** The sections as last shown, which [TickLinger] keeps a just-ticked row in. */
+    private var shown = HomeUiState()
     private val heldLists = HeldLists(holds)
 
     private val today = todayFlow(clock)
@@ -72,25 +77,44 @@ class HomeViewModel @Inject constructor(
         tasks.recentlyCompleted(),
         tasks.listSummaries(),
         combine(accounts.account, features.importance, ::Pair),
-        overrides.overrides
-    ) { (day, dueRows), doneRows, lists, (account, importance), pending ->
+        combine(overrides.overrides, linger.ticked, ::Pair)
+    ) { (day, dueRows), doneRows, lists, (account, importance), (pending, ticked) ->
         overrides.settle((dueRows + doneRows).associate { it.task.localId to it.task.completed })
         val (soon, later) = dueRows.partition { it.task.dueDate?.isAfter(day) == false }
         HomeUiState(
             loading = false,
             today = day,
-            dueToday = soon.map { it.toRow(day, pending[it.task.localId], importance) },
-            tomorrow = later.map { it.toRow(day, pending[it.task.localId], importance) },
+            dueToday = TickLinger.keep(
+                shown.dueToday,
+                soon.map {
+                    it.toRow(day, pending[it.task.localId], importance)
+                },
+                ticked
+            ),
+            tomorrow = TickLinger.keep(
+                shown.tomorrow,
+                later.map {
+                    it.toRow(day, pending[it.task.localId], importance)
+                },
+                ticked
+            ),
             lists = lists.map(ListSummary::toUi),
-            done = doneRows.map { it.toRow(day, pending[it.task.localId], importance) },
+            done = TickLinger.keep(
+                shown.done,
+                doneRows.map {
+                    it.toRow(day, pending[it.task.localId], importance)
+                },
+                ticked
+            ),
             serviceName = serviceName(account?.provider),
             importance = importance
-        )
+        ).also { shown = it }
     }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     fun setCompleted(id: String, completed: Boolean) {
+        linger.ticked(id, completed)
         overrides.set(id, completed)
         viewModelScope.launch {
             runCatching { tasks.setCompleted(id, completed) }.onFailure { overrides.clear(id) }

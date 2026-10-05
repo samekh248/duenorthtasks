@@ -37,13 +37,18 @@ class FakeGraphServer(
     private val pageSize: Int = 2,
     /** Whether delta honors `$expand=checklistItems`; when false the provider must fetch them. */
     private val expandOnDelta: Boolean = true,
-    withDefaultList: Boolean = false
+    withDefaultList: Boolean = false,
+    /** Delta keeps answering with the same next link and never finishes, as Graph sometimes does. */
+    private val loopDelta: Boolean = false
 ) : Dispatcher() {
     val server = MockWebServer()
     val baseUrl: HttpUrl get() = server.url("/v1.0/")
 
     /** Every request as "METHOD /path", in order, including requests inside a `$batch`. */
     val calls = mutableListOf<String>()
+
+    /** The Prefer header of every top-level request, in order. */
+    val prefers = mutableListOf<String?>()
 
     private val lock = Any()
     private val ids = AtomicLong(1)
@@ -96,6 +101,7 @@ class FakeGraphServer(
     fun shutdown() = server.close()
 
     override fun dispatch(request: RecordedRequest): MockResponse {
+        synchronized(lock) { prefers += request.headers["Prefer"] }
         failures.removeFirstOrNull()?.let { return it }
         if (request.headers["Authorization"] != "Bearer $TOKEN") {
             return error(401, "InvalidAuthenticationToken")
@@ -228,6 +234,25 @@ class FakeGraphServer(
 
     /** Delta tokens are the server version the client has seen; skip tokens add a page offset. */
     private fun delta(listId: String, query: Map<String, String?>): Reply {
+        if (loopDelta) {
+            val base = baseUrl.newBuilder().addPathSegments(
+                "me/todo/lists"
+            ).addPathSegment(listId).addPathSegments("tasks/delta")
+            return Reply(
+                200,
+                buildJsonObject {
+                    put("@odata.nextLink", base.addQueryParameter("\$skiptoken", "same").build().toString())
+                    put(
+                        "value",
+                        JsonArray(
+                            tasks.values.filter {
+                                it.listId == listId
+                            }.take(pageSize).map { it.json(false) }
+                        )
+                    )
+                }
+            )
+        }
         val (since, offset) = when {
             query["\$skiptoken"] != null -> query.getValue("\$skiptoken")!!.split(':').let {
                 it[0].toLong() to
