@@ -37,6 +37,8 @@ android {
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${secret("google.webClientId")}\"")
         buildConfigField("String", "MSAL_CLIENT_ID", "\"${secret("msal.clientId")}\"")
         buildConfigField("String", "MSAL_SIGNATURE_HASH", "\"${secret("msal.signatureHash")}\"")
+        // Path of the MSAL sign-in redirect activity declared by :provider:microsoft.
+        manifestPlaceholders["msalSignatureHash"] = secret("msal.signatureHash")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
