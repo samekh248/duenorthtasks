@@ -19,6 +19,8 @@ import app.duenorth.tasks.ui.home.HomeActions
 import app.duenorth.tasks.ui.home.HomeScreen
 import app.duenorth.tasks.ui.list.ListScreen
 import app.duenorth.tasks.ui.search.SearchScreen
+import app.duenorth.tasks.ui.settings.SettingsScreen
+import app.duenorth.tasks.ui.shade.ListShadeScreen
 
 object Routes {
     const val HOME = "home"
@@ -26,8 +28,12 @@ object Routes {
     const val TASK = "task/{id}"
     const val SEARCH = "search"
     const val GALLERY = "gallery"
+    const val SETTINGS = "settings"
+    const val LIST_SHADE = "list/{id}/shade"
 
     fun list(id: String) = "list/$id"
+
+    fun listShade(id: String) = "list/$id/shade"
 
     fun task(id: String) = "task/$id"
 }
@@ -54,6 +60,8 @@ fun DueNorthNavHost(onSwitchAccount: () -> Unit, nav: NavHostController = rememb
                 openList = { nav.navigate(Routes.list(it)) },
                 search = { nav.navigate(Routes.SEARCH) },
                 switchAccount = onSwitchAccount,
+                openSettings = { nav.navigate(Routes.SETTINGS) },
+                openListShade = { nav.navigate(Routes.listShade(it)) },
                 menuItems = if (DebugRoutes.GALLERY_ENABLED) {
                     listOf(AppBarMenuItem("component gallery") { nav.navigate(Routes.GALLERY) })
                 } else {
@@ -64,8 +72,18 @@ fun DueNorthNavHost(onSwitchAccount: () -> Unit, nav: NavHostController = rememb
         }
         composable(Routes.LIST) { entry ->
             Page(this) {
-                ListScreen(onOpenTask = { nav.navigate(Routes.task(it)) }, onClosed = { nav.closeIfOn(entry) })
+                ListScreen(
+                    onOpenTask = { nav.navigate(Routes.task(it)) },
+                    onClosed = { nav.closeIfOn(entry) },
+                    onShade = { id -> nav.navigate(Routes.listShade(id)) }
+                )
             }
+        }
+        composable(Routes.LIST_SHADE) {
+            Page(this) { ListShadeScreen() }
+        }
+        composable(Routes.SETTINGS) {
+            Page(this) { SettingsScreen() }
         }
         composable(Routes.TASK) { entry ->
             Page(this) { TaskDetailScreen(onClosed = { nav.closeIfOn(entry) }, animatedScope = this) }

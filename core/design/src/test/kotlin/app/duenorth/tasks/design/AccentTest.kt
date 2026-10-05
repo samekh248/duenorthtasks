@@ -48,6 +48,26 @@ class AccentTest {
     }
 
     @Test
+    fun aListsShadeFollowsTheAppAccent() {
+        // Spec US5 scenario 3: a light-magenta list becomes light coral when the accent changes.
+        for (theme in listOf(MetroColors.Light, MetroColors.Dark)) {
+            val coral = AccentShades.colors(Accent.Coral, -2, theme)
+            assertEquals(AccentShades.mix(Accent.Coral.fill(theme.isDark), -2), coral.fill)
+            assertTrue(coral.fill != AccentShades.colors(Accent.Magenta, -2, theme).fill)
+        }
+    }
+
+    @Test
+    fun stepZeroMatchesTheAppAccentInBothThemes() {
+        for (dark in listOf(false, true)) {
+            val theme = if (dark) MetroColors.Dark else MetroColors.Light
+            for (accent in Accent.entries) {
+                assertEquals(accent.colors(dark), AccentShades.colors(accent, 0, theme))
+            }
+        }
+    }
+
+    @Test
     fun movingToAShorterMonthClampsTheDay() {
         assertEquals(LocalDate.of(2027, 2, 28), LocalDate.of(2027, 1, 31).moveTo(month = 2))
         assertEquals(LocalDate.of(2028, 2, 29), LocalDate.of(2027, 2, 28).moveTo(year = 2028).plusDays(1))

@@ -48,6 +48,7 @@ import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.motion.rememberContinuumState
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.design.theme.listAccent
 import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
 import kotlinx.coroutines.launch
@@ -62,6 +63,8 @@ class HomeActions(
     val openList: (String) -> Unit,
     val search: () -> Unit,
     val switchAccount: () -> Unit,
+    val openSettings: () -> Unit = {},
+    val openListShade: (String) -> Unit = {},
     val menuItems: List<AppBarMenuItem> = emptyList()
 )
 
@@ -114,6 +117,7 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
                             onOpen = actions.openList,
                             onNew = { newList = true },
                             onRename = { renaming = it },
+                            onShade = { actions.openListShade(it.id) },
                             onDelete = { deleting = it }
                         )
                     },
@@ -124,7 +128,10 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
             )
         }
         val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
-        val menu = listOf(AppBarMenuItem("switch account") { leaving = true }) + actions.menuItems
+        val menu = listOf(
+            AppBarMenuItem("settings", actions.openSettings),
+            AppBarMenuItem("switch account") { leaving = true }
+        ) + actions.menuItems
         when (pager.currentPage) {
             TODAY -> MetroAppBar(
                 buttons = listOf(
@@ -276,6 +283,7 @@ private fun ListsSection(
     onOpen: (String) -> Unit,
     onNew: () -> Unit,
     onRename: (ListRowUi) -> Unit,
+    onShade: (ListRowUi) -> Unit,
     onDelete: (ListRowUi) -> Unit
 ) {
     LazyColumn(
@@ -288,7 +296,13 @@ private fun ListsSection(
             return@LazyColumn
         }
         items(state.lists, key = { it.id }, contentType = { "list" }) { list ->
-            ListRow(list, onOpen = { onOpen(list.id) }, onRename = { onRename(list) }, onDelete = { onDelete(list) })
+            ListRow(
+                list,
+                onOpen = { onOpen(list.id) },
+                onRename = { onRename(list) },
+                onShade = { onShade(list) },
+                onDelete = { onDelete(list) }
+            )
         }
         item(key = "new", contentType = "new") {
             Row(
@@ -308,7 +322,13 @@ private fun ListsSection(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ListRow(list: ListRowUi, onOpen: () -> Unit, onRename: () -> Unit, onDelete: () -> Unit) {
+private fun ListRow(
+    list: ListRowUi,
+    onOpen: () -> Unit,
+    onRename: () -> Unit,
+    onShade: () -> Unit,
+    onDelete: () -> Unit
+) {
     var menu by remember { mutableStateOf(false) }
     Box {
         Row(
@@ -323,7 +343,8 @@ private fun ListRow(list: ListRowUi, onOpen: () -> Unit, onRename: () -> Unit, o
                 ),
             horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
         ) {
-            MetroListTile(count = list.openCount)
+            val shade = listAccent(list.id)
+            MetroListTile(count = list.openCount, fill = shade.fill, onFill = shade.onFill)
             Column(Modifier.weight(1f)) {
                 MetroText(list.title, MetroTheme.typography.listName, maxLines = 1)
                 MetroText(
@@ -337,7 +358,11 @@ private fun ListRow(list: ListRowUi, onOpen: () -> Unit, onRename: () -> Unit, o
         MetroContextMenu(
             expanded = menu,
             onDismiss = { menu = false },
-            items = listOf(ContextMenuItem("rename", onRename), ContextMenuItem("delete", onDelete))
+            items = listOf(
+                ContextMenuItem("rename", onRename),
+                ContextMenuItem("list shade", onShade),
+                ContextMenuItem("delete", onDelete)
+            )
         )
     }
 }
