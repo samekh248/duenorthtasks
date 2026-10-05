@@ -52,5 +52,6 @@ dependencies {
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
     testImplementation(libs.roborazzi.junit.rule)
-    debugImplementation(libs.compose.ui.test.manifest)
+    // Registers the empty activity createComposeRule() launches; test classpath only, every variant.
+    testImplementation(libs.compose.ui.test.manifest)
 }
