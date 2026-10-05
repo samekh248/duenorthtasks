@@ -59,7 +59,7 @@ flowchart LR
 - [ ] T007 Bundle Selawik fonts in `core/design/src/main/res/font/` and define type ramp `MetroTypography.kt` (research R2). Type ramp done; fonts still to add (falls back to the platform sans-serif until then)
 - [X] T008 [P] `MetroColors.kt`: light and dark palettes (follow the system setting by default), 22 accents (WP8.1 set plus light orange and coral) with a light and a dark value each, magenta default (research R5); `MetroTheme` composable with `LocalMetroColors`, `LocalAccent`
 - [X] T009 [P] Motion: `motion/Turnstile.kt`, `motion/Tilt.kt` (Modifier.metroTilt), `motion/SlideInStagger.kt`, `motion/Continuum.kt`; all honor animator duration scale
-- [X] T010 `components/MetroPanorama.kt` (wide snapping scroller, 310dp sections that peek, title layer with ~1/3 speed parallax) and `components/MetroPivot.kt` for settings
+- [X] T010 `components/MetroPanorama.kt` (wide snapping scroller, screen-wide sections with a 40dp peek of the next, title layer with ~1/3 speed parallax) and `components/MetroPivot.kt` for settings
 - [X] T011 [P] `components/MetroAppBar.kt` (round outlined icon buttons, `•••` expand with labels + menu)
 - [X] T012 [P] `components/MetroCheckBox.kt`, `MetroToggle.kt`, `MetroTextField.kt`, `MetroListItem.kt`
 - [X] T013 [P] `components/MetroProgressDots.kt`, `MetroDialog.kt`, `MetroContextMenu.kt`
