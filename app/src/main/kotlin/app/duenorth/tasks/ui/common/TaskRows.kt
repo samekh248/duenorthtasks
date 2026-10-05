@@ -27,6 +27,7 @@ import app.duenorth.tasks.design.motion.ContinuumState
 import app.duenorth.tasks.design.motion.LocalAnimationsEnabled
 import app.duenorth.tasks.design.motion.continuumSource
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.design.theme.listAccent
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -118,7 +119,7 @@ fun TaskRow(
             title = row.title,
             details = row.details,
             caption = row.caption,
-            captionColor = if (row.overdue) MetroTheme.colors.overdue else MetroTheme.accent.text,
+            captionColor = if (row.overdue) MetroTheme.colors.overdue else listAccent(row.listId).text,
             strikethrough = row.completed,
             leading = { MetroCheckBox(checked = row.completed, onCheckedChange = onToggle) },
             trailing = if (row.important) ({ ImportantStar() }) else null,

@@ -20,9 +20,13 @@ import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.demo.DemoSeeder
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.account.AccountScreen
+import app.duenorth.tasks.ui.account.SyncAccountActions
+import app.duenorth.tasks.ui.account.SyncAccountContent
+import app.duenorth.tasks.ui.account.SyncAccountUiState
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.detail.TaskDetailContent
 import app.duenorth.tasks.ui.detail.TaskDetailViewModel
@@ -117,13 +121,42 @@ class ScreenScreenshotTest {
 
     @Test
     fun account() {
-        show(dark = false) { AccountScreen(demoAvailable = true, connecting = false, onDemo = {}) }
+        show(dark = false) {
+            AccountScreen(demoAvailable = true, connecting = null, error = null, isConfigured = { true }, onPick = {})
+        }
         snap("account", dark = false)
+    }
+
+    @Test
+    fun syncAccountLight() = syncAccount(dark = false)
+
+    @Test
+    fun syncAccountDark() = syncAccount(dark = true)
+
+    private fun syncAccount(dark: Boolean) {
+        val state = SyncAccountUiState(
+            loading = false,
+            provider = ProviderKind.GOOGLE,
+            signedInAs = "you@example.com",
+            pendingChanges = 3
+        )
+        show(dark) {
+            SyncAccountContent(
+                state = state,
+                demoAvailable = true,
+                isConfigured = { it != ProviderKind.MICROSOFT },
+                onInterval = {},
+                onWifiOnly = {},
+                onSyncNow = {},
+                actions = SyncAccountActions(switchTo = {}, signOut = {})
+            )
+        }
+        snap("sync_account", dark)
     }
 
     private fun home(dark: Boolean, name: String? = "home_today") {
         val viewModel = HomeViewModel(tasks, accounts, features, ListHolds(), clock)
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, switchAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
         show(dark) {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, actions)

@@ -72,7 +72,7 @@ class HomeFlowTest {
         val accounts = AccountRepository(db)
         runBlocking { accounts.connect(ProviderKind.FAKE, "demo", null) }
         viewModel = HomeViewModel(tasks, accounts, ServiceFeatures(accounts) { FakeProvider() }, holds, clock)
-        val actions = HomeActions(openTask = { opened += it }, openList = {}, search = {}, switchAccount = {})
+        val actions = HomeActions(openTask = { opened += it }, openList = {}, search = {}, openSyncAccount = {})
         compose.setContent {
             val state by viewModel.state.collectAsState()
             MetroTheme(darkTheme = false) { HomeContent(state, viewModel, actions) }

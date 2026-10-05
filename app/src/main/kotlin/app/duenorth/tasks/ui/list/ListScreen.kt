@@ -46,6 +46,7 @@ import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.motion.rememberContinuumState
+import app.duenorth.tasks.design.theme.ListAccent
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.ui.common.PageHeader
@@ -60,14 +61,35 @@ import kotlinx.coroutines.launch
 
 /** One list (contracts/ui-screens.md "List page"): header, open tasks, collapsible "completed". */
 @Composable
-fun ListScreen(onOpenTask: (String) -> Unit, onClosed: () -> Unit, viewModel: ListViewModel = hiltViewModel()) {
+fun ListScreen(
+    onOpenTask: (String) -> Unit,
+    onClosed: () -> Unit,
+    onShade: (String) -> Unit = {},
+    viewModel: ListViewModel = hiltViewModel()
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
-    ListContent(state, viewModel, onOpenTask)
+    ListContent(state, viewModel, onOpenTask, onShade)
+}
+
+/** The whole page, check boxes and captions included, uses the list's shade of the accent. */
+@Composable
+fun ListContent(
+    state: ListUiState,
+    viewModel: ListViewModel,
+    onOpenTask: (String) -> Unit,
+    onShade: (String) -> Unit = {}
+) {
+    ListAccent(viewModel.listId) { ListPage(state, viewModel, onOpenTask, onShade) }
 }
 
 @Composable
-fun ListContent(state: ListUiState, viewModel: ListViewModel, onOpenTask: (String) -> Unit) {
+private fun ListPage(
+    state: ListUiState,
+    viewModel: ListViewModel,
+    onOpenTask: (String) -> Unit,
+    onShade: (String) -> Unit
+) {
     val scope = rememberCoroutineScope()
     val continuum = rememberContinuumState()
     val addFocus = remember { FocusRequester() }
@@ -170,6 +192,7 @@ fun ListContent(state: ListUiState, viewModel: ListViewModel, onOpenTask: (Strin
             ),
             menuItems = listOf(
                 AppBarMenuItem("rename list") { renaming = true },
+                AppBarMenuItem("list shade") { onShade(viewModel.listId) },
                 AppBarMenuItem("delete list") { deleting = true }
             )
         )

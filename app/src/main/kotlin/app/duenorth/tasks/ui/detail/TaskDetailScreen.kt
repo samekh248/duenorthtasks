@@ -58,6 +58,7 @@ import app.duenorth.tasks.design.components.MetroToggle
 import app.duenorth.tasks.design.motion.continuumTarget
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.design.theme.listAccent
 import app.duenorth.tasks.ui.common.Chip
 import app.duenorth.tasks.ui.common.DueText
 
@@ -124,7 +125,11 @@ fun TaskDetailContent(
                         .semantics { heading() }
                 )
                 if (state.due != null) {
-                    MetroText(DueText.dueLine(state.due, state.today), type.subheader, color = MetroTheme.accent.text)
+                    MetroText(
+                        DueText.dueLine(state.due, state.today),
+                        type.subheader,
+                        color = listAccent(state.listId).text
+                    )
                 }
                 if (!state.details.isNullOrBlank()) {
                     Label("details")
