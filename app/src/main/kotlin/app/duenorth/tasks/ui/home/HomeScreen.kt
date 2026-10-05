@@ -40,6 +40,7 @@ import app.duenorth.tasks.design.components.MetroInputDialog
 import app.duenorth.tasks.design.components.MetroListTile
 import app.duenorth.tasks.design.components.MetroPanorama
 import app.duenorth.tasks.design.components.MetroPickerDialog
+import app.duenorth.tasks.design.components.MetroProgressDots
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.PanoramaSection
@@ -62,21 +63,23 @@ class HomeActions(
     val openTask: (String) -> Unit,
     val openList: (String) -> Unit,
     val search: () -> Unit,
-    val switchAccount: () -> Unit,
+    val openSyncAccount: () -> Unit,
+    /** Syncs now; null hides the sync button (no sync engine, as in tests). */
+    val sync: (() -> Unit)? = null,
     val openSettings: () -> Unit = {},
     val openListShade: (String) -> Unit = {},
     val menuItems: List<AppBarMenuItem> = emptyList()
 )
 
 @Composable
-fun HomeScreen(actions: HomeActions, viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(actions: HomeActions, syncing: Boolean, viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    HomeContent(state, viewModel, actions)
+    HomeContent(state, viewModel, actions, syncing)
 }
 
 /** The Light Panorama home (FR-002): "tasks" (with "due north" under it) over today, lists and done. */
 @Composable
-fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActions) {
+fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActions, syncing: Boolean = false) {
     val pager = rememberPagerState { 3 }
     val scope = rememberCoroutineScope()
     val addFocus = remember { FocusRequester() }
@@ -85,7 +88,6 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
     var renaming by remember { mutableStateOf<ListRowUi?>(null) }
     var deleting by remember { mutableStateOf<ListRowUi?>(null) }
     var moving by remember { mutableStateOf<TaskRowUi?>(null) }
-    var leaving by rememberSaveable { mutableStateOf(false) }
 
     val openTask: (String) -> Unit = { id ->
         scope.launch {
@@ -126,28 +128,20 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
                     }
                 )
             )
+            if (syncing) MetroProgressDots()
         }
         val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
+        val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", onClick = it) }
         val menu = listOf(
             AppBarMenuItem("settings", actions.openSettings),
-            AppBarMenuItem("switch account") { leaving = true }
+            AppBarMenuItem("sync account", actions.openSyncAccount)
         ) + actions.menuItems
-        when (pager.currentPage) {
-            TODAY -> MetroAppBar(
-                buttons = listOf(
-                    AppBarButton(MetroIcon.Add, "new task") { addFocus.requestFocus() },
-                    search
-                ),
-                menuItems = menu
-            )
-
-            LISTS -> MetroAppBar(
-                buttons = listOf(AppBarButton(MetroIcon.Add, "new list") { newList = true }, search),
-                menuItems = menu
-            )
-
-            else -> MetroAppBar(buttons = listOf(search), menuItems = menu)
+        val first = when (pager.currentPage) {
+            TODAY -> AppBarButton(MetroIcon.Add, "new task") { addFocus.requestFocus() }
+            LISTS -> AppBarButton(MetroIcon.Add, "new list") { newList = true }
+            else -> null
         }
+        MetroAppBar(buttons = listOfNotNull(first, sync, search), menuItems = menu)
     }
 
     if (newList) {
@@ -198,19 +192,6 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
                 moving = null
             },
             onDismiss = { moving = null }
-        )
-    }
-    if (leaving) {
-        MetroDialog(
-            title = "switch account?",
-            message = "This signs out of ${state.serviceName} and clears its tasks from this phone. " +
-                "Tasks already synced stay in that account.",
-            confirmLabel = "switch",
-            onConfirm = {
-                leaving = false
-                actions.switchAccount()
-            },
-            onDismiss = { leaving = false }
         )
     }
 }

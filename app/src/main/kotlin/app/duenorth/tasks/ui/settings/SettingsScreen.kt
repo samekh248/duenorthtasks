@@ -1,9 +1,11 @@
 package app.duenorth.tasks.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -13,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -23,6 +26,7 @@ import app.duenorth.tasks.design.components.MetroAccentGrid
 import app.duenorth.tasks.design.components.MetroPivot
 import app.duenorth.tasks.design.components.MetroRadio
 import app.duenorth.tasks.design.components.MetroText
+import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.Accent
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
@@ -31,20 +35,31 @@ import app.duenorth.tasks.settings.ThemeSettings
 
 /** The settings pivot (contracts/ui-screens.md "Settings"). */
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreen(onOpenSyncAccount: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val theme by viewModel.theme.collectAsStateWithLifecycle()
-    SettingsContent(theme ?: ThemeSettings(), onMode = viewModel::setMode, onAccent = viewModel::setAccent)
+    SettingsContent(
+        theme ?: ThemeSettings(),
+        onMode = viewModel::setMode,
+        onAccent = viewModel::setAccent,
+        onOpenSyncAccount = onOpenSyncAccount
+    )
 }
 
 @Composable
-fun SettingsContent(theme: ThemeSettings, onMode: (ThemeMode) -> Unit, onAccent: (Accent) -> Unit) {
+fun SettingsContent(
+    theme: ThemeSettings,
+    onMode: (ThemeMode) -> Unit,
+    onAccent: (Accent) -> Unit,
+    onOpenSyncAccount: () -> Unit = {}
+) {
     MetroPivot(
-        headers = listOf("theme", "about"),
+        headers = listOf("theme", "sync account", "about"),
         pageTitle = "settings",
         modifier = Modifier.statusBarsPadding()
     ) { index ->
         when (index) {
             0 -> ThemePage(theme, onMode, onAccent)
+            1 -> SyncAccountLink(onOpenSyncAccount)
             else -> AboutPage()
         }
     }
@@ -92,6 +107,31 @@ private fun ThemePage(theme: ThemeSettings, onMode: (ThemeMode) -> Unit, onAccen
             Modifier.padding(top = MetroDimens.Gutter, bottom = MetroDimens.Grid),
             color = MetroTheme.colors.secondary
         )
+    }
+}
+
+/** The sync account page has its own route; this pivot item leads to it. */
+@Composable
+private fun SyncAccountLink(onOpen: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MetroTheme.colors.background)
+            .padding(top = MetroDimens.Grid)
+    ) {
+        Column(
+            Modifier
+                .metroTilt()
+                .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onOpen)
+                .heightIn(min = MetroDimens.TouchTarget)
+        ) {
+            MetroText("sync account", MetroTheme.typography.listName, color = MetroTheme.accent.text)
+            MetroText(
+                "choose Google Tasks or Microsoft To Do, sign in or out, and how often to sync",
+                MetroTheme.typography.caption,
+                color = MetroTheme.colors.secondary
+            )
+        }
     }
 }
 

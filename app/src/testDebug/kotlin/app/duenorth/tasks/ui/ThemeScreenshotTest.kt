@@ -128,7 +128,7 @@ class ThemeScreenshotTest {
     /** The lists section with Errands two shades lighter and Work two darker. */
     private fun shadedLists(accent: Accent, dark: Boolean) {
         val viewModel = HomeViewModel(tasks, accounts, clock)
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, switchAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
         show(dark, accent, demoShades()) {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, actions)
