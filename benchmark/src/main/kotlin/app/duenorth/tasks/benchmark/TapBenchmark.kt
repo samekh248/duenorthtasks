@@ -7,9 +7,7 @@ import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.uiautomator.By
-import androidx.test.uiautomator.StaleObjectException
-import androidx.test.uiautomator.Until
+import androidx.test.uiautomator.UiSelector
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,21 +50,17 @@ class TapBenchmark {
     }
 
     /**
-     * Taps the first unticked box. A sync or the row fade can rebuild the row between finding the
-     * box and tapping it, so a stale box is looked up again rather than failing the run.
+     * Taps the first unticked box. Looked up fresh at tap time (UiObject, not UiObject2): a
+     * UiObject2 found a moment earlier went stale on every CI run before it could be tapped.
      */
     private fun MacrobenchmarkScope.tickOpenTask() {
         repeat(ATTEMPTS) {
-            val box = device.wait(Until.findObject(By.checkable(true).checked(false)), TIMEOUT_MS)
-                ?: error("No open task to tick")
-            try {
-                box.click()
-                return
-            } catch (_: StaleObjectException) {
-                device.waitForIdle()
-            }
+            val box = device.findObject(UiSelector().checkable(true).checked(false))
+            check(box.waitForExists(TIMEOUT_MS)) { "No open task to tick" }
+            if (box.click()) return
+            device.waitForIdle()
         }
-        error("The check box kept going stale before it could be tapped")
+        error("Couldn't tap an open task's check box")
     }
 
     private companion object {
