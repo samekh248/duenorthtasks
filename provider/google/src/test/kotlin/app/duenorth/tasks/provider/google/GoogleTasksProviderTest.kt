@@ -84,7 +84,10 @@ class GoogleTasksProviderTest {
 
     @Test
     fun aSubtaskDeletedOnTheWebDropsTheStep() = runTest {
-        val task = provider.createTask("default", TaskDraft("Pack", steps = listOf(StepDraft("Socks"), StepDraft("Hat"))))
+        val task = provider.createTask(
+            "default",
+            TaskDraft("Pack", steps = listOf(StepDraft("Socks"), StepDraft("Hat")))
+        )
         val cursor = provider.getTaskChanges("default", null).nextCursor
 
         server.deleteOnWeb(task.steps.first().id)
@@ -132,7 +135,10 @@ class GoogleTasksProviderTest {
 
     @Test
     fun patchSendsOnlyChangedFieldsAndNullToClear() = runTest {
-        val task = provider.createTask("default", TaskDraft("Buy milk", notes = "Oat", dueDate = LocalDate.of(2026, 10, 5)))
+        val task = provider.createTask(
+            "default",
+            TaskDraft("Buy milk", notes = "Oat", dueDate = LocalDate.of(2026, 10, 5))
+        )
 
         provider.updateTask("default", task.id, TaskPatch(notes = Patch.Clear))
 
@@ -268,7 +274,8 @@ class GoogleTasksProviderTest {
     inner class RecordedResponses {
         private val raw = MockWebServer().apply { start() }
         private val bearer = BearerToken()
-        private val recorded = GoogleTasksProvider(GoogleTasksClient.api(raw.url("/tasks/v1/").toString(), bearer), auth, bearer)
+        private val recorded =
+            GoogleTasksProvider(GoogleTasksClient.api(raw.url("/tasks/v1/").toString(), bearer), auth, bearer)
 
         @AfterEach
         fun closeRaw() = raw.close()

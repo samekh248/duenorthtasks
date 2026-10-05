@@ -90,6 +90,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.work.runtime)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.profileinstaller)

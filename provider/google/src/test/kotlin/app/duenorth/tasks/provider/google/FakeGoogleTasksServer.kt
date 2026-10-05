@@ -310,13 +310,21 @@ class FakeGoogleTasksServer(
         put("webViewLink", "https://tasks.google.com/task/$id")
     }
 
-    private fun ok(body: JsonElement) =
-        MockResponse(200, Headers.headersOf("Content-Type", "application/json; charset=UTF-8", "Date", httpDate()), body.toString())
+    private fun ok(body: JsonElement) = MockResponse(
+        200,
+        Headers.headersOf("Content-Type", "application/json; charset=UTF-8", "Date", httpDate()),
+        body.toString()
+    )
 
-    private fun error(code: Int, message: String) =
-        MockResponse(code, Headers.headersOf("Content-Type", "application/json; charset=UTF-8"), errorBody(code, message))
+    private fun error(code: Int, message: String) = MockResponse(
+        code,
+        Headers.headersOf("Content-Type", "application/json; charset=UTF-8"),
+        errorBody(code, message)
+    )
 
-    private fun JsonObject.string(key: String): String? = this[key]?.takeUnless { it is JsonNull }?.jsonPrimitive?.content
+    private fun JsonObject.string(key: String): String? = this[key]?.takeUnless {
+        it is JsonNull
+    }?.jsonPrimitive?.content
 
     /** Google drops the time from `due` and returns midnight UTC. */
     private fun normalizeDue(value: String) = value.substring(0, 10) + "T00:00:00.000Z"

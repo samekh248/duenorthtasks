@@ -119,20 +119,20 @@ flowchart LR
 
 ### Sync engine (`core:sync`)
 
-- [ ] T038 [US2] `SyncEngine`: push outbox in `seq` order, then pull per list with cursor; map `ProviderError` to actions (contract table)
-- [ ] T039 [US2] Conflict resolver (remote wins unless newer pending local edit; loser to `SyncLogEntity`)
-- [ ] T040 [US2] `SyncWorker` + `SyncScheduler` (unique work, network constraint, debounce 5s after edits, on foreground, periodic at the user's "sync every" interval, default 15 min, Wi-Fi only if set)
-- [ ] T041 [P] [US2] Sync engine tests against `FakeProvider`: offline queue, conflict both directions, cursor expired, auth required, recovered-list edge case
-- [ ] T042 [P] [US2] Soak test `SyncSoakTest.kt`: 200 random ops with random failures, zero duplicates/losses (SC-004)
-- [ ] T043 [US2] Smooth sync: apply remote changes in ≤50-row transactions, hold updates to a list while the user is touching or flinging it, fade in changed rows, first sync pulls today's tasks first and shows lists as they arrive (FR-008, FR-009a)
+- [X] T038 [US2] `SyncEngine`: pull per list with cursor, then push outbox in `seq` order (pull first so an older offline edit cannot overwrite a newer web one, FR-023); map `ProviderError` to actions (contract table)
+- [X] T039 [US2] Conflict resolver (remote wins unless newer pending local edit; loser to `SyncLogEntity`)
+- [X] T040 [US2] `SyncWorker` + `SyncScheduler` (unique work, network constraint, debounce 5s after edits, on foreground, periodic at the user's "sync every" interval, default 15 min, Wi-Fi only if set)
+- [X] T041 [P] [US2] Sync engine tests against `FakeProvider`: offline queue, conflict both directions, cursor expired, auth required, recovered-list edge case
+- [X] T042 [P] [US2] Soak test `SyncSoakTest.kt`: 200 random ops with random failures, zero duplicates/losses (SC-004)
+- [ ] T043 [US2] Smooth sync: apply remote changes in ≤50-row transactions, hold updates to a list while the user is touching or flinging it, fade in changed rows, first sync pulls today's tasks first and shows lists as they arrive (FR-008, FR-009a). Engine side done in M3 (`Puller.BATCH`, `ListHolds`, due-soonest first, one list at a time); row fade-in is the UI's part
 - [ ] T044 [P] [US2] Macrobenchmark "scroll while syncing 500 changes" against `FakeProvider` with latency (SC-005)
 
 ### Google provider (`provider:google`)
 
-- [ ] T045 [P] [US2] Retrofit `GoogleTasksApi` + DTOs (research R6)
-- [ ] T046 [US2] `GoogleAuth`: Credential Manager sign-in + `AuthorizationClient` for the `tasks` scope, silent token refresh
-- [ ] T047 [US2] `GoogleTasksProvider` mapping per data-model.md (subtasks <-> steps, `updatedMin` cursor, `move` for order)
-- [ ] T048 [P] [US2] MockWebServer fixtures and `GoogleTasksProviderContractTest`
+- [X] T045 [P] [US2] Retrofit `GoogleTasksApi` + DTOs (research R6)
+- [X] T046 [US2] `GoogleAuth`: Credential Manager sign-in + `AuthorizationClient` for the `tasks` scope, silent token refresh
+- [X] T047 [US2] `GoogleTasksProvider` mapping per data-model.md (subtasks <-> steps, `updatedMin` cursor, `move` for order)
+- [X] T048 [P] [US2] MockWebServer fixtures and `GoogleTasksProviderContractTest`
 - [ ] T049 [US2] Sync account screen (radio choice, "signed in as", sync interval, Wi-Fi only toggle) + first-sync progress
 
 **Checkpoint**: Daily-drivable with a Google account.

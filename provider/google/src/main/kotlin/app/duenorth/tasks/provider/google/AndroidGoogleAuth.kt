@@ -45,10 +45,7 @@ interface GoogleSignInHost : SignInHost {
  * Tokens stay in Google Play services; only the signed-in email is kept here, in private
  * preferences, so background syncs can ask for a token for the right account without UI.
  */
-class AndroidGoogleAuth(
-    private val context: Context,
-    private val webClientId: String
-) : GoogleAuth {
+class AndroidGoogleAuth(private val context: Context, private val webClientId: String) : GoogleAuth {
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val authorization = Identity.getAuthorizationClient(context)
     private val mutex = Mutex()

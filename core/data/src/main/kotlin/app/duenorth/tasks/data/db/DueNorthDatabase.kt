@@ -32,6 +32,8 @@ abstract class DueNorthDatabase : RoomDatabase() {
 
     abstract fun syncLogDao(): SyncLogDao
 
+    abstract fun syncDao(): SyncDao
+
     companion object {
         const val NAME = "duenorth.db"
 

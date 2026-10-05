@@ -1,0 +1,405 @@
+package app.duenorth.tasks.sync
+
+import app.duenorth.tasks.data.db.EntityType
+import app.duenorth.tasks.data.db.Fields
+import app.duenorth.tasks.data.db.OperationKind
+import app.duenorth.tasks.data.db.StepEntity
+import app.duenorth.tasks.data.db.SyncLogType
+import app.duenorth.tasks.data.db.TaskEntity
+import app.duenorth.tasks.data.db.TaskListEntity
+import app.duenorth.tasks.provider.api.ProviderError
+import app.duenorth.tasks.provider.api.RemoteList
+import app.duenorth.tasks.provider.api.RemoteTask
+import app.duenorth.tasks.provider.api.TaskProvider
+import app.duenorth.tasks.sync.ConflictResolver.Decision
+import app.duenorth.tasks.sync.SyncStore.Companion.toJson
+
+/**
+ * Pulls remote changes into Room (research R9, plan "Keeping it fast").
+ *
+ * Lists are reconciled first, then each list's tasks since its cursor. Changes are applied in
+ * transactions of at most [BATCH] rows, tasks due soonest first, and each batch waits while the
+ * user is touching that list ([ListHolds]), so the screen never jumps under a finger (FR-008).
+ */
+internal class Puller(
+    private val store: SyncStore,
+    private val provider: TaskProvider,
+    private val holds: ListHolds,
+    private val stillConnected: suspend () -> Boolean
+) {
+    private val canStoreImportance = provider.capabilities.importance
+
+    suspend fun pullAll() {
+        reconcileLists(provider.getLists())
+        val lists = store.sync.allLists()
+            .filter { !it.deletedLocally && it.remoteId != null }
+            .sortedWith(compareByDescending<TaskListEntity> { it.isDefault }.thenBy { it.title.lowercase() })
+        for (list in lists) {
+            if (!stillConnected()) return
+            pullList(list)
+        }
+    }
+
+    // Lists
+
+    private suspend fun reconcileLists(remote: List<RemoteList>) = store.transaction {
+        val local = store.sync.allLists()
+        val byRemoteId = local.filter { it.remoteId != null }.associateBy { it.remoteId }
+        for (rl in remote) {
+            val existing = byRemoteId[rl.id]
+            if (existing == null) {
+                val pendingCreate = local.firstOrNull { candidate ->
+                    candidate.remoteId == null &&
+                        (store.journal.sentTitle(candidate.localId) ?: candidate.title) == rl.title &&
+                        store.opsFor(EntityType.LIST, candidate.localId).any { it.kind == OperationKind.CREATE }
+                }
+                if (pendingCreate != null) {
+                    // A create whose answer was lost: this is ours (FR-022).
+                    store.lists.update(
+                        pendingCreate.copy(remoteId = rl.id, etag = rl.etag, remoteUpdatedAt = rl.updatedAt)
+                    )
+                    store.dropOps(EntityType.LIST, pendingCreate.localId)
+                    if (pendingCreate.title !=
+                        rl.title
+                    ) {
+                        store.enqueue(
+                            EntityType.LIST,
+                            pendingCreate.localId,
+                            OperationKind.UPDATE,
+                            setOf(Fields.TITLE)
+                        )
+                    }
+                    store.journal.clear(pendingCreate.localId)
+                } else {
+                    store.lists.insert(
+                        TaskListEntity(
+                            localId = store.newLocalId(),
+                            remoteId = rl.id,
+                            title = rl.title,
+                            isDefault = rl.isDefault,
+                            etag = rl.etag,
+                            remoteUpdatedAt = rl.updatedAt,
+                            localUpdatedAt = rl.updatedAt
+                        )
+                    )
+                }
+                continue
+            }
+            if (existing.deletedLocally) continue // our delete is still on its way
+            val pending = store.opsFor(EntityType.LIST, existing.localId).any { it.kind == OperationKind.UPDATE }
+            val decision = ConflictResolver.decide(
+                pending,
+                existing.localUpdatedAt,
+                existing.remoteUpdatedAt,
+                rl.updatedAt
+            )
+            val takeRemote = decision == Decision.APPLY_REMOTE || decision == Decision.REMOTE_WINS
+            if (decision == Decision.REMOTE_WINS && existing.title != rl.title) {
+                store.log(
+                    SyncLogType.CONFLICT,
+                    "List renamed here and elsewhere; kept “${rl.title}” over “${existing.title}”"
+                )
+            }
+            if (decision == Decision.LOCAL_WINS && existing.title != rl.title) {
+                store.log(
+                    SyncLogType.CONFLICT,
+                    "List renamed here and elsewhere; kept “${existing.title}” over “${rl.title}”"
+                )
+            }
+            if (decision == Decision.REMOTE_WINS) store.dropOps(EntityType.LIST, existing.localId)
+            store.lists.update(
+                existing.copy(
+                    title = if (takeRemote) rl.title else existing.title,
+                    isDefault = rl.isDefault,
+                    etag = rl.etag,
+                    remoteUpdatedAt = rl.updatedAt,
+                    localUpdatedAt = if (takeRemote) rl.updatedAt else existing.localUpdatedAt
+                )
+            )
+        }
+        val remoteIds = remote.map { it.id }.toSet()
+        local.filter { it.remoteId != null && it.remoteId !in remoteIds }.forEach { listGoneRemotely(it) }
+    }
+
+    /**
+     * Spec edge case: a list deleted on the web while the phone has unsynced tasks in it. Those
+     * tasks move to a local "Recovered" list (and are created again from there); the rest go.
+     */
+    private suspend fun listGoneRemotely(list: TaskListEntity) {
+        val tasks = store.sync.tasksInList(list.localId)
+        val unsynced = if (list.deletedLocally) {
+            emptyList()
+        } else {
+            tasks.filter {
+                !it.deletedLocally &&
+                    store.hasPending(it)
+            }
+        }
+        if (unsynced.isNotEmpty()) {
+            val recovered = store.recoveredList()
+            unsynced.forEach { store.recreate(it, listId = recovered.localId) }
+            val count = if (unsynced.size == 1) "1 task" else "${unsynced.size} tasks"
+            store.log(
+                SyncLogType.RECOVERED,
+                "“${list.title}” was deleted elsewhere. $count with unsynced changes moved to “${recovered.title}”."
+            )
+        }
+        tasks.filter { it !in unsynced }.forEach {
+            store.dropStepOps(it.localId)
+            store.dropOps(EntityType.TASK, it.localId)
+        }
+        store.dropOps(EntityType.LIST, list.localId)
+        store.lists.delete(list.localId)
+    }
+
+    // Tasks
+
+    private suspend fun pullList(list: TaskListEntity) {
+        val listRemoteId = checkNotNull(list.remoteId)
+        var cursor = list.tasksCursor
+        var full = cursor == null
+        val seen = mutableSetOf<String>()
+        while (true) {
+            val page = try {
+                provider.getTaskChanges(listRemoteId, cursor)
+            } catch (_: ProviderError.CursorExpired) {
+                if (full) throw ProviderError.Transient("Full fetch of ${list.title} was refused")
+                cursor = null
+                full = true
+                continue
+            } catch (_: ProviderError.NotFound) {
+                return // gone since the list check; the next sync's list check recovers it
+            }
+            seen += page.changed.map { it.id }
+            // Today's tasks first, so the "today" section fills in before the rest (FR-009a).
+            val ordered = page.changed.sortedWith(compareBy<RemoteTask> { it.dueDate == null }.thenBy { it.dueDate })
+            for (batch in ordered.chunked(BATCH)) {
+                holds.awaitReleased(list.localId)
+                store.transaction { batch.forEach { applyTask(list, it) } }
+            }
+            for (batch in page.deletedIds.chunked(BATCH)) {
+                holds.awaitReleased(list.localId)
+                store.transaction { batch.forEach { applyRemoteDelete(list, it) } }
+            }
+            cursor = page.nextCursor
+            if (!page.hasMore) break
+        }
+        store.transaction {
+            if (full) {
+                // A full fetch has no deletion list: whatever it did not return is gone.
+                val missing = store.sync.tasksInList(list.localId).mapNotNull { it.remoteId }.filter { it !in seen }
+                missing.forEach { applyRemoteDelete(list, it) }
+            }
+            store.lists.get(list.localId)?.let { store.lists.update(it.copy(tasksCursor = cursor)) }
+        }
+    }
+
+    private suspend fun applyTask(list: TaskListEntity, remote: RemoteTask) {
+        val local = store.sync.taskByRemoteId(remote.id)
+        if (local == null) {
+            if (!adoptLostCreate(list, remote)) insertTask(list, remote)
+            return
+        }
+        val (taskOps, stepOps) = store.pendingFor(local)
+        if (local.deletedLocally) {
+            // Deleted here but changed elsewhere since: the newer edit wins and the task comes back.
+            val decision = ConflictResolver.decide(true, local.localUpdatedAt, local.remoteUpdatedAt, remote.updatedAt)
+            if (decision == Decision.REMOTE_WINS) {
+                store.dropStepOps(local.localId)
+                store.dropOps(EntityType.TASK, local.localId)
+                store.log(
+                    SyncLogType.CONFLICT,
+                    "“${remote.title}” was changed elsewhere after you deleted it, so it was kept"
+                )
+                applyFields(local.copy(deletedLocally = false), remote, list, keep = emptySet())
+                store.mergeSteps(local.localId, remote, keepPending = emptySet())
+            }
+            return
+        }
+        val pendingFields = taskOps.flatMap { op ->
+            if (op.kind == OperationKind.CREATE) SyncStore.ALL_TASK_FIELDS else op.changedFields
+        }.toSet()
+        val pendingSteps = stepOps.map { it.entityLocalId }.toSet()
+        val decision = ConflictResolver.decide(
+            hasPendingLocalChange = taskOps.isNotEmpty() || stepOps.isNotEmpty(),
+            localUpdatedAt = local.localUpdatedAt,
+            lastSeenRemoteUpdatedAt = local.remoteUpdatedAt,
+            remoteUpdatedAt = remote.updatedAt
+        )
+        when (decision) {
+            Decision.APPLY_REMOTE -> {
+                applyFields(local, remote, list, keep = emptySet())
+                store.mergeSteps(local.localId, remote, keepPending = emptySet())
+            }
+            Decision.KEEP_LOCAL -> Unit
+            Decision.LOCAL_WINS -> {
+                // Fields not changed here still take the remote value; ours win where both changed.
+                val lost = differingFields(local, remote, pendingFields)
+                if (lost.isNotEmpty() || stepsDiffer(local, remote, pendingSteps)) {
+                    store.log(
+                        SyncLogType.CONFLICT,
+                        "“${local.title}” changed here and elsewhere; kept your newer version",
+                        remote.toJson()
+                    )
+                }
+                applyFields(local, remote, list, keep = pendingFields)
+                store.mergeSteps(local.localId, remote, keepPending = pendingSteps)
+            }
+            Decision.REMOTE_WINS -> {
+                val lost = differingFields(local, remote, pendingFields)
+                if (lost.isNotEmpty() || stepsDiffer(local, remote, pendingSteps)) {
+                    store.log(
+                        SyncLogType.CONFLICT,
+                        "“${remote.title}” changed here and elsewhere; kept the newer version from your account",
+                        local.toJson(store.steps.forTask(local.localId))
+                    )
+                }
+                taskOps.filter {
+                    it.kind == OperationKind.UPDATE || it.kind == OperationKind.MOVE
+                }.forEach { store.ops.delete(it.seq) }
+                // Steps added here are not in conflict with anything, so they stay queued.
+                stepOps.filter { it.kind != OperationKind.CREATE }.forEach { store.ops.delete(it.seq) }
+                val keptNewSteps = stepOps.filter { it.kind == OperationKind.CREATE }.map { it.entityLocalId }.toSet()
+                applyFields(local, remote, list, keep = emptySet())
+                store.mergeSteps(local.localId, remote, keepPending = keptNewSteps)
+            }
+        }
+    }
+
+    /** Matches a task this phone created but never heard back about (FR-022: no duplicates on retry). */
+    private suspend fun adoptLostCreate(list: TaskListEntity, remote: RemoteTask): Boolean {
+        val candidate = store.sync.tasksInList(list.localId).firstOrNull { task ->
+            task.remoteId == null && store.journal.sentTitle(task.localId) == remote.title &&
+                store.opsFor(EntityType.TASK, task.localId).any { it.kind == OperationKind.CREATE }
+        } ?: return false
+        store.journal.clear(candidate.localId)
+        store.tasks.update(
+            candidate.copy(
+                remoteId = remote.id,
+                etag = remote.etag,
+                remoteUpdatedAt = remote.updatedAt,
+                position = remote.position
+            )
+        )
+        // Pair steps by title in order; any left over are added as new steps.
+        val remaining = remote.steps.toMutableList()
+        store.steps.forTask(candidate.localId).filterNot { it.deletedLocally }.forEach { step ->
+            val match = remaining.firstOrNull { it.title == step.title } ?: return@forEach
+            remaining.remove(match)
+            store.steps.update(step.copy(remoteId = match.id))
+            store.dropOps(EntityType.STEP, step.localId)
+            if (match.done !=
+                step.done
+            ) {
+                store.enqueue(EntityType.STEP, step.localId, OperationKind.UPDATE, setOf(Fields.DONE))
+            }
+        }
+        // The create is done; our copy is the newer one, so push all of its fields once.
+        store.dropOps(EntityType.TASK, candidate.localId)
+        store.enqueue(EntityType.TASK, candidate.localId, OperationKind.UPDATE, SyncStore.ALL_TASK_FIELDS)
+        return true
+    }
+
+    private suspend fun insertTask(list: TaskListEntity, remote: RemoteTask) {
+        val id = store.newLocalId()
+        store.tasks.insert(
+            TaskEntity(
+                localId = id,
+                listId = list.localId,
+                remoteId = remote.id,
+                title = remote.title,
+                notes = remote.notes,
+                dueDate = remote.dueDate,
+                completed = remote.completed,
+                completedAt = remote.completedAt,
+                important = remote.important && canStoreImportance,
+                position = remote.position,
+                remoteStatusRaw = remote.rawStatus,
+                etag = remote.etag,
+                remoteUpdatedAt = remote.updatedAt,
+                localUpdatedAt = remote.updatedAt
+            )
+        )
+        remote.steps.forEachIndexed { index, step ->
+            store.steps.insert(
+                StepEntity(
+                    localId = store.newLocalId(),
+                    taskId = id,
+                    remoteId = step.id,
+                    title = step.title,
+                    done = step.done,
+                    sortOrder = index
+                )
+            )
+        }
+    }
+
+    private suspend fun applyRemoteDelete(list: TaskListEntity, remoteId: String) {
+        val local = store.sync.taskByRemoteId(remoteId) ?: return
+        if (local.listId != list.localId) return // moved here to another list; that push owns it
+        val (taskOps, stepOps) = store.pendingFor(local)
+        when {
+            local.deletedLocally || (taskOps.isEmpty() && stepOps.isEmpty()) -> {
+                store.dropStepOps(local.localId)
+                store.dropOps(EntityType.TASK, local.localId)
+                store.tasks.delete(local.localId)
+            }
+            else -> {
+                // Deleted elsewhere, changed here: nothing is lost if it comes back.
+                store.log(
+                    SyncLogType.RECOVERED,
+                    "“${local.title}” was deleted elsewhere but had changes here, so it was put back"
+                )
+                store.recreate(local)
+            }
+        }
+    }
+
+    /** Writes [remote] over [local], except the fields in [keep] (pending changes that won). */
+    private suspend fun applyFields(local: TaskEntity, remote: RemoteTask, list: TaskListEntity, keep: Set<String>) {
+        val completedChanges = Fields.COMPLETED !in keep
+        store.tasks.update(
+            local.copy(
+                listId = if (Fields.LIST in keep) local.listId else list.localId,
+                title = if (Fields.TITLE in keep) local.title else remote.title,
+                notes = if (Fields.NOTES in keep) local.notes else remote.notes,
+                dueDate = if (Fields.DUE_DATE in keep) local.dueDate else remote.dueDate,
+                completed = if (completedChanges) remote.completed else local.completed,
+                completedAt = if (completedChanges) remote.completedAt else local.completedAt,
+                important = if (Fields.IMPORTANT in keep || !canStoreImportance) local.important else remote.important,
+                position = remote.position,
+                remoteStatusRaw = remote.rawStatus,
+                etag = remote.etag,
+                remoteUpdatedAt = remote.updatedAt,
+                localUpdatedAt = if (keep.isEmpty()) remote.updatedAt else local.localUpdatedAt
+            )
+        )
+    }
+
+    private fun differingFields(local: TaskEntity, remote: RemoteTask, fields: Set<String>): Set<String> =
+        fields.filter { field ->
+            when (field) {
+                Fields.TITLE -> local.title != remote.title
+                Fields.NOTES -> local.notes.orEmpty() != remote.notes.orEmpty()
+                Fields.DUE_DATE -> local.dueDate != remote.dueDate
+                Fields.COMPLETED -> local.completed != remote.completed
+                Fields.IMPORTANT -> canStoreImportance && local.important != remote.important
+                else -> false
+            }
+        }.toSet()
+
+    private suspend fun stepsDiffer(local: TaskEntity, remote: RemoteTask, pendingSteps: Set<String>): Boolean {
+        val remoteById = remote.steps.associateBy { it.id }
+        return store.steps.forTask(local.localId).filter {
+            it.localId in pendingSteps && it.remoteId != null
+        }.any { step ->
+            val other = remoteById[step.remoteId] ?: return@any true
+            other.title != step.title || other.done != step.done
+        }
+    }
+
+    companion object {
+        /** At most this many rows per transaction, so the UI's Room flows never stall (T043). */
+        const val BATCH = 50
+    }
+}
