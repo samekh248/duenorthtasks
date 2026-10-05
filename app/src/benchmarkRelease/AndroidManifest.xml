@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!--
+            Benchmark builds only: lets :benchmark fill and sync a list over adb (T037, T044).
+            Exported so the shell user can reach it; release and debug builds never contain it.
+        -->
+        <receiver
+            android:name=".bench.BenchmarkSeedReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver" />
+    </application>
+</manifest>

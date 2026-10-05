@@ -70,7 +70,7 @@ jobs:
         run: >
           ./gradlew :benchmark:pixel6Api34BenchmarkReleaseAndroidTest
           -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
-          -Pandroid.testInstrumentationRunnerArguments.class=app.duenorth.tasks.benchmark.StartupBenchmark
+          -Pandroid.testInstrumentationRunnerArguments.class=app.duenorth.tasks.benchmark.StartupBenchmark,app.duenorth.tasks.benchmark.ScrollBenchmark
       - name: Check budgets (constitution Principle II)
         run: python3 scripts/check_benchmark_budgets.py benchmark/build/outputs
       - name: Upload benchmark results

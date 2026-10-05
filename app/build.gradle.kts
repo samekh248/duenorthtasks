@@ -77,6 +77,17 @@ android {
     }
 }
 
+// benchmarkRelease (made by the baselineprofile plugin) also gets the fake provider and the adb seed
+// receiver in src/benchmarkRelease, so macrobenchmarks can sync without a real account (T037, T044).
+configurations.matching { it.name == "benchmarkReleaseImplementation" }.configureEach {
+    dependencies.add(project.dependencies.create(project(":provider:fake")))
+}
+androidComponents {
+    onVariants(selector().withBuildType("benchmarkRelease")) { variant ->
+        variant.sources.manifests.addStaticManifestFile("src/benchmarkRelease/AndroidManifest.xml")
+    }
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)

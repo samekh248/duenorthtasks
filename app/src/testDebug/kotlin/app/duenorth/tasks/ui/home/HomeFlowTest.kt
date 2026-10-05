@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -23,17 +24,24 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.repo.AccountRepository
+import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderKind
+import app.duenorth.tasks.provider.fake.FakeProvider
+import app.duenorth.tasks.sync.ListHolds
+import app.duenorth.tasks.ui.common.ServiceFeatures
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -52,6 +60,7 @@ class HomeFlowTest {
     private lateinit var db: DueNorthDatabase
     private lateinit var tasks: TaskRepository
     private lateinit var viewModel: HomeViewModel
+    private val holds = ListHolds()
     private val opened = mutableListOf<String>()
 
     @Before
@@ -62,7 +71,7 @@ class HomeFlowTest {
         tasks = TaskRepository(db, clock)
         val accounts = AccountRepository(db)
         runBlocking { accounts.connect(ProviderKind.FAKE, "demo", null) }
-        viewModel = HomeViewModel(tasks, accounts, clock)
+        viewModel = HomeViewModel(tasks, accounts, ServiceFeatures(accounts) { FakeProvider() }, holds, clock)
         val actions = HomeActions(openTask = { opened += it }, openList = {}, search = {}, switchAccount = {})
         compose.setContent {
             val state by viewModel.state.collectAsState()
@@ -113,6 +122,44 @@ class HomeFlowTest {
         waitFor(hasText("nothing due today"))
     }
 
+    @Test
+    fun syncedChangesWaitForTheFingerToLift() {
+        add("Return library books")
+        val task = runBlocking { tasks.tasksDueBy(LocalDate.of(2026, 10, 5)).first().single().task }
+
+        // A finger rests on today: sync is asked to wait for that list...
+        compose.onNode(hasTestTag("today")).performTouchInput { down(center) }
+        compose.waitForIdle()
+        assertTrue(stillHeld(task.listId))
+
+        // ...and a change that lands anyway (a batch already in flight) doesn't redraw the rows.
+        runBlocking { tasks.editTask(task.localId, TaskEdit(title = "Return the library books")) }
+        compose.mainClock.advanceTimeBy(1_000)
+        compose.waitForIdle()
+        compose.onNode(hasText("Return library books") and hasAnyAncestor(hasTestTag("today"))).assertExists()
+
+        // Lifting the finger releases the list and shows the change.
+        compose.onNode(hasTestTag("today")).performTouchInput { up() }
+        waitFor(hasText("Return the library books") and hasAnyAncestor(hasTestTag("today")))
+        assertFalse(stillHeld(task.listId))
+    }
+
+    @Test
+    fun importantTasksShowTheStar() {
+        add("Call the vet")
+        val task = runBlocking { tasks.tasksDueBy(LocalDate.of(2026, 10, 5)).first().single().task }
+        assertTrue(compose.onAllNodes(hasContentDescription("important")).fetchSemanticsNodes().isEmpty())
+
+        longPress("Call the vet")
+        compose.onNode(hasText("mark important")).performClick()
+        waitFor(hasContentDescription("important"))
+        assertTrue(runBlocking { tasks.task(task.localId).first()!!.important })
+    }
+
+    /** True while sync would still be waiting on [listId]. */
+    private fun stillHeld(listId: String): Boolean =
+        runBlocking { withTimeoutOrNull(HOLD_PROBE_MS) { holds.awaitReleased(listId) } == null }
+
     private fun add(title: String) {
         val field = compose.onAllNodes(hasSetTextAction() and hasAnyAncestor(hasTestTag("today"))).onFirst()
         field.performTextInput(title)
@@ -132,5 +179,6 @@ class HomeFlowTest {
 
     private companion object {
         const val TIMEOUT = 5_000L
+        const val HOLD_PROBE_MS = 100L
     }
 }

@@ -8,7 +8,10 @@ import app.duenorth.tasks.data.db.TaskWithList
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
+import app.duenorth.tasks.ui.common.HeldLists
+import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.serviceName
 import app.duenorth.tasks.ui.common.toRow
@@ -46,7 +49,9 @@ data class ListUiState(
     val sort: ListSort = ListSort.MY_ORDER,
     val lists: List<ListRowUi> = emptyList(),
     val serviceName: String = "",
-    val today: LocalDate = LocalDate.MIN
+    val today: LocalDate = LocalDate.MIN,
+    /** The connected service has an importance star (To Do); false hides it everywhere. */
+    val importance: Boolean = false
 )
 
 private data class ListPrefs(val sort: ListSort = ListSort.MY_ORDER, val completedExpanded: Boolean = false)
@@ -57,11 +62,14 @@ class ListViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val tasks: TaskRepository,
     accounts: AccountRepository,
+    features: ServiceFeatures,
+    holds: ListHolds,
     clock: Clock
 ) : ViewModel() {
     val listId: String = checkNotNull(savedState["id"]) { "list route needs an id" }
 
     private val overrides = CompletionOverrides()
+    private val heldLists = HeldLists(holds)
     private val prefs = MutableStateFlow(ListPrefs())
 
     private val content = combine(
@@ -74,13 +82,13 @@ class ListViewModel @Inject constructor(
     val state: StateFlow<ListUiState> = combine(
         content,
         tasks.listSummaries(),
-        accounts.account,
+        combine(accounts.account, features.importance, ::Pair),
         prefs,
         overrides.overrides
-    ) { content, lists, account, prefs, pending ->
+    ) { content, lists, (account, importance), prefs, pending ->
         overrides.settle((content.open + content.done).associate { it.task.localId to it.task.completed })
         val all = content.open + content.done
-        val rows = all.map { it.toRow(content.today, pending[it.task.localId]) }
+        val rows = all.map { it.toRow(content.today, pending[it.task.localId], importance) }
         val (done, open) = rows.partition { it.completed }
         ListUiState(
             loading = false,
@@ -92,7 +100,8 @@ class ListViewModel @Inject constructor(
             sort = prefs.sort,
             lists = lists.map { ListRowUi(it.localId, it.title, it.openCount, it.nextTaskTitle) },
             serviceName = serviceName(account?.provider),
-            today = content.today
+            today = content.today,
+            importance = importance
         )
     }
         .flowOn(Dispatchers.Default)
@@ -113,6 +122,15 @@ class ListViewModel @Inject constructor(
         if (title.isBlank()) return
         viewModelScope.launch { runCatching { tasks.createTask(listId, title) } }
     }
+
+    fun setImportant(id: String, important: Boolean) {
+        viewModelScope.launch { runCatching { tasks.editTask(id, TaskEdit(important = important)) } }
+    }
+
+    /** Holds sync for this list while a finger is on it or it is still flinging (FR-008). */
+    fun holdSync(active: Boolean) = heldLists.set(active) { listOf(listId) }
+
+    override fun onCleared() = heldLists.releaseAll()
 
     fun deleteTask(id: String) {
         viewModelScope.launch { runCatching { tasks.deleteTask(id) } }

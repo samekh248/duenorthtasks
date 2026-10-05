@@ -105,7 +105,7 @@ flowchart LR
 - [X] T035 [US1] Debug-only "demo account" option on the sync account screen, backed by `FakeProvider` with sample data (Google and Microsoft rows show "coming soon" until M3/M4)
 
 - [X] T036 [US1] Speed for US1: optimistic ViewModel state for add/complete/edit (FR-006), launch straight from Room with Baseline Profile (SC-007), task-shaped placeholders (FR-009), stable keys and `animateItem()` in every list (profile generation needs a device; runs with T037)
-- [ ] T037 [P] [US1] Macrobenchmarks: cold/warm start, 1,000-task scroll, tap-to-tick latency (SC-005, SC-007, SC-008) (deferred: release builds have no demo account to seed, so this lands with M3 sign-in or a benchmark-only seed)
+- [ ] T037 [P] [US1] Macrobenchmarks: cold/warm start, 1,000-task scroll, tap-to-tick latency (SC-005, SC-007, SC-008). Start and 1,000-task scroll done (`StartupBenchmark`, `ScrollBenchmark.scroll`, seeded over adb by the benchmark-only `BenchmarkSeedReceiver`); tap-to-tick latency still to add
 
 **Checkpoint**: US1 acceptance scenarios pass in airplane mode, within the performance budgets.
 
@@ -124,8 +124,8 @@ flowchart LR
 - [X] T040 [US2] `SyncWorker` + `SyncScheduler` (unique work, network constraint, debounce 5s after edits, on foreground, periodic at the user's "sync every" interval, default 15 min, Wi-Fi only if set)
 - [X] T041 [P] [US2] Sync engine tests against `FakeProvider`: offline queue, conflict both directions, cursor expired, auth required, recovered-list edge case
 - [X] T042 [P] [US2] Soak test `SyncSoakTest.kt`: 200 random ops with random failures, zero duplicates/losses (SC-004)
-- [ ] T043 [US2] Smooth sync: apply remote changes in ≤50-row transactions, hold updates to a list while the user is touching or flinging it, fade in changed rows, first sync pulls today's tasks first and shows lists as they arrive (FR-008, FR-009a). Engine side done in M3 (`Puller.BATCH`, `ListHolds`, due-soonest first, one list at a time); row fade-in is the UI's part
-- [ ] T044 [P] [US2] Macrobenchmark "scroll while syncing 500 changes" against `FakeProvider` with latency (SC-005)
+- [x] T043 [US2] Smooth sync: apply remote changes in ≤50-row transactions, hold updates to a list while the user is touching or flinging it, fade in changed rows, first sync pulls today's tasks first and shows lists as they arrive (FR-008, FR-009a). Engine side done in M3 (`Puller.BATCH`, `ListHolds`, due-soonest first, one list at a time); UI side done in sync polish: today, done and list pages hold their lists through `ListHolds` while touched or flinging and keep showing the rows they had until the finger lifts (`SyncHold.kt`), and rows whose text or date changed fade back in
+- [x] T044 [P] [US2] Macrobenchmark "scroll while syncing 500 changes" against `FakeProvider` with latency (SC-005): `ScrollBenchmark.scrollWhileSyncing`, 10 rounds of 50 changes at 150 ms per call, P99 frame budget in `check_benchmark_budgets.py`
 
 ### Google provider (`provider:google`)
 
@@ -147,7 +147,7 @@ flowchart LR
 - [X] T051 [US3] `MicrosoftAuth` with MSAL single-account mode, `common` authority, `Tasks.ReadWrite`
 - [X] T052 [US3] `MicrosoftTodoProvider` mapping (checklistItems <-> steps, importance, deltaLink cursors, raw status preserved)
 - [X] T053 [P] [US3] MockWebServer fixtures and `MicrosoftTodoProviderContractTest` (contract suite runs against `FakeGraphServer`, a stateful Graph stand-in; real-account captures still to replace the fixtures)
-- [ ] T054 [US3] Importance star in task rows and detail, shown only when `capabilities.importance`
+- [x] T054 [US3] Importance star in task rows and detail, shown only when `capabilities.importance` (`ServiceFeatures`; row star and "mark important" menu item, "important" toggle on the task page)
 
 **Checkpoint**: Daily-drivable with a Microsoft account.
 
@@ -180,7 +180,7 @@ flowchart LR
 
 - [ ] T064 [P] Accessibility pass: TalkBack labels on app bar buttons and checkboxes, 48dp targets, panorama sections announced as headings, contrast check for every accent's light and dark value
 - [ ] T065 [P] Performance pass on real mid-range and low-end phones: review benchmark trends, JankStats logs and startup traces; fix anything over budget
-- [ ] T066 [P] Metro launcher icon (flat white glyph on accent square) and splash
+- [x] T066 [P] Metro launcher icon (flat white glyph on accent square) and splash (adaptive icon with a themed-icon layer; Android 12+ shows it on the theme background as the splash)
 - [ ] T067 Privacy policy and Google OAuth verification submission for the `tasks` scope
 - [ ] T068 Play Console internal testing track and release signing via CI secrets
 - [ ] T069 Run every quickstart.md scenario and record results

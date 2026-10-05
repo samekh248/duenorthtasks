@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -29,21 +30,23 @@ fun MetroIconGlyph(
     icon: MetroIcon,
     modifier: Modifier = Modifier,
     color: Color = MetroTheme.colors.foreground,
-    size: Dp = 24.dp
+    size: Dp = 24.dp,
+    /** Fills closed shapes (the star when a task is important) instead of outlining them. */
+    filled: Boolean = false
 ) {
     Canvas(modifier.size(size)) {
-        drawGlyph(icon, color)
+        drawGlyph(icon, color, filled)
     }
 }
 
 /** Glyphs are designed on a 24 x 24 grid and scaled to the canvas. */
-internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color) {
+internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean = false) {
     val u = this.size.minDimension / 24f
     val stroke = Stroke(width = 1.6f * u, cap = StrokeCap.Square, join = StrokeJoin.Miter)
     fun p(x: Float, y: Float) = Offset(x * u, y * u)
     fun line(x1: Float, y1: Float, x2: Float, y2: Float) =
         drawLine(color, p(x1, y1), p(x2, y2), strokeWidth = stroke.width, cap = StrokeCap.Square)
-    fun path(block: Path.() -> Unit) = drawPath(Path().apply(block), color, style = stroke)
+    fun path(block: Path.() -> Unit) = drawPath(Path().apply(block), color, style = if (filled) Fill else stroke)
 
     when (icon) {
         MetroIcon.Add -> {

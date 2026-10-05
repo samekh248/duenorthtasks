@@ -20,7 +20,10 @@ import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.demo.DemoSeeder
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.provider.fake.FakeProvider
+import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.account.AccountScreen
+import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.detail.TaskDetailContent
 import app.duenorth.tasks.ui.detail.TaskDetailViewModel
 import app.duenorth.tasks.ui.home.HomeActions
@@ -58,6 +61,7 @@ class ScreenScreenshotTest {
     private lateinit var db: DueNorthDatabase
     private lateinit var tasks: TaskRepository
     private lateinit var accounts: AccountRepository
+    private lateinit var features: ServiceFeatures
 
     @Before
     fun setUp() {
@@ -65,6 +69,8 @@ class ScreenScreenshotTest {
         db = Room.inMemoryDatabaseBuilder(context, DueNorthDatabase::class.java).allowMainThreadQueries().build()
         tasks = TaskRepository(db, clock)
         accounts = AccountRepository(db)
+        // The demo provider has the importance star, like Microsoft To Do.
+        features = ServiceFeatures(accounts) { FakeProvider() }
         runBlocking { DemoSeeder(accounts, tasks, clock).connect() }
     }
 
@@ -102,7 +108,7 @@ class ScreenScreenshotTest {
 
     @Test
     fun search() {
-        val viewModel = SearchViewModel(tasks, clock)
+        val viewModel = SearchViewModel(tasks, features, clock)
         show(dark = false) { SearchScreen(onOpenTask = {}, viewModel = viewModel) }
         compose.onNode(hasTestTag("search field")).performTextInput("the")
         compose.waitUntilAtLeastOneExists(hasText("Water the plants"), TIMEOUT)
@@ -116,7 +122,7 @@ class ScreenScreenshotTest {
     }
 
     private fun home(dark: Boolean, name: String? = "home_today") {
-        val viewModel = HomeViewModel(tasks, accounts, clock)
+        val viewModel = HomeViewModel(tasks, accounts, features, ListHolds(), clock)
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, switchAccount = {})
         show(dark) {
             val state by viewModel.state.collectAsState()
@@ -128,7 +134,8 @@ class ScreenScreenshotTest {
 
     private fun list(dark: Boolean) {
         val id = runBlocking { tasks.listSummaries().first().first { it.title == "Errands" }.localId }
-        val viewModel = ListViewModel(SavedStateHandle(mapOf("id" to id)), tasks, accounts, clock)
+        val viewModel =
+            ListViewModel(SavedStateHandle(mapOf("id" to id)), tasks, accounts, features, ListHolds(), clock)
         viewModel.toggleCompletedGroup()
         show(dark) {
             val state by viewModel.state.collectAsState()
@@ -141,7 +148,7 @@ class ScreenScreenshotTest {
     private fun detail(dark: Boolean) {
         val id = runBlocking { tasks.tasksDueBy(clock.instant().atZone(clock.zone).toLocalDate().plusDays(1)).first() }
             .first { it.task.title == "Call the vet" }.task.localId
-        val viewModel = TaskDetailViewModel(SavedStateHandle(mapOf("id" to id)), tasks, clock)
+        val viewModel = TaskDetailViewModel(SavedStateHandle(mapOf("id" to id)), tasks, features, clock)
         show(dark) {
             val state by viewModel.state.collectAsState()
             TaskDetailContent(state, viewModel, animatedScope = null)
