@@ -71,7 +71,7 @@ fun HomeScreen(actions: HomeActions, viewModel: HomeViewModel = hiltViewModel())
     HomeContent(state, viewModel, actions)
 }
 
-/** The Light Panorama home (FR-002): "due north" over today, lists and done. */
+/** The Light Panorama home (FR-002): "tasks" (with "due north" under it) over today, lists and done. */
 @Composable
 fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActions) {
     val pager = rememberPagerState { 3 }
@@ -101,7 +101,8 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
     Column(Modifier.fillMaxSize().imePadding()) {
         Box(Modifier.weight(1f).statusBarsPadding()) {
             MetroPanorama(
-                title = "due north",
+                title = "tasks",
+                subtitle = "due north",
                 state = pager,
                 sections = listOf(
                     PanoramaSection("today") {

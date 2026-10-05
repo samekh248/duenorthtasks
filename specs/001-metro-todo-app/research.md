@@ -37,7 +37,7 @@ Phase 0 output for [plan.md](plan.md). Each entry is Decision / Rationale / Alte
 
 | Metro control | Our Compose component | Notes |
 |---|---|---|
-| Panorama (home) | `MetroPanorama` | one wide horizontal scroller; title layer moves at about 1/3 the speed of the sections (parallax); sections 310dp wide with 40dp gaps so the next one peeks; snaps per section |
+| Panorama (home) | `MetroPanorama` | one wide horizontal scroller; title layer moves at about 1/3 the speed of the sections (parallax); sections fill the screen except a 40dp strip where the next one peeks (Dustin, 2026-10-05: less of the next section); snaps per section |
 | List tile | `MetroListTile` | 64dp flat accent square, open-task count bottom-right in white 22sp Light, grey square for undated lists |
 | Pivot | `MetroPivot` | `HorizontalPager` + header row that scrolls with the pager, inactive headers at 40% opacity, next header bleeds off screen |
 | Application Bar | `MetroAppBar` | 72dp tall, up to 4 round 48dp outlined icon buttons, `•••` expands to labels + menu items |

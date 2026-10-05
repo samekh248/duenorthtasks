@@ -84,6 +84,7 @@ class ScreenScreenshotTest {
         home(dark = false, name = null)
         compose.onNode(hasTestTag("today")).performTouchInput { swipeLeft() }
         compose.waitUntilAtLeastOneExists(hasText("next: Call the vet"), TIMEOUT)
+        compose.mainClock.advanceTimeBy(2_000)
         snap("home_lists", dark = false)
     }
 
