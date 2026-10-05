@@ -3,8 +3,11 @@ package app.duenorth.tasks.ui.account
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.duenorth.tasks.data.repo.AccountRepository
+import app.duenorth.tasks.provider.api.ProviderKind
+import app.duenorth.tasks.provider.api.SignInHost
+import app.duenorth.tasks.sync.SyncEngine
+import app.duenorth.tasks.sync.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.Optional
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,36 +31,63 @@ sealed interface AppState {
     data object Connected : AppState
 }
 
-/** The gate in front of the app (contracts/ui-screens.md "Screen flow"): no account, no panorama. */
+/**
+ * The gate in front of the app (contracts/ui-screens.md "Screen flow"): no account, no panorama.
+ * Also carries the app-wide sync status for the progress dots and the sync button.
+ */
 @HiltViewModel
-class AppViewModel @Inject constructor(private val accounts: AccountRepository, demo: Optional<DemoAccount>) :
-    ViewModel() {
-    private val demoAccount: DemoAccount? = demo.orElse(null)
+class AppViewModel @Inject constructor(
+    accounts: AccountRepository,
+    private val session: AccountSession,
+    private val scheduler: SyncScheduler,
+    engine: SyncEngine
+) : ViewModel() {
+    val demoAvailable: Boolean = session.demoAvailable
 
-    val demoAvailable: Boolean = demoAccount != null
+    private val busy = MutableStateFlow<ProviderKind?>(null)
 
-    private val busy = MutableStateFlow(false)
-    val connecting: StateFlow<Boolean> = busy.asStateFlow()
+    /** The service being signed in to, or null. */
+    val connecting: StateFlow<ProviderKind?> = busy.asStateFlow()
+
+    private val failure = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = failure.asStateFlow()
+
+    val syncing: StateFlow<Boolean> = engine.isSyncing
 
     val state: StateFlow<AppState> = accounts.account
         .map { if (it == null) AppState.NoAccount else AppState.Connected }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppState.Loading)
 
-    fun connectDemo() {
-        val demo = demoAccount ?: return
-        if (busy.value) return
-        busy.value = true
+    fun isConfigured(kind: ProviderKind): Boolean = session.isConfigured(kind)
+
+    fun connect(kind: ProviderKind, host: SignInHost) = signIn(kind) { session.connect(kind, host) }
+
+    /**
+     * Signs out, then into [kind]. Runs here rather than on the sync account page because signing
+     * out closes that page (the gate takes over) and would cancel the sign-in with it.
+     */
+    fun switchTo(kind: ProviderKind, host: SignInHost) = signIn(kind) { session.switchTo(kind, host) }
+
+    fun signOut() {
+        viewModelScope.launch { session.signOut() }
+    }
+
+    private fun signIn(kind: ProviderKind, block: suspend () -> Unit) {
+        if (busy.value != null) return
+        busy.value = kind
+        failure.value = null
         viewModelScope.launch {
             try {
-                demo.connect()
+                block()
+            } catch (e: Exception) {
+                failure.value = signInError(kind, e)
             } finally {
-                busy.value = false
+                busy.value = null
             }
         }
     }
 
-    /** Signs out: the account row goes, and every list, task and queued change with it. */
-    fun switchAccount() {
-        viewModelScope.launch { accounts.disconnect() }
-    }
+    fun connectDemo() = connect(ProviderKind.FAKE, object : SignInHost {})
+
+    fun syncNow() = scheduler.syncNow()
 }

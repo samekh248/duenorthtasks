@@ -133,7 +133,7 @@ flowchart LR
 - [X] T046 [US2] `GoogleAuth`: Credential Manager sign-in + `AuthorizationClient` for the `tasks` scope, silent token refresh
 - [X] T047 [US2] `GoogleTasksProvider` mapping per data-model.md (subtasks <-> steps, `updatedMin` cursor, `move` for order)
 - [X] T048 [P] [US2] MockWebServer fixtures and `GoogleTasksProviderContractTest`
-- [ ] T049 [US2] Sync account screen (radio choice, "signed in as", sync interval, Wi-Fi only toggle) + first-sync progress
+- [X] T049 [US2] Sync account screen (radio choice, "signed in as", sync interval, Wi-Fi only toggle) + first-sync progress (a service whose client ID the build lacks shows "not set up in this build yet"; progress dots on home while `SyncEngine.isSyncing`)
 
 **Checkpoint**: Daily-drivable with a Google account.
 
@@ -158,8 +158,8 @@ flowchart LR
 **Independent Test**: spec.md US4; quickstart V7.
 
 - [ ] T055 [P] [US4] Test: switch with pending ops shows warning; confirm clears all tables; no provider write calls recorded on the fake
-- [ ] T056 [US4] `AccountManager.switchProvider()`: cancel unique sync work, sign out, delete Account row, return to "choose a service"
-- [ ] T057 [US4] Picking the other service on the sync account screen: Metro confirm dialog with the "your tasks stay in that account" note and the unsynced-changes warning; sign out button
+- [X] T056 [US4] `AccountManager.switchProvider()`: cancel unique sync work, sign out, delete Account row, return to "choose a service" (shipped as `AccountSession.signOut()` / `switchTo()` in app)
+- [X] T057 [US4] Picking the other service on the sync account screen: Metro confirm dialog with the "your tasks stay in that account" note and the unsynced-changes warning; sign out button
 - [ ] T058 [P] [US4] `SyncLogScreen`
 
 ---
