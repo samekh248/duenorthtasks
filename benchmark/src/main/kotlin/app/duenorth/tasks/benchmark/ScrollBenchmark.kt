@@ -1,7 +1,8 @@
 package app.duenorth.tasks.benchmark
 
 import androidx.benchmark.macro.CompilationMode
-import androidx.benchmark.macro.FrameTimingMetric
+import androidx.benchmark.macro.ExperimentalMetricApi
+import androidx.benchmark.macro.FrameTimingGfxInfoMetric
 import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
@@ -20,6 +21,7 @@ import org.junit.runner.RunWith
  *
  * Runs against the benchmark build's fake service, filled over adb by BenchmarkSeedReceiver.
  */
+@OptIn(ExperimentalMetricApi::class)
 @RunWith(AndroidJUnit4::class)
 class ScrollBenchmark {
     @get:Rule
@@ -33,7 +35,9 @@ class ScrollBenchmark {
 
     private fun measure(syncing: Boolean) = rule.measureRepeated(
         packageName = TARGET_PACKAGE,
-        metrics = listOf(FrameTimingMetric()),
+        // gfxinfo rather than FrameTimingMetric: the CI emulator renders in software and its traces
+        // have no frame timeline slices, which FrameTimingMetric needs.
+        metrics = listOf(FrameTimingGfxInfoMetric()),
         compilationMode = CompilationMode.Partial(),
         startupMode = StartupMode.WARM,
         iterations = 5,

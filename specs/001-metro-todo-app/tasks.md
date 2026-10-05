@@ -125,7 +125,7 @@ flowchart LR
 - [X] T041 [P] [US2] Sync engine tests against `FakeProvider`: offline queue, conflict both directions, cursor expired, auth required, recovered-list edge case
 - [X] T042 [P] [US2] Soak test `SyncSoakTest.kt`: 200 random ops with random failures, zero duplicates/losses (SC-004)
 - [x] T043 [US2] Smooth sync: apply remote changes in ≤50-row transactions, hold updates to a list while the user is touching or flinging it, fade in changed rows, first sync pulls today's tasks first and shows lists as they arrive (FR-008, FR-009a). Engine side done in M3 (`Puller.BATCH`, `ListHolds`, due-soonest first, one list at a time); UI side done in sync polish: today, done and list pages hold their lists through `ListHolds` while touched or flinging and keep showing the rows they had until the finger lifts (`SyncHold.kt`), and rows whose text or date changed fade back in
-- [x] T044 [P] [US2] Macrobenchmark "scroll while syncing 500 changes" against `FakeProvider` with latency (SC-005): `ScrollBenchmark.scrollWhileSyncing`, 10 rounds of 50 changes at 150 ms per call, P99 frame budget in `check_benchmark_budgets.py`
+- [x] T044 [P] [US2] Macrobenchmark "scroll while syncing 500 changes" against `FakeProvider` with latency (SC-005): `ScrollBenchmark.scrollWhileSyncing`, 10 rounds of 50 changes at 150 ms per call, 1% janky-frame budget in `check_benchmark_budgets.py`
 
 ### Google provider (`provider:google`)
 

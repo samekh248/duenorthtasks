@@ -11,14 +11,14 @@ import os
 import pathlib
 import sys
 
-# test name -> (metric, statistic, budget in ms on a mid-range phone)
+# test name -> (metric, statistic, budget on a mid-range phone: ms, or percent for jank)
 BUDGETS = {
     "coldStart": ("timeToInitialDisplayMs", "median", 1000),
     "warmStart": ("timeToInitialDisplayMs", "median", 300),
-    # SC-005: under 1% janky frames scrolling 1,000 tasks, with or without a sync running, so the
-    # 99th percentile frame must fit in one 60 Hz frame (16.7 ms).
-    "scroll": ("frameDurationCpuMs", "P99", 16.7),
-    "scrollWhileSyncing": ("frameDurationCpuMs", "P99", 16.7),
+    # SC-005: under 1% janky frames scrolling 1,000 tasks, with or without a sync running
+    # (FrameTimingGfxInfoMetric's jank percentage, in percent rather than ms).
+    "scroll": ("gfxFrameJankPercent", "median", 1.0),
+    "scrollWhileSyncing": ("gfxFrameJankPercent", "median", 1.0),
 }
 EMULATOR_FACTOR = float(os.environ.get("BENCHMARK_EMULATOR_FACTOR", "3.0"))
 
@@ -48,9 +48,9 @@ def main(root: str) -> int:
             limit = budget * factor
             checked += 1
             status = "ok" if value <= limit else "OVER BUDGET"
-            print(f"{name}: {metric} {stat} {value:.1f} ms, limit {limit:.1f} ms ({status})")
+            print(f"{name}: {metric} {stat} {value:.1f}, limit {limit:.1f} ({status})")
             if value > limit:
-                failures.append(f"{name}: {metric} {stat} {value:.1f} ms > {limit:.1f} ms")
+                failures.append(f"{name}: {metric} {stat} {value:.1f} > {limit:.1f}")
     if failures:
         print("\n".join(["Performance budget failures:"] + failures))
         return 1
