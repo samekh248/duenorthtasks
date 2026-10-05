@@ -14,7 +14,13 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -25,6 +31,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
+import kotlinx.coroutines.flow.first
 
 /** One panorama section: its lowercase header and its content. */
 @Immutable
@@ -49,6 +56,9 @@ object PanoramaDefaults {
  * oversized title that drifts a little as the sections under it slide by, sections that snap one at a time
  * and the next section always peeking in. Parallax is applied in the draw phase from the pager's
  * offset, so swiping never recomposes or relayouts the title.
+ *
+ * Every section stays composed once the first frames are on screen, so the first swipe after a
+ * cold start never has to build a section mid-gesture (constitution Principle II).
  */
 @Composable
 fun MetroPanorama(
@@ -62,6 +72,13 @@ fun MetroPanorama(
     val colors = MetroTheme.colors
     val type = MetroTheme.typography
     val pageSize = remember(peekWidth) { PeekPageSize(peekWidth) }
+    var warm by remember { mutableStateOf(false) }
+    LaunchedEffect(state) {
+        // Let the first frames through, then build the sections out of view while nothing moves.
+        repeat(WARM_UP_FRAMES) { withFrameNanos { } }
+        snapshotFlow { state.isScrollInProgress }.first { !it }
+        warm = true
+    }
     Box(modifier.fillMaxSize().background(colors.background)) {
         Column(
             Modifier
@@ -100,6 +117,7 @@ fun MetroPanorama(
             ),
             pageSize = pageSize,
             pageSpacing = PanoramaDefaults.SectionSpacing,
+            beyondViewportPageCount = if (warm) (sections.size - 1).coerceAtLeast(0) else 0,
             verticalAlignment = Alignment.Top,
             key = { sections[it].header }
         ) { page ->
@@ -122,6 +140,9 @@ private class PeekPageSize(private val peek: Dp) : PageSize {
     override fun Density.calculateMainAxisPageSize(availableSpace: Int, pageSpacing: Int): Int =
         (availableSpace - pageSpacing - peek.roundToPx()).coerceAtLeast(0)
 }
+
+/** Frames the panorama shows before it builds the sections out of view. */
+private const val WARM_UP_FRAMES = 2
 
 /** Space the title takes above the sections. */
 private val PanoramaTitleHeight = 132.dp

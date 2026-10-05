@@ -77,14 +77,24 @@ android {
     }
 }
 
-// benchmarkRelease (made by the baselineprofile plugin) also gets the fake provider and the adb seed
-// receiver in src/benchmarkRelease, so macrobenchmarks can sync without a real account (T037, T044).
-configurations.matching { it.name == "benchmarkReleaseImplementation" }.configureEach {
+// benchmarkRelease and nonMinifiedRelease (made by the baselineprofile plugin, for macrobenchmarks
+// and Baseline Profile generation) also get the fake provider and the adb seed receiver in
+// src/benchmarkRelease, so they can sync without a real account (T037, T044). They also offer the
+// demo account like debug builds, so a benchmark build is a non-debuggable, profile-compiled app
+// people can try on a phone.
+val benchmarkBuildTypes = setOf("benchmarkRelease", "nonMinifiedRelease")
+android.sourceSets.configureEach {
+    if (name == "debug" || name in benchmarkBuildTypes) kotlin.srcDir("src/demo/kotlin")
+    if (name == "nonMinifiedRelease") kotlin.srcDir("src/benchmarkRelease/kotlin")
+}
+configurations.matching { it.name in benchmarkBuildTypes.map { type -> "${type}Implementation" } }.configureEach {
     dependencies.add(project.dependencies.create(project(":provider:fake")))
 }
 androidComponents {
-    onVariants(selector().withBuildType("benchmarkRelease")) { variant ->
-        variant.sources.manifests.addStaticManifestFile("src/benchmarkRelease/AndroidManifest.xml")
+    onVariants { variant ->
+        if (variant.buildType in benchmarkBuildTypes) {
+            variant.sources.manifests.addStaticManifestFile("src/benchmarkRelease/AndroidManifest.xml")
+        }
     }
 }
 

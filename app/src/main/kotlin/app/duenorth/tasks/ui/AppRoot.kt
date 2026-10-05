@@ -38,17 +38,21 @@ fun AppRoot(viewModel: AppViewModel = hiltViewModel()) {
         )
     }
     Box(Modifier.fillMaxSize().background(MetroTheme.colors.background)) {
-        Crossfade(targetState = state, label = "account gate") { current ->
-            when (current) {
-                AppState.Loading -> Box(Modifier.fillMaxSize())
-                AppState.NoAccount -> AccountScreen(
-                    demoAvailable = viewModel.demoAvailable,
-                    connecting = connecting,
-                    error = error,
-                    isConfigured = viewModel::isConfigured,
-                    onPick = { kind -> viewModel.connect(kind, host()) }
-                )
-                AppState.Connected -> DueNorthNavHost(actions, syncing)
+        // A cold start goes straight from the blank window to the first screen: fading it in would
+        // draw the whole screen through an offscreen layer while the first swipes come in.
+        if (state != AppState.Loading) {
+            Crossfade(targetState = state, label = "account gate") { current ->
+                when (current) {
+                    AppState.Loading -> Box(Modifier.fillMaxSize())
+                    AppState.NoAccount -> AccountScreen(
+                        demoAvailable = viewModel.demoAvailable,
+                        connecting = connecting,
+                        error = error,
+                        isConfigured = viewModel::isConfigured,
+                        onPick = { kind -> viewModel.connect(kind, host()) }
+                    )
+                    AppState.Connected -> DueNorthNavHost(actions, syncing)
+                }
             }
         }
     }
