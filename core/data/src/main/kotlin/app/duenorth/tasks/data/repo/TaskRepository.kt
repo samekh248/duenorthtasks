@@ -5,6 +5,7 @@ import app.duenorth.tasks.data.db.AccountEntity
 import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.db.EntityType
 import app.duenorth.tasks.data.db.Fields
+import app.duenorth.tasks.data.db.ListKey
 import app.duenorth.tasks.data.db.ListSummary
 import app.duenorth.tasks.data.db.OperationKind
 import app.duenorth.tasks.data.db.StepEntity
@@ -55,6 +56,8 @@ class TaskRepository(
     fun listSummaries(): Flow<List<ListSummary>> = lists.observeSummaries()
 
     fun list(localId: String): Flow<TaskListEntity?> = lists.observe(localId)
+
+    fun listKeys(): Flow<List<ListKey>> = lists.observeKeys()
 
     fun openTasks(listId: String): Flow<List<TaskWithList>> = tasks.observeOpenInList(listId)
 

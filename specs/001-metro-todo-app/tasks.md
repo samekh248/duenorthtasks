@@ -168,11 +168,11 @@ flowchart LR
 
 **Independent Test**: spec.md US5.
 
-- [ ] T059 [P] [US5] `ThemePreferences` in DataStore (theme: system / light / dark, default system; accent default magenta)
-- [ ] T060 [US5] Settings "theme" pivot item with a "follow phone / light / dark" choice and `MetroAccentGrid`; live update without restart
-- [ ] T061 [P] [US5] Screenshot tests for three accents in both themes
-- [ ] T062 [US5] Per-list shades: `ListShadeStore` in DataStore (step -3..+3) keyed by provider + remote list id (backed up, survives sign-out and switching back); `AccentShades.kt` computes the seven shades per theme with caption-contrast fallback; "list shade" page with `MetroShadeRow` and live preview, from the tile long-press and list page menu; `LocalAccent` provided per list for tiles, list page and task captions
-- [ ] T063 [P] [US5] Tests: default is step 0, pick and reset, shades follow an app accent change, caption fallback meets 4.5:1 for every accent and step in both themes, key moves from local to remote id after first push, shade survives switching service and back
+- [X] T059 [P] [US5] `ThemePreferences` in DataStore (theme: system / light / dark, default system; accent default magenta)
+- [X] T060 [US5] Settings "theme" pivot item with a "follow phone / light / dark" choice and `MetroAccentGrid`; live update without restart
+- [X] T061 [P] [US5] Screenshot tests for three accents in both themes
+- [X] T062 [US5] Per-list shades: `ListShadeStore` in DataStore (step -3..+3) keyed by provider + remote list id (backed up, survives sign-out and switching back); `AccentShades.kt` computes the seven shades per theme with caption-contrast fallback; "list shade" page with `MetroShadeRow` and live preview, from the tile long-press and list page menu; `LocalAccent` provided per list for tiles, list page and task captions
+- [X] T063 [P] [US5] Tests: default is step 0, pick and reset, shades follow an app accent change, caption fallback meets 4.5:1 for every accent and step in both themes, key moves from local to remote id after first push, shade survives switching service and back
 
 ---
 

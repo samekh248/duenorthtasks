@@ -35,8 +35,14 @@ data class ListSummary(
     val nextTaskTitle: String?
 )
 
+/** A list's ids only, for phone-side display preferences keyed by remote id (list shades). */
+data class ListKey(val localId: String, val remoteId: String?)
+
 @Dao
 interface TaskListDao {
+    @Query("SELECT localId, remoteId FROM task_list WHERE deletedLocally = 0")
+    fun observeKeys(): Flow<List<ListKey>>
+
     @Query(
         """
         SELECT l.localId, l.remoteId, l.title, l.isDefault,
