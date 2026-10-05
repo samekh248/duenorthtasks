@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "TooManyRequests",
+    "message": "Please retry after",
+    "innerError": { "date": "2026-10-04T12:00:00", "request-id": "94fb3b52-452a-4535-a601-69e0a90e3aa2" }
+  }
+}

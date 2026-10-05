@@ -74,6 +74,7 @@ data class TaskPatch(
     val completed: Boolean? = null,
     val important: Boolean? = null,
     val steps: List<StepPatch>? = null,
+    val reopenStatus: String? = null,       // with completed=false: rawStatus to restore (To Do)
 )
 
 data class TaskChangePage(

@@ -143,10 +143,10 @@ flowchart LR
 
 **Independent Test**: spec.md US3; quickstart V6.
 
-- [ ] T050 [P] [US3] Retrofit `GraphTodoApi` + DTOs including `$batch` (research R7)
-- [ ] T051 [US3] `MicrosoftAuth` with MSAL single-account mode, `common` authority, `Tasks.ReadWrite`
-- [ ] T052 [US3] `MicrosoftTodoProvider` mapping (checklistItems <-> steps, importance, deltaLink cursors, raw status preserved)
-- [ ] T053 [P] [US3] MockWebServer fixtures and `MicrosoftTodoProviderContractTest`
+- [X] T050 [P] [US3] Retrofit `GraphTodoApi` + DTOs including `$batch` (research R7)
+- [X] T051 [US3] `MicrosoftAuth` with MSAL single-account mode, `common` authority, `Tasks.ReadWrite`
+- [X] T052 [US3] `MicrosoftTodoProvider` mapping (checklistItems <-> steps, importance, deltaLink cursors, raw status preserved)
+- [X] T053 [P] [US3] MockWebServer fixtures and `MicrosoftTodoProviderContractTest` (contract suite runs against `FakeGraphServer`, a stateful Graph stand-in; real-account captures still to replace the fixtures)
 - [ ] T054 [US3] Importance star in task rows and detail, shown only when `capabilities.importance`
 
 **Checkpoint**: Daily-drivable with a Microsoft account.
