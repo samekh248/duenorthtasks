@@ -1,0 +1,55 @@
+{
+  "kind": "tasks#tasks",
+  "etag": "\"LTEzMjQ5ODQ4OTk\"",
+  "items": [
+    {
+      "kind": "tasks#task",
+      "id": "cGFyZW50LXBhY2s",
+      "etag": "\"LTEzMjQ5ODQ4OTk\"",
+      "title": "Pack for the trip",
+      "updated": "2026-10-03T20:15:07.512Z",
+      "selfLink": "https://www.googleapis.com/tasks/v1/lists/VEdjVzRhTWtUZ2ZqZ2xYQQ/tasks/cGFyZW50LXBhY2s",
+      "position": "00000000000000000000",
+      "notes": "Check the weather first",
+      "status": "needsAction",
+      "due": "2026-10-06T00:00:00.000Z",
+      "links": [],
+      "webViewLink": "https://tasks.google.com/task/cGFyZW50LXBhY2s"
+    },
+    {
+      "kind": "tasks#task",
+      "id": "Y2hpbGQtc2hvZXM",
+      "etag": "\"LTEzMjQ5ODQ5MDA\"",
+      "title": "Shoes",
+      "updated": "2026-10-03T20:15:09.002Z",
+      "parent": "cGFyZW50LXBhY2s",
+      "position": "00000000000000000001",
+      "status": "needsAction",
+      "links": []
+    },
+    {
+      "kind": "tasks#task",
+      "id": "Y2hpbGQtc29ja3M",
+      "etag": "\"LTEzMjQ5ODQ5MDE\"",
+      "title": "Socks",
+      "updated": "2026-10-03T20:15:08.114Z",
+      "parent": "cGFyZW50LXBhY2s",
+      "position": "00000000000000000000",
+      "status": "completed",
+      "completed": "2026-10-03T21:00:00.000Z",
+      "links": []
+    },
+    {
+      "kind": "tasks#task",
+      "id": "ZG9uZS1oaWRkZW4",
+      "etag": "\"LTEzMjQ5ODQ5MDI\"",
+      "title": "Return library books",
+      "updated": "2026-10-01T08:00:00.000Z",
+      "position": "00000000000000000001",
+      "status": "completed",
+      "completed": "2026-10-01T08:00:00.000Z",
+      "hidden": true,
+      "links": [{"type": "email", "description": "Library reminder", "link": "https://mail.google.com/mail/#all/abc"}]
+    }
+  ]
+}
