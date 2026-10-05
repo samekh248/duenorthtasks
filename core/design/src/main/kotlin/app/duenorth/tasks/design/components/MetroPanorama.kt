@@ -1,6 +1,7 @@
 package app.duenorth.tasks.design.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -23,11 +25,15 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
@@ -72,6 +78,8 @@ fun MetroPanorama(
     val colors = MetroTheme.colors
     val type = MetroTheme.typography
     val pageSize = remember(peekWidth) { PeekPageSize(peekWidth) }
+    val defaultNested = PagerDefaults.pageNestedScrollConnection(state, Orientation.Horizontal)
+    val nested = remember(defaultNested) { SidewaysOnly(defaultNested) }
     var warm by remember { mutableStateOf(false) }
     LaunchedEffect(state) {
         // Let the first frames through, then build the sections out of view while nothing moves.
@@ -119,6 +127,7 @@ fun MetroPanorama(
             pageSpacing = PanoramaDefaults.SectionSpacing,
             beyondViewportPageCount = if (warm) (sections.size - 1).coerceAtLeast(0) else 0,
             verticalAlignment = Alignment.Top,
+            pageNestedScrollConnection = nested,
             key = { sections[it].header }
         ) { page ->
             val section = sections[page]
@@ -139,6 +148,25 @@ fun MetroPanorama(
 private class PeekPageSize(private val peek: Dp) : PageSize {
     override fun Density.calculateMainAxisPageSize(availableSpace: Int, pageSpacing: Int): Int =
         (availableSpace - pageSpacing - peek.roundToPx()).coerceAtLeast(0)
+}
+
+/**
+ * The pager's own nested scroll handling, kept to the sideways axis. While the pager rests between
+ * snap points, the default connection hands back the whole vertical delta of a section's list as
+ * consumed. The last section always rests there (it is clamped to the screen's end, short of its
+ * snap point by the peek), so slow drags on "done" never scrolled; only flings did.
+ */
+private class SidewaysOnly(private val pager: NestedScrollConnection) : NestedScrollConnection {
+    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
+        pager.onPreScroll(available.copy(y = 0f), source).copy(y = 0f)
+
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
+        pager.onPostScroll(consumed, available, source)
+
+    override suspend fun onPreFling(available: Velocity): Velocity = pager.onPreFling(available)
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
+        pager.onPostFling(consumed, available)
 }
 
 /** Frames the panorama shows before it builds the sections out of view. */
