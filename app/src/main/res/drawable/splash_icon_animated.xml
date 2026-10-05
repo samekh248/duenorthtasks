@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The splash screen icon (Android 12 and up): "check north" draws itself. The stem grows up
+    with the arrowhead riding on top, the arrowhead leaves a trail of frames that fade, and the
+    check's short stroke appears once the arrowhead has passed it. Frames low enough to cross
+    that stroke are gone before it shows. Everything finishes inside the splash screen's
+    1000 ms, and the splash never waits for it. The last frame is exactly the launcher icon.
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <path
+                android:name="trail0"
+                android:pathData="M46,68 L58,56 L70,68"
+                android:strokeWidth="5.5"
+                android:strokeColor="#FFFFFF"
+                android:strokeAlpha="0"
+                android:strokeLineCap="square"
+                android:strokeLineJoin="miter" />
+            <path
+                android:name="trail1"
+                android:pathData="M46,62 L58,50 L70,62"
+                android:strokeWidth="5.5"
+                android:strokeColor="#FFFFFF"
+                android:strokeAlpha="0"
+                android:strokeLineCap="square"
+                android:strokeLineJoin="miter" />
+            <path
+                android:name="trail2"
+                android:pathData="M46,56 L58,44 L70,56"
+                android:strokeWidth="5.5"
+                android:strokeColor="#FFFFFF"
+                android:strokeAlpha="0"
+                android:strokeLineCap="square"
+                android:strokeLineJoin="miter" />
+            <path
+                android:name="trail3"
+                android:pathData="M46,50 L58,38 L70,50"
+                android:strokeWidth="5.5"
+                android:strokeColor="#FFFFFF"
+                android:strokeAlpha="0"
+                android:strokeLineCap="square"
+                android:strokeLineJoin="miter" />
+            <path
+                android:name="riser"
+                android:pathData="M58,76 L58,32"
+                android:strokeWidth="5.5"
+                android:strokeColor="#FFFFFF"
+                android:strokeLineCap="butt"
+                android:trimPathEnd="0.318" />
+            <path
+                android:name="check"
+                android:pathData="M38.06,56.06 L58,76 L58,32"
+                android:strokeWidth="5.5"
+                android:strokeColor="#FFFFFF"
+                android:strokeAlpha="0"
+                android:strokeLineCap="butt"
+                android:strokeLineJoin="miter"
+                android:trimPathEnd="0.5845" />
+            <group
+                android:name="head"
+                android:translateY="30">
+                <path
+                    android:pathData="M46,44 L58,32 L70,44"
+                    android:strokeWidth="5.5"
+                    android:strokeColor="#FFFFFF"
+                    android:strokeLineCap="square"
+                    android:strokeLineJoin="miter" />
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="head">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="600"
+                android:interpolator="@interpolator/splash_rise"
+                android:propertyName="translateY"
+                android:valueFrom="30"
+                android:valueTo="0"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+    <target android:name="riser">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="600"
+                    android:interpolator="@interpolator/splash_rise"
+                    android:propertyName="trimPathEnd"
+                    android:valueFrom="0.318"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="1"
+                    android:startOffset="198"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="1"
+                    android:valueTo="0"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="check">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="600"
+                    android:interpolator="@interpolator/splash_rise"
+                    android:propertyName="trimPathEnd"
+                    android:valueFrom="0.5845"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="60"
+                    android:startOffset="138"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="trail0">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="1"
+                    android:startOffset="49"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0"
+                    android:valueTo="0.5"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="110"
+                    android:startOffset="50"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0.5"
+                    android:valueTo="0"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="trail1">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="1"
+                    android:startOffset="100"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0"
+                    android:valueTo="0.5"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="69"
+                    android:startOffset="101"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0.5"
+                    android:valueTo="0"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="trail2">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="1"
+                    android:startOffset="160"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0"
+                    android:valueTo="0.5"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="839"
+                    android:startOffset="161"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0.5"
+                    android:valueTo="0"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="trail3">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="1"
+                    android:startOffset="250"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0"
+                    android:valueTo="0.5"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="749"
+                    android:startOffset="251"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0.5"
+                    android:valueTo="0"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>
