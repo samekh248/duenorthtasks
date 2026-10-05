@@ -18,6 +18,7 @@ import app.duenorth.tasks.provider.microsoft.graph.BatchRequestDto
 import app.duenorth.tasks.provider.microsoft.graph.BatchRequestItem
 import app.duenorth.tasks.provider.microsoft.graph.ChecklistItemDto
 import app.duenorth.tasks.provider.microsoft.graph.GRAPH_BASE_URL
+import app.duenorth.tasks.provider.microsoft.graph.GraphPage
 import app.duenorth.tasks.provider.microsoft.graph.GraphTodoApi
 import app.duenorth.tasks.provider.microsoft.graph.MAX_BATCH
 import app.duenorth.tasks.provider.microsoft.graph.TodoTaskDto
@@ -25,9 +26,16 @@ import app.duenorth.tasks.provider.microsoft.graph.allows
 import app.duenorth.tasks.provider.microsoft.graph.errorCode
 import app.duenorth.tasks.provider.microsoft.graph.graphApi
 import app.duenorth.tasks.provider.microsoft.graph.graphCall
+import app.duenorth.tasks.provider.microsoft.graph.graphJson
 import app.duenorth.tasks.provider.microsoft.graph.httpError
 import java.time.Clock
 import java.time.ZoneId
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.HttpUrl
@@ -80,18 +88,53 @@ class MicrosoftTodoProvider internal constructor(
     override suspend fun deleteList(id: String) = graphCall(id) { api.deleteList(id) }
 
     override suspend fun getTaskChanges(listId: String, cursor: String?): TaskChangePage {
+        val round = rounds.getOrPut(listId) { DeltaRound() }
+        synchronized(round) {
+            // A new round starts from scratch or from a stored delta link; anything else continues one.
+            if (cursor == null || cursor != round.handedOut) round.reset()
+            if (cursor != null && !round.followed.add(cursor) || round.followed.size > MAX_PAGES) {
+                round.reset()
+                throw ProviderError.Transient("Microsoft To Do kept paging list $listId; trying again later")
+            }
+        }
         val page = graphCall(listId, listId = listId) {
             if (cursor == null) api.taskDelta(listId) else api.taskDeltaPage(checkedLink(cursor, listId))
         }
+        synchronized(round) {
+            val signature = page.value.map { it.id to it.etag }
+            // Same items again behind a fresh link: Graph is going round in circles.
+            if (page.nextLink != null && signature.isNotEmpty() && signature == round.lastPage) {
+                round.reset()
+                throw ProviderError.Transient("Microsoft To Do repeated a page of list $listId; trying again later")
+            }
+            round.lastPage = signature
+            round.handedOut = page.nextLink
+        }
         val (removed, live) = page.value.partition { it.removed != null }
+        val steps = missingSteps(listId, live)
         return TaskChangePage(
-            changed = live.map { it.toRemote(listId, stepsOf(listId, it)) },
+            changed = live.map { it.toRemote(listId, it.checklistItems ?: steps[it.id].orEmpty()) },
             deletedIds = removed.map { it.id },
             nextCursor = page.nextLink ?: page.deltaLink
                 ?: throw ProviderError.Transient("Delta response for list $listId had no next or delta link"),
             hasMore = page.nextLink != null
         )
     }
+
+    /** Links followed in the current delta round of one list, so a page that repeats cannot loop sync forever. */
+    private class DeltaRound {
+        val followed = mutableSetOf<String>()
+        var handedOut: String? = null
+        var lastPage: List<Pair<String, String?>>? = null
+
+        fun reset() {
+            followed.clear()
+            handedOut = null
+            lastPage = null
+        }
+    }
+
+    private val rounds = ConcurrentHashMap<String, DeltaRound>()
 
     override suspend fun createTask(listId: String, draft: TaskDraft): RemoteTask {
         val created = graphCall(listId) { api.createTask(listId, draft.toCreateBody(zone())) }
@@ -126,6 +169,58 @@ class MicrosoftTodoProvider internal constructor(
     /** Checklist items of [task], fetched separately when the response did not expand them. */
     private suspend fun stepsOf(listId: String, task: TodoTaskDto): List<ChecklistItemDto> =
         task.checklistItems ?: graphCall(task.id) { api.checklistItems(listId, task.id).value }
+
+    /**
+     * Checklist items for the [tasks] that arrived without them. Graph does not always honor
+     * `$expand` on delta pages, and one request per task made a first sync crawl, so they are read
+     * [MAX_BATCH] tasks per `$batch` call, a few calls at a time.
+     */
+    private suspend fun missingSteps(listId: String, tasks: List<TodoTaskDto>): Map<String, List<ChecklistItemDto>> {
+        val ids = tasks.filter { it.checklistItems == null }.map { it.id }
+        if (ids.isEmpty()) return emptyMap()
+        val gate = Semaphore(PARALLEL_BATCHES)
+        return coroutineScope {
+            ids.chunked(MAX_BATCH).map { chunk ->
+                async { gate.withPermit { checklistBatch(listId, chunk) } }
+            }.awaitAll().fold(emptyMap()) { all, part -> all + part }
+        }
+    }
+
+    private suspend fun checklistBatch(listId: String, taskIds: List<String>): Map<String, List<ChecklistItemDto>> {
+        val requests = taskIds.mapIndexed { i, taskId ->
+            BatchRequestItem(
+                id = "${i + 1}",
+                method = "GET",
+                url = "/me/todo/lists/${listId.urlSegment()}/tasks/${taskId.urlSegment()}/checklistItems"
+            )
+        }
+        val response = graphCall(listId) { api.batch(BatchRequestDto(requests)) }
+        val byId = response.responses.associateBy { it.id }
+        return taskIds.mapIndexed { i, taskId ->
+            val item = byId["${i + 1}"]
+            val page = item?.takeIf { it.status in 200..299 }?.body?.let {
+                runCatching {
+                    graphJson.decodeFromJsonElement(GraphPage.serializer(ChecklistItemDto.serializer()), it)
+                }.getOrNull()
+            }
+            val steps = when {
+                // A task deleted since the delta page was read has no steps to show.
+                item?.status == 404 -> emptyList()
+                // Throttled or failing: stop here so the sync backs off instead of piling on.
+                item != null && item.status !in 200..299 -> throw httpError(
+                    status = item.status,
+                    retryAfter = item.headers?.entries?.firstOrNull { it.key.equals("Retry-After", true) }?.value,
+                    code = item.body?.let { errorCode(it.toString()) },
+                    id = taskId,
+                    listId = null
+                )
+                // Missing or paged answers: ask for that one task directly.
+                page == null || page.nextLink != null -> graphCall(taskId) { api.checklistItems(listId, taskId).value }
+                else -> page.value
+            }
+            taskId to steps
+        }.toMap()
+    }
 
     /** Sends step changes as `$batch` calls of up to [MAX_BATCH] requests each, in order. */
     private suspend fun applySteps(listId: String, taskId: String, steps: List<StepPatch>) {
@@ -199,6 +294,12 @@ class MicrosoftTodoProvider internal constructor(
 
     companion object {
         private val JSON_HEADERS = mapOf("Content-Type" to "application/json")
+
+        /** More pages than any real list needs; past this a delta round is treated as stuck. */
+        private const val MAX_PAGES = 500
+
+        /** `$batch` calls in flight at once when reading steps; Graph throttles bursts beyond a few. */
+        private const val PARALLEL_BATCHES = 4
 
         /** The provider the app binds for [app.duenorth.tasks.provider.api.ProviderKind.MICROSOFT]. */
         fun create(auth: MicrosoftAccountAuth): MicrosoftTodoProvider = create(auth, GRAPH_BASE_URL.toHttpUrl())

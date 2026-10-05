@@ -4,6 +4,7 @@ import kotlinx.serialization.json.JsonObject
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -36,12 +37,16 @@ internal interface GraphTodoApi {
     @GET("me/todo/lists/{listId}/tasks/delta")
     suspend fun taskDelta(
         @Path("listId") listId: String,
-        @Query("\$expand") expand: String = "checklistItems"
+        @Query("\$expand") expand: String = "checklistItems",
+        @Header("Prefer") prefer: String = PREFER_LARGE_PAGES
     ): GraphPage<TodoTaskDto>
 
     /** Follows an `@odata.nextLink` or a stored `@odata.deltaLink`. */
     @GET
-    suspend fun taskDeltaPage(@Url url: String): GraphPage<TodoTaskDto>
+    suspend fun taskDeltaPage(
+        @Url url: String,
+        @Header("Prefer") prefer: String = PREFER_LARGE_PAGES
+    ): GraphPage<TodoTaskDto>
 
     @GET("me/todo/lists/{listId}/tasks/{taskId}")
     suspend fun task(
@@ -72,3 +77,9 @@ internal interface GraphTodoApi {
     @POST("\$batch")
     suspend fun batch(@Body body: BatchRequestDto): BatchResponseDto
 }
+
+/**
+ * Asks for bigger delta pages than Graph's small default, so a first sync takes a few round trips
+ * instead of dozens. Graph may still send fewer; paging handles that.
+ */
+internal const val PREFER_LARGE_PAGES = "odata.maxpagesize=200"
