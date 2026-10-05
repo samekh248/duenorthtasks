@@ -45,7 +45,10 @@ class SyncEngine(
     private val store = SyncStore(db, clock, newId, journal)
     private val running = MutableStateFlow(false)
 
-    /** True while a sync runs: the only thing the UI shows for it (Metro progress dots). */
+    /**
+     * True while a sync runs: the only thing the UI shows for it (Metro progress dots). A first
+     * sync turns it off once open tasks are in, while completed ones keep arriving behind it.
+     */
     val isSyncing: StateFlow<Boolean> = running.asStateFlow()
 
     /** Runs one sync. Concurrent calls wait for the one in progress and then run their own. */
@@ -70,7 +73,8 @@ class SyncEngine(
         return try {
             // Pull first: a pending edit only goes out if it is newer than what changed elsewhere
             // (FR-023), and creates whose answer was lost are recognised before being retried.
-            Puller(store, provider, holds, stillConnected).pullAll()
+            // Once open tasks are in, the app is usable: the rest of a first sync carries on quietly.
+            Puller(store, provider, holds, stillConnected) { running.value = false }.pullAll()
             if (!stillConnected()) return SyncResult.NoAccount
             val waited = Pusher(store, provider).pushAll()
             store.accounts.get()?.takeIf { it.provider == account.provider }?.let {

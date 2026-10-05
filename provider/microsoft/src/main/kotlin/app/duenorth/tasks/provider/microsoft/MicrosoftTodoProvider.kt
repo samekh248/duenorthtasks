@@ -16,6 +16,7 @@ import app.duenorth.tasks.provider.api.TaskProvider
 import app.duenorth.tasks.provider.microsoft.auth.MicrosoftAccountAuth
 import app.duenorth.tasks.provider.microsoft.graph.BatchRequestDto
 import app.duenorth.tasks.provider.microsoft.graph.BatchRequestItem
+import app.duenorth.tasks.provider.microsoft.graph.BatchResponseItem
 import app.duenorth.tasks.provider.microsoft.graph.ChecklistItemDto
 import app.duenorth.tasks.provider.microsoft.graph.GRAPH_BASE_URL
 import app.duenorth.tasks.provider.microsoft.graph.GraphPage
@@ -28,12 +29,16 @@ import app.duenorth.tasks.provider.microsoft.graph.graphApi
 import app.duenorth.tasks.provider.microsoft.graph.graphCall
 import app.duenorth.tasks.provider.microsoft.graph.graphJson
 import app.duenorth.tasks.provider.microsoft.graph.httpError
+import app.duenorth.tasks.provider.microsoft.graph.parseRetryAfter
 import java.time.Clock
 import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.buildJsonObject
@@ -111,7 +116,9 @@ class MicrosoftTodoProvider internal constructor(
             round.handedOut = page.nextLink
         }
         val (removed, live) = page.value.partition { it.removed != null }
-        val steps = missingSteps(listId, live)
+        val steps = stepsFor(listId, live)
+        // Steps read for this round are only good until it ends; later rounds bring few changes.
+        if (page.nextLink == null) stepCaches.remove(listId)
         return TaskChangePage(
             changed = live.map { it.toRemote(listId, it.checklistItems ?: steps[it.id].orEmpty()) },
             deletedIds = removed.map { it.id },
@@ -135,6 +142,75 @@ class MicrosoftTodoProvider internal constructor(
     }
 
     private val rounds = ConcurrentHashMap<String, DeltaRound>()
+
+    override suspend fun getOpenTasks(listId: String): List<RemoteTask>? {
+        // If Graph will not filter this list, the full fetch alone still gets everything.
+        val open = try {
+            readTasks(listId, filter = OPEN)
+        } catch (_: ProviderError.Transient) {
+            return null
+        }
+        stepCaches.getValue(listId).openRead = true
+        val steps = missingSteps(listId, open)
+        return open.map { it.toRemote(listId, it.checklistItems ?: steps[it.id].orEmpty()) }
+    }
+
+    /**
+     * Steps of one list's tasks as last read through the list endpoint, keyed by task id with the
+     * etag they were read at, so a delta round can reuse them instead of asking task by task.
+     */
+    private class StepCache {
+        val steps = ConcurrentHashMap<String, Pair<String?, List<ChecklistItemDto>>>()
+
+        @Volatile var listRead = false
+
+        /** Open tasks were read already ([getOpenTasks]), so a full read needs only completed ones. */
+        @Volatile var openRead = false
+
+        fun remember(tasks: List<TodoTaskDto>) = tasks.forEach { task ->
+            task.checklistItems?.let { steps[task.id] = task.etag to it }
+        }
+
+        fun lookup(task: TodoTaskDto): List<ChecklistItemDto>? =
+            steps[task.id]?.takeIf { it.first == task.etag }?.second
+    }
+
+    private val stepCaches = ConcurrentHashMap<String, StepCache>()
+
+    /** Every task of [listId] matching [filter], following pages; their steps are kept for the delta round. */
+    private suspend fun readTasks(listId: String, filter: String?): List<TodoTaskDto> = graphCall(listId) {
+        var page = api.tasks(listId, filter)
+        val tasks = page.value.toMutableList()
+        while (page.nextLink != null) {
+            page = api.tasksPage(checkedLink(page.nextLink!!, listId = null))
+            tasks += page.value
+        }
+        stepCaches.getOrPut(listId) { StepCache() }.remember(tasks)
+        tasks
+    }
+
+    /**
+     * Steps for delta [tasks] that arrived without them (Graph does not expand them on delta).
+     * Ones already read this round are reused; when many are missing, as on a first sync, the
+     * whole list is read once with its steps (100 tasks a request); the few left go by `$batch`.
+     */
+    private suspend fun stepsFor(listId: String, tasks: List<TodoTaskDto>): Map<String, List<ChecklistItemDto>> {
+        val bare = tasks.filter { it.checklistItems == null }
+        if (bare.isEmpty()) return emptyMap()
+        val cache = stepCaches.getOrPut(listId) { StepCache() }
+        var missing = bare.filter { cache.lookup(it) == null }
+        if (missing.size > MAX_BATCH && !cache.listRead) {
+            cache.listRead = true
+            // Best effort: whatever this read cannot answer is fetched by $batch below.
+            try {
+                readTasks(listId, filter = if (cache.openRead) COMPLETED else null)
+            } catch (_: ProviderError.Transient) {
+            }
+            missing = bare.filter { cache.lookup(it) == null }
+        }
+        val fetched = missingSteps(listId, missing)
+        return bare.associate { it.id to (cache.lookup(it) ?: fetched[it.id].orEmpty()) }
+    }
 
     override suspend fun createTask(listId: String, draft: TaskDraft): RemoteTask {
         val created = graphCall(listId) { api.createTask(listId, draft.toCreateBody(zone())) }
@@ -171,9 +247,8 @@ class MicrosoftTodoProvider internal constructor(
         task.checklistItems ?: graphCall(task.id) { api.checklistItems(listId, task.id).value }
 
     /**
-     * Checklist items for the [tasks] that arrived without them. Graph does not always honor
-     * `$expand` on delta pages, and one request per task made a first sync crawl, so they are read
-     * [MAX_BATCH] tasks per `$batch` call, a few calls at a time.
+     * Checklist items for the [tasks] that arrived without them, [MAX_BATCH] tasks per `$batch`
+     * call. One request per task made a first sync crawl.
      */
     private suspend fun missingSteps(listId: String, tasks: List<TodoTaskDto>): Map<String, List<ChecklistItemDto>> {
         val ids = tasks.filter { it.checklistItems == null }.map { it.id }
@@ -187,40 +262,61 @@ class MicrosoftTodoProvider internal constructor(
     }
 
     private suspend fun checklistBatch(listId: String, taskIds: List<String>): Map<String, List<ChecklistItemDto>> {
-        val requests = taskIds.mapIndexed { i, taskId ->
-            BatchRequestItem(
-                id = "${i + 1}",
-                method = "GET",
-                url = "/me/todo/lists/${listId.urlSegment()}/tasks/${taskId.urlSegment()}/checklistItems"
-            )
-        }
-        val response = graphCall(listId) { api.batch(BatchRequestDto(requests)) }
-        val byId = response.responses.associateBy { it.id }
-        return taskIds.mapIndexed { i, taskId ->
-            val item = byId["${i + 1}"]
-            val page = item?.takeIf { it.status in 200..299 }?.body?.let {
-                runCatching {
-                    graphJson.decodeFromJsonElement(GraphPage.serializer(ChecklistItemDto.serializer()), it)
-                }.getOrNull()
-            }
-            val steps = when {
-                // A task deleted since the delta page was read has no steps to show.
-                item?.status == 404 -> emptyList()
-                // Throttled or failing: stop here so the sync backs off instead of piling on.
-                item != null && item.status !in 200..299 -> throw httpError(
-                    status = item.status,
-                    retryAfter = item.headers?.entries?.firstOrNull { it.key.equals("Retry-After", true) }?.value,
-                    code = item.body?.let { errorCode(it.toString()) },
-                    id = taskId,
-                    listId = null
+        val result = mutableMapOf<String, List<ChecklistItemDto>>()
+        var pending = taskIds
+        var attempt = 0
+        while (true) {
+            val requests = pending.mapIndexed { i, taskId ->
+                BatchRequestItem(
+                    id = "${i + 1}",
+                    method = "GET",
+                    url = "/me/todo/lists/${listId.urlSegment()}/tasks/${taskId.urlSegment()}/checklistItems"
                 )
-                // Missing or paged answers: ask for that one task directly.
-                page == null || page.nextLink != null -> graphCall(taskId) { api.checklistItems(listId, taskId).value }
-                else -> page.value
             }
-            taskId to steps
-        }.toMap()
+            val response = graphCall(listId) { api.batch(BatchRequestDto(requests)) }
+            val byId = response.responses.associateBy { it.id }
+            val throttled = mutableListOf<Pair<String, BatchResponseItem>>()
+            pending.forEachIndexed { i, taskId ->
+                val item = byId["${i + 1}"]
+                val page = item?.takeIf { it.status in 200..299 }?.body?.let {
+                    runCatching {
+                        graphJson.decodeFromJsonElement(GraphPage.serializer(ChecklistItemDto.serializer()), it)
+                    }.getOrNull()
+                }
+                when {
+                    // A task deleted since the delta page was read has no steps to show.
+                    item?.status == 404 -> result[taskId] = emptyList()
+                    // To Do runs only a few requests per mailbox at once and turns the rest of a batch
+                    // away; those are asked again after a pause rather than failing the whole sync.
+                    item != null && (item.status == 429 || item.status == 503) -> throttled += taskId to item
+                    item != null && item.status !in 200..299 -> throw item.toError(taskId)
+                    // Missing or paged answers: ask for that one task directly.
+                    page == null || page.nextLink != null ->
+                        result[taskId] = graphCall(taskId) { api.checklistItems(listId, taskId).value }
+                    else -> result[taskId] = page.value
+                }
+            }
+            if (throttled.isEmpty()) return result
+            // Past a few rounds, stop so the sync backs off as a whole.
+            if (++attempt > BATCH_RETRIES) throttled.first().let { (taskId, item) -> throw item.toError(taskId) }
+            val wait = throttled.maxOf { (_, item) -> parseRetryAfter(item.retryAfter()) }
+            delay(wait.coerceIn(MIN_BATCH_PAUSE, MAX_BATCH_PAUSE))
+            pending = throttled.map { it.first }
+        }
     }
+
+    private fun BatchResponseItem.retryAfter(): String? =
+        headers?.entries?.firstOrNull { it.key.equals("Retry-After", true) }?.value
+
+    private fun BatchResponseItem.toError(id: String): ProviderError = httpError(
+        status = status,
+        retryAfter = retryAfter(),
+        code = body?.let {
+            errorCode(it.toString())
+        },
+        id = id,
+        listId = null
+    )
 
     /** Sends step changes as `$batch` calls of up to [MAX_BATCH] requests each, in order. */
     private suspend fun applySteps(listId: String, taskId: String, steps: List<StepPatch>) {
@@ -294,12 +390,19 @@ class MicrosoftTodoProvider internal constructor(
 
     companion object {
         private val JSON_HEADERS = mapOf("Content-Type" to "application/json")
+        private const val OPEN = "status ne 'completed'"
+        private const val COMPLETED = "status eq 'completed'"
 
         /** More pages than any real list needs; past this a delta round is treated as stuck. */
         private const val MAX_PAGES = 500
 
-        /** `$batch` calls in flight at once when reading steps; Graph throttles bursts beyond a few. */
-        private const val PARALLEL_BATCHES = 4
+        /** `$batch` calls in flight at once when reading steps; To Do serves about four requests per mailbox at once. */
+        private const val PARALLEL_BATCHES = 1
+
+        /** Times a throttled part of a step batch is asked again before the sync backs off. */
+        private const val BATCH_RETRIES = 3
+        private val MIN_BATCH_PAUSE = 500.milliseconds
+        private val MAX_BATCH_PAUSE = 30.seconds
 
         /** The provider the app binds for [app.duenorth.tasks.provider.api.ProviderKind.MICROSOFT]. */
         fun create(auth: MicrosoftAccountAuth): MicrosoftTodoProvider = create(auth, GRAPH_BASE_URL.toHttpUrl())

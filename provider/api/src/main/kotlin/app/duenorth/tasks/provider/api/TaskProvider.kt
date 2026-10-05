@@ -27,6 +27,13 @@ interface TaskProvider {
     /** Changes in list [listId] since [cursor]; a null cursor means a full fetch. Call again while [TaskChangePage.hasMore]. */
     suspend fun getTaskChanges(listId: String, cursor: String?): TaskChangePage
 
+    /**
+     * Every task in list [listId] that is not completed, with its steps, or null when the service
+     * cannot filter by status. Lets a first sync show what matters before the full history arrives;
+     * the full fetch through [getTaskChanges] still follows and stays the source of truth.
+     */
+    suspend fun getOpenTasks(listId: String): List<RemoteTask>? = null
+
     suspend fun createTask(listId: String, draft: TaskDraft): RemoteTask
 
     /** Sends only the non-null fields of [patch] (PATCH semantics, FR-024). */

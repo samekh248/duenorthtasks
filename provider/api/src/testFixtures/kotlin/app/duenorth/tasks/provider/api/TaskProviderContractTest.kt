@@ -153,6 +153,21 @@ abstract class TaskProviderContractTest {
     }
 
     @Test
+    fun openTasksLeaveOutCompletedOnesAndKeepSteps() = runTest {
+        val provider = newProvider()
+        val list = provider.createList("Errands")
+        val open = provider.createTask(list.id, TaskDraft("Pack", steps = listOf(StepDraft("Socks"))))
+        val done = provider.createTask(list.id, TaskDraft("Old"))
+        provider.updateTask(list.id, done.id, TaskPatch(completed = true))
+
+        // Optional: a provider that cannot filter by status returns null and is fetched in full.
+        val tasks = provider.getOpenTasks(list.id) ?: return@runTest
+
+        assertEquals(listOf(open.id), tasks.map { it.id })
+        assertEquals(listOf("Socks"), tasks.single().steps.map { it.title })
+    }
+
+    @Test
     fun missingTaskIsNotFound() = runTest {
         val provider = newProvider()
         val list = provider.createList("Errands")

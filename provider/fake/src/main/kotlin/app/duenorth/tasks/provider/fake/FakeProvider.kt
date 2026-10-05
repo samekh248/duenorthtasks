@@ -117,6 +117,11 @@ class FakeProvider(
         TaskChangePage(page.map { it.task }, deleted, "v:$upTo", hasMore)
     }
 
+    override suspend fun getOpenTasks(listId: String): List<RemoteTask> = call("getOpenTasks") {
+        if (listId !in lists) throw ProviderError.NotFound(listId)
+        tasks.values.map { it.task }.filter { it.listId == listId && !it.completed }
+    }
+
     override suspend fun createTask(listId: String, draft: TaskDraft): RemoteTask = call("createTask") {
         if (listId !in lists) throw ProviderError.NotFound(listId)
         val task = RemoteTask(
