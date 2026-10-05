@@ -3,9 +3,12 @@ package app.duenorth.tasks.ui.home
 import android.app.Application
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
@@ -20,12 +23,14 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.DpSize
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
@@ -154,6 +159,31 @@ class HomeFlowTest {
         compose.onNode(hasText("mark important")).performClick()
         waitFor(hasContentDescription("important"))
         assertTrue(runBlocking { tasks.task(task.localId).first()!!.important })
+    }
+
+    /** T064: every tap target on home says what it is to TalkBack and is at least 48dp square. */
+    @Test
+    fun everyTapTargetIsLabelledAndAtLeast48dp() {
+        add("Call the vet")
+        compose.onNode(hasTestTag("today")).performTouchInput { swipeLeft() }
+        waitFor(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "1 open"))
+        // The check box names its task; the list row reads its count after its name.
+        compose.onNode(isToggleable() and hasContentDescription("Call the vet")).assertExists()
+
+        val targets = compose.onAllNodes(hasClickAction() or isToggleable()).fetchSemanticsNodes()
+        assertTrue(targets.size > 5)
+        for (node in targets) {
+            val config = node.config
+            val label = config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
+                config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } +
+                listOfNotNull(config.getOrNull(SemanticsProperties.EditableText)?.text)
+            assertTrue("unlabelled tap target ${node.id}", label.any { it.isNotBlank() })
+            val size = with(node.layoutInfo.density) { DpSize(node.size.width.toDp(), node.size.height.toDp()) }
+            assertTrue(
+                "$label is $size",
+                size.width >= MetroDimens.TouchTarget && size.height >= MetroDimens.TouchTarget
+            )
+        }
     }
 
     /** True while sync would still be waiting on [listId]. */

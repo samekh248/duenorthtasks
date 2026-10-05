@@ -1,7 +1,6 @@
 package app.duenorth.tasks.design.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -70,7 +70,12 @@ fun MetroPivot(
                         type.header,
                         Modifier
                             .graphicsLayer { alpha = if (position == 0) 1f else INACTIVE_HEADER_ALPHA }
-                            .clickable(interactionSource = null, indication = null, role = Role.Tab) {
+                            .selectable(
+                                selected = position == 0,
+                                interactionSource = null,
+                                indication = null,
+                                role = Role.Tab
+                            ) {
                                 scope.launch { state.animateScrollToPage(index) }
                             },
                         maxLines = 1,

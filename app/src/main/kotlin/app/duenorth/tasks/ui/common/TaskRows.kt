@@ -121,7 +121,7 @@ fun TaskRow(
             caption = row.caption,
             captionColor = if (row.overdue) MetroTheme.colors.overdue else listAccent(row.listId).text,
             strikethrough = row.completed,
-            leading = { MetroCheckBox(checked = row.completed, onCheckedChange = onToggle) },
+            leading = { MetroCheckBox(checked = row.completed, onCheckedChange = onToggle, label = row.title) },
             trailing = if (row.important) ({ ImportantStar() }) else null,
             onClick = onOpen,
             onLongClick = if (menuItems.isEmpty()) null else ({ menu = true }),

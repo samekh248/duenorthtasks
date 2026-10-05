@@ -30,6 +30,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -363,11 +366,18 @@ private fun ListRow(
                     indication = null,
                     onLongClick = { menu = true },
                     onClick = onOpen
-                ),
+                )
+                // TalkBack reads the name first, then "3 open" instead of a bare number from the tile.
+                .semantics { stateDescription = "${list.openCount} open" },
             horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
         ) {
             val shade = listAccent(list.id)
-            MetroListTile(count = list.openCount, fill = shade.fill, onFill = shade.onFill)
+            MetroListTile(
+                count = list.openCount,
+                modifier = Modifier.clearAndSetSemantics {},
+                fill = shade.fill,
+                onFill = shade.onFill
+            )
             Column(Modifier.weight(1f)) {
                 MetroText(list.title, MetroTheme.typography.listName, maxLines = 1)
                 MetroText(
