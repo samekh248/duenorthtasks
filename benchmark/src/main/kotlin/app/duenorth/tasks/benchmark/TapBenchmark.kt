@@ -28,7 +28,9 @@ class TapBenchmark {
         packageName = TARGET_PACKAGE,
         metrics = listOf(
             TraceSectionMetric(TICK_SECTION, TraceSectionMetric.Mode.Max),
-            TraceSectionMetric(TICK_SECTION, TraceSectionMetric.Mode.Count)
+            TraceSectionMetric(TICK_SECTION, TraceSectionMetric.Mode.Count),
+            // How many taps reached the check box's handler, to tell a missed tap from a lost tick.
+            TraceSectionMetric(TOGGLE_SECTION, TraceSectionMetric.Mode.Count)
         ),
         compilationMode = CompilationMode.Partial(),
         startupMode = StartupMode.WARM,
@@ -66,6 +68,9 @@ class TapBenchmark {
     private companion object {
         /** Matches TICK_TRACE_SECTION in core:design's MetroCheckBox. */
         const val TICK_SECTION = "MetroCheckBox tick"
+
+        /** Matches TOGGLE_TRACE_SECTION in core:design's MetroCheckBox. */
+        const val TOGGLE_SECTION = "MetroCheckBox toggle"
         const val TASKS = 200
         const val TAPS = 5
         const val TIMEOUT_MS = 10_000L
