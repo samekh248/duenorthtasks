@@ -52,8 +52,14 @@ fun MetroCheckBox(
             interactionSource = null,
             indication = null,
             onValueChange = { value ->
-                tick.begin(value)
-                onCheckedChange(value)
+                // The handler's own time, and a count of taps the tick sections can be matched to.
+                Trace.beginSection(TOGGLE_TRACE_SECTION)
+                try {
+                    tick.begin(value)
+                    onCheckedChange(value)
+                } finally {
+                    Trace.endSection()
+                }
             }
         )
     } else {
@@ -110,3 +116,6 @@ private class TickTrace {
 
 /** The trace section [MetroCheckBox] writes per tap; the benchmark module matches this name. */
 const val TICK_TRACE_SECTION = "MetroCheckBox tick"
+
+/** The synchronous section around the tap handler itself. */
+const val TOGGLE_TRACE_SECTION = "MetroCheckBox toggle"
