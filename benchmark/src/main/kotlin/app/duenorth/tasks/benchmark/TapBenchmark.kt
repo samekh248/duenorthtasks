@@ -2,11 +2,13 @@ package app.duenorth.tasks.benchmark
 
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.ExperimentalMetricApi
+import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.Until
 import org.junit.Rule
 import org.junit.Test
@@ -39,14 +41,32 @@ class TapBenchmark {
             pressHome()
             startActivityAndWait()
             waitForHome()
+            // Let the panorama finish building its other sections, which refreshes the tree.
+            device.waitForIdle()
         }
     ) {
         repeat(TAPS) {
-            val box = device.wait(Until.findObject(By.checkable(true).checked(false)), TIMEOUT_MS)
-                ?: error("No open task to tick")
-            box.click()
+            tickOpenTask()
             device.waitForIdle()
         }
+    }
+
+    /**
+     * Taps the first unticked box. A sync or the row fade can rebuild the row between finding the
+     * box and tapping it, so a stale box is looked up again rather than failing the run.
+     */
+    private fun MacrobenchmarkScope.tickOpenTask() {
+        repeat(ATTEMPTS) {
+            val box = device.wait(Until.findObject(By.checkable(true).checked(false)), TIMEOUT_MS)
+                ?: error("No open task to tick")
+            try {
+                box.click()
+                return
+            } catch (_: StaleObjectException) {
+                device.waitForIdle()
+            }
+        }
+        error("The check box kept going stale before it could be tapped")
     }
 
     private companion object {
@@ -55,5 +75,6 @@ class TapBenchmark {
         const val TASKS = 200
         const val TAPS = 5
         const val TIMEOUT_MS = 10_000L
+        const val ATTEMPTS = 3
     }
 }
