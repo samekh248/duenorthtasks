@@ -50,17 +50,17 @@ class TapBenchmark {
     }
 
     /**
-     * Taps the first unticked box. Looked up fresh at tap time (UiObject, not UiObject2): a
-     * UiObject2 found a moment earlier went stale on every CI run before it could be tapped.
+     * Taps the first unticked box at the centre of where it is on screen right now. Neither a
+     * cached UiObject2 (stale on every CI run) nor UiObject.click() (which waits for an
+     * accessibility event and reported failure every time) held up, so this reads the bounds and
+     * taps the screen directly. Whether the tap landed is what the trace section measures: no
+     * ticks means no "MetroCheckBox tick" sections, which the budget check reports as missing.
      */
     private fun MacrobenchmarkScope.tickOpenTask() {
-        repeat(ATTEMPTS) {
-            val box = device.findObject(UiSelector().checkable(true).checked(false))
-            check(box.waitForExists(TIMEOUT_MS)) { "No open task to tick" }
-            if (box.click()) return
-            device.waitForIdle()
-        }
-        error("Couldn't tap an open task's check box")
+        val box = device.findObject(UiSelector().checkable(true).checked(false))
+        check(box.waitForExists(TIMEOUT_MS)) { "No open task to tick" }
+        val bounds = box.visibleBounds
+        device.click(bounds.centerX(), bounds.centerY())
     }
 
     private companion object {
@@ -69,6 +69,5 @@ class TapBenchmark {
         const val TASKS = 200
         const val TAPS = 5
         const val TIMEOUT_MS = 10_000L
-        const val ATTEMPTS = 3
     }
 }
