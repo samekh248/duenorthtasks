@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.baselineprofile)
+    alias(libs.plugins.roborazzi)
 }
 
 // Client IDs come from local.properties or CI secrets, never from git (constitution, Technical Constraints).
@@ -36,6 +37,8 @@ android {
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${secret("google.webClientId")}\"")
         buildConfigField("String", "MSAL_CLIENT_ID", "\"${secret("msal.clientId")}\"")
         buildConfigField("String", "MSAL_SIGNATURE_HASH", "\"${secret("msal.signatureHash")}\"")
+        // Path of the MSAL sign-in redirect activity declared by :provider:microsoft.
+        manifestPlaceholders["msalSignatureHash"] = secret("msal.signatureHash")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -58,6 +61,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        // Robolectric downloads android-all from the canonical Maven Central host.
+        unitTests.all { it.systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2") }
     }
 
     lint {
@@ -91,6 +100,9 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.work.runtime)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.navigation.compose)
+    implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.profileinstaller)
@@ -101,4 +113,12 @@ dependencies {
     baselineProfile(project(":benchmark"))
 
     testImplementation(libs.junit4)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

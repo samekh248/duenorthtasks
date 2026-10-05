@@ -51,7 +51,13 @@ data class TaskPatch(
     val dueDate: Patch<LocalDate>? = null,
     val completed: Boolean? = null,
     val important: Boolean? = null,
-    val steps: List<StepPatch>? = null
+    val steps: List<StepPatch>? = null,
+    /**
+     * With `completed = false`: the provider status to restore, i.e. the [RemoteTask.rawStatus]
+     * the task had before it was completed. Lets To Do tasks go back to "in progress" and friends
+     * instead of "not started". Ignored by providers with a plain done flag.
+     */
+    val reopenStatus: String? = null
 ) {
     val isEmpty: Boolean
         get() = title == null && notes == null && dueDate == null && completed == null && important == null &&

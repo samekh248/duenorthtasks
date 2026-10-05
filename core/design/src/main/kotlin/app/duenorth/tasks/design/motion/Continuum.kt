@@ -59,7 +59,7 @@ fun Modifier.continuumSource(state: ContinuumState, key: Any): Modifier = this.g
 /** For the header of the page being opened: it drops in from where the item flew to. */
 fun Modifier.continuumTarget(scope: AnimatedVisibilityScope): Modifier = this.composed {
     val p by scope.transition.animateFloat(
-        transitionSpec = { tween(TURNSTILE_MS, easing = MetroEasing) },
+        transitionSpec = { tween(TURNSTILE_MS, delayMillis = TURNSTILE_MS, easing = MetroEasing) },
         label = "continuum"
     ) { state -> if (state == EnterExitState.Visible) 1f else 0f }
     Modifier.graphicsLayer {

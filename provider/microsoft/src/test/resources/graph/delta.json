@@ -1,0 +1,23 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#Collection(todoTask)",
+  "@odata.deltaLink": "BASE_URLme/todo/lists/AAMkADIyAAAhrbPWAAA=/tasks/delta?$deltatoken=ki-Ow8ZLz4bFQLzFLCpXpnXwJFSAiqvqhdvNHvW2QjLp",
+  "value": [
+    {
+      "@odata.etag": "W/\"xzyPKP0BiUGgld+lMKXwbQAAgdhkVw==\"",
+      "importance": "normal",
+      "isReminderOn": false,
+      "status": "completed",
+      "title": "Return library books",
+      "createdDateTime": "2026-10-01T22:15:14.6409186Z",
+      "lastModifiedDateTime": "2026-10-04T08:41:52.9061247Z",
+      "id": "AlMKXwbQAAAJws6wcAAAB=",
+      "body": { "content": "", "contentType": "text" },
+      "completedDateTime": { "dateTime": "2026-10-04T00:00:00.0000000", "timeZone": "UTC" },
+      "checklistItems": []
+    },
+    {
+      "@removed": { "reason": "deleted" },
+      "id": "AlMKXwbQAAAJws6wcAAAC="
+    }
+  ]
+}

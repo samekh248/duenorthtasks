@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "syncStateNotFound",
+    "message": "The sync state generation is not found. Delta tokens may be invalid or expired.",
+    "innerError": { "date": "2026-10-04T12:00:00", "request-id": "1f0c2f5b-0a8b-4bbc-9c36-6a4c2b8f1f9e" }
+  }
+}

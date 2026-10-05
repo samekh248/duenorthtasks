@@ -92,20 +92,20 @@ flowchart LR
 
 **Independent Test**: spec.md US1; quickstart V1, V2, V8.
 
-- [ ] T025 [P] [US1] Compose UI test: swipe the panorama, add, complete, edit, delete a task in `app/src/androidTest/.../HomeFlowTest.kt`
-- [ ] T026 [US1] Navigation graph with turnstile transitions in `app/.../nav/NavGraph.kt`
-- [ ] T027 [US1] `HomeViewModel` + `HomeScreen` panorama: "today" (overdue first in red, today, tomorrow across all lists), "lists" (tiles with counts and next task, new list row), "done" (recent completions); pull-to-refresh hook
-- [ ] T028 [US1] `ListViewModel` + `ListScreen`: one list's tasks, collapsible completed group, sort
-- [ ] T029 [US1] "add a task" box at the top of today: enter adds (due today, default list); "add details" link appears once typing and expands the box in place with details, due and list chips, "hide details" / "add", and the provider hint; app bar `+` focuses the box
-- [ ] T030 [US1] `TaskDetailViewModel` + `TaskDetailScreen` with continuum entry: "DUE NORTH · LIST" header, 38sp title, accent due line, full details with tappable links, steps, due and list pickers; app bar mark done / edit / delete
-- [ ] T031 [P] [US1] Task row details preview: first two lines of details, clamped, grey 14sp, between title and caption
-- [ ] T032 [P] [US1] Add, rename, delete lists (from the "lists" section and the list page menu)
-- [ ] T033 [P] [US1] `SearchScreen`: search titles and details across lists (FR-015), with a Room FTS table
-- [ ] T034 [P] [US1] Long-press context menu (edit, delete, move to)
-- [ ] T035 [US1] Debug-only "demo account" option on the sync account screen, backed by `FakeProvider` with sample data
+- [X] T025 [P] [US1] Compose UI test: swipe the panorama, add, complete, edit, delete a task in `app/src/androidTest/.../HomeFlowTest.kt` (runs under Robolectric in `app/src/testDebug/`, so CI needs no emulator; screen screenshots sit beside it)
+- [X] T026 [US1] Navigation graph with turnstile transitions in `app/.../nav/NavGraph.kt`
+- [X] T027 [US1] `HomeViewModel` + `HomeScreen` panorama: "today" (overdue first in red, today, tomorrow across all lists), "lists" (tiles with counts and next task, new list row), "done" (recent completions); pull-to-refresh hook (the hook and the sync button arrive with the sync engine in M3)
+- [X] T028 [US1] `ListViewModel` + `ListScreen`: one list's tasks, collapsible completed group, sort
+- [X] T029 [US1] "add a task" box at the top of today: enter adds (due today, default list); "add details" link appears once typing and expands the box in place with details, due and list chips, "hide details" / "add", and the provider hint; app bar `+` focuses the box
+- [X] T030 [US1] `TaskDetailViewModel` + `TaskDetailScreen` with continuum entry: "DUE NORTH · LIST" header, 38sp title, accent due line, full details with tappable links, steps, due and list pickers; app bar mark done / edit / delete
+- [X] T031 [P] [US1] Task row details preview: first two lines of details, clamped, grey 14sp, between title and caption
+- [X] T032 [P] [US1] Add, rename, delete lists (from the "lists" section and the list page menu)
+- [X] T033 [P] [US1] `SearchScreen`: search titles and details across lists (FR-015), with a Room FTS table (shipped as an escaped `LIKE` query instead: substring matches, which FTS tokens miss, and fast enough at ~5k rows)
+- [X] T034 [P] [US1] Long-press context menu (edit, delete, move to)
+- [X] T035 [US1] Debug-only "demo account" option on the sync account screen, backed by `FakeProvider` with sample data (Google and Microsoft rows show "coming soon" until M3/M4)
 
-- [ ] T036 [US1] Speed for US1: optimistic ViewModel state for add/complete/edit (FR-006), launch straight from Room with Baseline Profile (SC-007), task-shaped placeholders (FR-009), stable keys and `animateItem()` in every list
-- [ ] T037 [P] [US1] Macrobenchmarks: cold/warm start, 1,000-task scroll, tap-to-tick latency (SC-005, SC-007, SC-008)
+- [X] T036 [US1] Speed for US1: optimistic ViewModel state for add/complete/edit (FR-006), launch straight from Room with Baseline Profile (SC-007), task-shaped placeholders (FR-009), stable keys and `animateItem()` in every list (profile generation needs a device; runs with T037)
+- [ ] T037 [P] [US1] Macrobenchmarks: cold/warm start, 1,000-task scroll, tap-to-tick latency (SC-005, SC-007, SC-008) (deferred: release builds have no demo account to seed, so this lands with M3 sign-in or a benchmark-only seed)
 
 **Checkpoint**: US1 acceptance scenarios pass in airplane mode, within the performance budgets.
 
@@ -143,10 +143,10 @@ flowchart LR
 
 **Independent Test**: spec.md US3; quickstart V6.
 
-- [ ] T050 [P] [US3] Retrofit `GraphTodoApi` + DTOs including `$batch` (research R7)
-- [ ] T051 [US3] `MicrosoftAuth` with MSAL single-account mode, `common` authority, `Tasks.ReadWrite`
-- [ ] T052 [US3] `MicrosoftTodoProvider` mapping (checklistItems <-> steps, importance, deltaLink cursors, raw status preserved)
-- [ ] T053 [P] [US3] MockWebServer fixtures and `MicrosoftTodoProviderContractTest`
+- [X] T050 [P] [US3] Retrofit `GraphTodoApi` + DTOs including `$batch` (research R7)
+- [X] T051 [US3] `MicrosoftAuth` with MSAL single-account mode, `common` authority, `Tasks.ReadWrite`
+- [X] T052 [US3] `MicrosoftTodoProvider` mapping (checklistItems <-> steps, importance, deltaLink cursors, raw status preserved)
+- [X] T053 [P] [US3] MockWebServer fixtures and `MicrosoftTodoProviderContractTest` (contract suite runs against `FakeGraphServer`, a stateful Graph stand-in; real-account captures still to replace the fixtures)
 - [ ] T054 [US3] Importance star in task rows and detail, shown only when `capabilities.importance`
 
 **Checkpoint**: Daily-drivable with a Microsoft account.

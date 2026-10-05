@@ -20,17 +20,28 @@ private const val TURNSTILE_ANGLE = 80f
 /** WP8.1's ease for page transitions: quick start, soft landing. */
 val MetroEasing = CubicBezierEasing(0.1f, 0.9f, 0.2f, 1f)
 
+/** Leaving pages accelerate away. */
+private val TurnstileOutEasing = CubicBezierEasing(0.6f, 0f, 0.9f, 0.4f)
+
 /**
  * Turnstile page transition (research R4): the page swings around its left edge like a door.
  * Entering pages swing in from behind, leaving pages swing out the other way.
  *
  * Use inside an animated destination (for example a Navigation Compose `composable {}` block):
- * `Modifier.turnstile(this)`, with the NavHost's own enter/exit set to keep the content on screen
- * for [TURNSTILE_MS]. Drawn with graphicsLayer only, so it never relayouts.
+ * `Modifier.turnstile(this)`, with the NavHost's exit transition keeping the old page on screen for
+ * [TURNSTILE_MS]; the new page swings in after that. Drawn with graphicsLayer only, so it never
+ * relayouts.
  */
 fun Modifier.turnstile(scope: AnimatedVisibilityScope): Modifier = this.composed {
     val angle by scope.transition.animateFloat(
-        transitionSpec = { tween(TURNSTILE_MS, easing = MetroEasing) },
+        // The old page swings out first, then the new one swings in, as on the phone.
+        transitionSpec = {
+            if (targetState == EnterExitState.Visible) {
+                tween(TURNSTILE_MS, delayMillis = TURNSTILE_MS, easing = MetroEasing)
+            } else {
+                tween(TURNSTILE_MS, easing = TurnstileOutEasing)
+            }
+        },
         label = "turnstile"
     ) { state ->
         when (state) {

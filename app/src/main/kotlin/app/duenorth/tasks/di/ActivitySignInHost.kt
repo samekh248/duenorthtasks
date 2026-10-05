@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import app.duenorth.tasks.provider.google.GoogleSignInHost
+import app.duenorth.tasks.provider.microsoft.auth.ActivitySignInHost as MicrosoftSignInHost
 import java.util.UUID
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -14,9 +15,11 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 /**
  * The [app.duenorth.tasks.provider.api.SignInHost] the sync account screen passes to
  * `AccountConnector.connect`. It wraps the current Activity and shows a provider's consent page
- * for a result. Built per sign-in; nothing is kept after it finishes.
+ * for a result. Works for both services. Built per sign-in; nothing is kept after it finishes.
  */
-class ActivitySignInHost(override val activity: ComponentActivity) : GoogleSignInHost {
+class ActivitySignInHost(override val activity: ComponentActivity) :
+    GoogleSignInHost,
+    MicrosoftSignInHost {
     override suspend fun launchForResult(intentSender: IntentSender): Intent? = suspendCancellableCoroutine { cont ->
         val key = "sign-in-${UUID.randomUUID()}"
         var launcher: androidx.activity.result.ActivityResultLauncher<IntentSenderRequest>? = null

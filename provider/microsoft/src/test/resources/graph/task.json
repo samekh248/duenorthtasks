@@ -1,0 +1,36 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users('dustin%40example.com')/todo/lists('AAMkADIyAAAhrbPWAAA%3D')/tasks/$entity",
+  "@odata.etag": "W/\"xzyPKP0BiUGgld+lMKXwbQAAgdhkVw==\"",
+  "importance": "high",
+  "isReminderOn": false,
+  "status": "inProgress",
+  "title": "Plan the camping trip",
+  "createdDateTime": "2026-10-01T22:15:14.6409186Z",
+  "lastModifiedDateTime": "2026-10-03T18:02:09.4171063Z",
+  "hasAttachments": false,
+  "categories": ["Important"],
+  "id": "AlMKXwbQAAAJws6wcAAAA=",
+  "body": {
+    "content": "<p>Book the site&nbsp;at <b>Starved Rock</b></p><p>Bring &amp; share snacks</p>",
+    "contentType": "html"
+  },
+  "dueDateTime": {
+    "dateTime": "2026-10-06T05:00:00.0000000",
+    "timeZone": "UTC"
+  },
+  "checklistItems": [
+    {
+      "displayName": "Reserve the campsite",
+      "createdDateTime": "2026-10-01T22:16:01.2015424Z",
+      "checkedDateTime": "2026-10-02T09:00:00Z",
+      "isChecked": true,
+      "id": "51d8a471-2e9d-4f53-9937-c33a8742d28f"
+    },
+    {
+      "displayName": "Buy firewood",
+      "createdDateTime": "2026-10-01T22:16:05.0010213Z",
+      "isChecked": false,
+      "id": "7b2f6c8e-6e0b-43f3-b2b8-6a4c1d9a0e11"
+    }
+  ]
+}
