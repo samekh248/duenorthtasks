@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -44,6 +45,7 @@ fun MetroCheckBox(
     val fill by animateColorAsState(if (checked) accent.fill else Color.Transparent, tween(FILL_MS), label = "fill")
     val border = if (checked) accent.fill else colors.foreground
     val tick = remember { TickTrace() }
+    DisposableEffect(tick) { onDispose(tick::left) }
     val toggle = if (onCheckedChange != null) {
         Modifier.toggleable(
             value = checked,
@@ -107,6 +109,19 @@ private class TickTrace {
         if (waitingFor != checked || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
         waitingFor = null
         Trace.endAsyncSection(TICK_TRACE_SECTION, cookie)
+        mark(DRAWN_TRACE_SECTION)
+    }
+
+    /** The box left the screen before it drew the new state (its row went first). */
+    fun left() {
+        if (waitingFor == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        waitingFor = null
+        mark(LEFT_TRACE_SECTION)
+    }
+
+    private fun mark(name: String) {
+        Trace.beginSection(name)
+        Trace.endSection()
     }
 
     private companion object {
@@ -119,3 +134,7 @@ const val TICK_TRACE_SECTION = "MetroCheckBox tick"
 
 /** The synchronous section around the tap handler itself. */
 const val TOGGLE_TRACE_SECTION = "MetroCheckBox toggle"
+
+/** Diagnostics for the tap-to-tick benchmark: a tick drawn, or a box gone before it drew one. */
+const val DRAWN_TRACE_SECTION = "MetroCheckBox drawn"
+const val LEFT_TRACE_SECTION = "MetroCheckBox left"
