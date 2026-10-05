@@ -12,6 +12,7 @@ import app.duenorth.tasks.provider.api.TaskPatch
 import java.io.IOException
 import java.time.LocalDate
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -456,5 +457,26 @@ class SyncEngineTest : SyncTestBase() {
         sync()
 
         assertTrue(steps(task("Pack")).single().done)
+    }
+
+    @Test
+    fun reopeningSendsTheStatusTheTaskHadBefore() {
+        io { remote.seed("Errands", listOf(TaskDraft("Buy milk"))) }
+        sync()
+        val local = task("Buy milk")
+        // As if To Do had it "in progress" when the phone last saw it.
+        io { db.taskDao().update(local.copy(remoteStatusRaw = "inProgress")) }
+        val patches = mutableListOf<TaskPatch>()
+        val recording = object : app.duenorth.tasks.provider.api.TaskProvider by remote {
+            override suspend fun updateTask(listId: String, id: String, patch: TaskPatch) =
+                remote.updateTask(listId, id, patch).also { patches += patch }
+        }
+        val engine = SyncEngine(db, { recording }, holds, clock, { "r${Math.random()}" }, Dispatchers.Unconfined)
+        io { repo.setCompleted(local.localId, true) }
+        io { repo.setCompleted(local.localId, false) }
+
+        runBlocking { engine.sync() }
+
+        assertEquals(TaskPatch(completed = false, reopenStatus = "inProgress"), patches.single())
     }
 }

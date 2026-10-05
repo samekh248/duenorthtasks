@@ -220,7 +220,9 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
             notes = if (Fields.NOTES in fields) task.notes?.let { Patch.Set(it) } ?: Patch.Clear else null,
             dueDate = if (Fields.DUE_DATE in fields) task.dueDate?.let { Patch.Set(it) } ?: Patch.Clear else null,
             completed = task.completed.takeIf { Fields.COMPLETED in fields },
-            important = task.important.takeIf { Fields.IMPORTANT in fields && canStoreImportance }
+            important = task.important.takeIf { Fields.IMPORTANT in fields && canStoreImportance },
+            // Un-completing restores the service's own status (To Do's "in progress" and friends).
+            reopenStatus = task.remoteStatusRaw.takeIf { Fields.COMPLETED in fields && !task.completed }
         )
         if (patch.isEmpty) return store.ops.delete(op.seq)
         val remote = provider.updateTask(listRemoteId, remoteId, patch)
