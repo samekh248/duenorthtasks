@@ -99,6 +99,17 @@ class ScreenScreenshotTest {
     }
 
     @Test
+    fun homeDone() {
+        home(dark = false, name = null)
+        compose.onNode(hasTestTag("today")).performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        compose.onNode(hasTestTag("lists")).performTouchInput { swipeLeft() }
+        compose.waitUntilAtLeastOneExists(hasText("Water the plants"), TIMEOUT)
+        compose.mainClock.advanceTimeBy(2_000)
+        snap("home_done", dark = false)
+    }
+
+    @Test
     fun listLight() = list(dark = false)
 
     @Test
