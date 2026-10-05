@@ -13,6 +13,11 @@ import app.duenorth.tasks.provider.api.RemoteTask
 import app.duenorth.tasks.provider.api.TaskProvider
 import app.duenorth.tasks.sync.ConflictResolver.Decision
 import app.duenorth.tasks.sync.SyncStore.Companion.toJson
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 /**
  * Pulls remote changes into Room (research R9, plan "Keeping it fast").
@@ -20,12 +25,18 @@ import app.duenorth.tasks.sync.SyncStore.Companion.toJson
  * Lists are reconciled first, then each list's tasks since its cursor. Changes are applied in
  * transactions of at most [BATCH] rows, tasks due soonest first, and each batch waits while the
  * user is touching that list ([ListHolds]), so the screen never jumps under a finger (FR-008).
+ *
+ * Lists never fetched before get their open tasks first, all lists at once, when the provider can
+ * filter them ([TaskProvider.getOpenTasks]). [onOpenTasksLoaded] then fires, and the full fetch that
+ * brings in completed tasks and the change cursor carries on behind it, so an account with years of
+ * finished tasks is usable in seconds.
  */
 internal class Puller(
     private val store: SyncStore,
     private val provider: TaskProvider,
     private val holds: ListHolds,
-    private val stillConnected: suspend () -> Boolean
+    private val stillConnected: suspend () -> Boolean,
+    private val onOpenTasksLoaded: () -> Unit = {}
 ) {
     private val canStoreImportance = provider.capabilities.importance
 
@@ -34,9 +45,15 @@ internal class Puller(
         val lists = store.sync.allLists()
             .filter { !it.deletedLocally && it.remoteId != null }
             .sortedWith(compareByDescending<TaskListEntity> { it.isDefault }.thenBy { it.title.lowercase() })
-        for (list in lists) {
-            if (!stillConnected()) return
-            pullList(list)
+        val gate = Semaphore(PARALLEL_LISTS)
+        val loadedOpen = coroutineScope {
+            lists.filter { it.tasksCursor == null }
+                .map { list -> async { gate.withPermit { stillConnected() && pullOpenTasks(list) } } }
+                .awaitAll()
+        }
+        if (loadedOpen.any { it }) onOpenTasksLoaded()
+        coroutineScope {
+            lists.map { list -> async { gate.withPermit { if (stillConnected()) pullList(list) } } }.awaitAll()
         }
     }
 
@@ -154,11 +171,48 @@ internal class Puller(
 
     // Tasks
 
+    /**
+     * The open tasks of a list fetched for the first time; no deletions and no cursor, which the
+     * full fetch owns. False when the provider cannot filter, so there is nothing early to show.
+     */
+    private suspend fun pullOpenTasks(list: TaskListEntity): Boolean {
+        val open = try {
+            provider.getOpenTasks(checkNotNull(list.remoteId))
+        } catch (_: ProviderError.NotFound) {
+            null
+        } ?: return false
+        applyChanged(list, open, mayAdopt(list))
+        return true
+    }
+
+    /** Only a create that was sent can come back unrecognised; most pulls have none to look for. */
+    private suspend fun mayAdopt(list: TaskListEntity): Boolean =
+        store.sync.unsyncedTasksInList(list.localId).any { store.journal.sentTitle(it.localId) != null }
+
+    /** Writes [changed] into [list]: today's tasks first, one lookup and one insert per batch. */
+    private suspend fun applyChanged(list: TaskListEntity, changed: List<RemoteTask>, mayAdopt: Boolean) {
+        // Today's tasks first, so the "today" section fills in before the rest (FR-009a).
+        // A task listed twice counts once, in its last state, since a batch inserts new rows together.
+        val ordered = changed.asReversed().distinctBy { it.id }
+            .sortedWith(compareBy<RemoteTask> { it.dueDate == null }.thenBy { it.dueDate })
+        for (batch in ordered.chunked(BATCH)) {
+            holds.awaitReleased(list.localId)
+            store.transaction {
+                // Looking rows up and inserting them one at a time was most of a first sync.
+                val known = store.sync.tasksByRemoteIds(batch.map { it.id }).associateBy { it.remoteId }
+                val fresh = NewRows()
+                batch.forEach { applyTask(list, it, known[it.id], mayAdopt, fresh) }
+                fresh.write()
+            }
+        }
+    }
+
     private suspend fun pullList(list: TaskListEntity) {
         val listRemoteId = checkNotNull(list.remoteId)
         var cursor = list.tasksCursor
         var full = cursor == null
         val seen = mutableSetOf<String>()
+        val mayAdopt = mayAdopt(list)
         while (true) {
             val page = try {
                 provider.getTaskChanges(listRemoteId, cursor)
@@ -171,12 +225,7 @@ internal class Puller(
                 return // gone since the list check; the next sync's list check recovers it
             }
             seen += page.changed.map { it.id }
-            // Today's tasks first, so the "today" section fills in before the rest (FR-009a).
-            val ordered = page.changed.sortedWith(compareBy<RemoteTask> { it.dueDate == null }.thenBy { it.dueDate })
-            for (batch in ordered.chunked(BATCH)) {
-                holds.awaitReleased(list.localId)
-                store.transaction { batch.forEach { applyTask(list, it) } }
-            }
+            applyChanged(list, page.changed, mayAdopt)
             for (batch in page.deletedIds.chunked(BATCH)) {
                 holds.awaitReleased(list.localId)
                 store.transaction { batch.forEach { applyRemoteDelete(list, it) } }
@@ -194,10 +243,15 @@ internal class Puller(
         }
     }
 
-    private suspend fun applyTask(list: TaskListEntity, remote: RemoteTask) {
-        val local = store.sync.taskByRemoteId(remote.id)
+    private suspend fun applyTask(
+        list: TaskListEntity,
+        remote: RemoteTask,
+        local: TaskEntity?,
+        mayAdopt: Boolean,
+        fresh: NewRows
+    ) {
         if (local == null) {
-            if (!adoptLostCreate(list, remote)) insertTask(list, remote)
+            if (!mayAdopt || !adoptLostCreate(list, remote)) fresh.add(list, remote)
             return
         }
         val (taskOps, stepOps) = store.pendingFor(local)
@@ -268,8 +322,9 @@ internal class Puller(
 
     /** Matches a task this phone created but never heard back about (FR-022: no duplicates on retry). */
     private suspend fun adoptLostCreate(list: TaskListEntity, remote: RemoteTask): Boolean {
-        val candidate = store.sync.tasksInList(list.localId).firstOrNull { task ->
-            task.remoteId == null && store.journal.sentTitle(task.localId) == remote.title &&
+        // Only never-synced tasks can match; reading the whole list per task made a first sync quadratic.
+        val candidate = store.sync.unsyncedTasksInList(list.localId).firstOrNull { task ->
+            store.journal.sentTitle(task.localId) == remote.title &&
                 store.opsFor(EntityType.TASK, task.localId).any { it.kind == OperationKind.CREATE }
         } ?: return false
         store.journal.clear(candidate.localId)
@@ -300,10 +355,14 @@ internal class Puller(
         return true
     }
 
-    private suspend fun insertTask(list: TaskListEntity, remote: RemoteTask) {
-        val id = store.newLocalId()
-        store.tasks.insert(
-            TaskEntity(
+    /** Tasks new to this phone, with their steps, written together at the end of a batch. */
+    private inner class NewRows {
+        private val tasks = mutableListOf<TaskEntity>()
+        private val steps = mutableListOf<StepEntity>()
+
+        fun add(list: TaskListEntity, remote: RemoteTask) {
+            val id = store.newLocalId()
+            tasks += TaskEntity(
                 localId = id,
                 listId = list.localId,
                 remoteId = remote.id,
@@ -319,10 +378,8 @@ internal class Puller(
                 remoteUpdatedAt = remote.updatedAt,
                 localUpdatedAt = remote.updatedAt
             )
-        )
-        remote.steps.forEachIndexed { index, step ->
-            store.steps.insert(
-                StepEntity(
+            remote.steps.forEachIndexed { index, step ->
+                steps += StepEntity(
                     localId = store.newLocalId(),
                     taskId = id,
                     remoteId = step.id,
@@ -330,7 +387,12 @@ internal class Puller(
                     done = step.done,
                     sortOrder = index
                 )
-            )
+            }
+        }
+
+        suspend fun write() {
+            if (tasks.isNotEmpty()) store.tasks.insertAll(tasks)
+            if (steps.isNotEmpty()) store.steps.insertAll(steps)
         }
     }
 
@@ -401,5 +463,8 @@ internal class Puller(
     companion object {
         /** At most this many rows per transaction, so the UI's Room flows never stall (T043). */
         const val BATCH = 50
+
+        /** Lists fetched at once; Microsoft allows four requests in flight per mailbox. */
+        const val PARALLEL_LISTS = 3
     }
 }

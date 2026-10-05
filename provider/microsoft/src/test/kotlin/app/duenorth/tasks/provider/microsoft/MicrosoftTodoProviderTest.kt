@@ -2,6 +2,8 @@ package app.duenorth.tasks.provider.microsoft
 
 import app.duenorth.tasks.provider.api.Patch
 import app.duenorth.tasks.provider.api.ProviderError
+import app.duenorth.tasks.provider.api.RemoteList
+import app.duenorth.tasks.provider.api.RemoteTask
 import app.duenorth.tasks.provider.api.StepDraft
 import app.duenorth.tasks.provider.api.StepPatch
 import app.duenorth.tasks.provider.api.TaskDraft
@@ -363,24 +365,114 @@ class MicrosoftTodoStepsTest {
     }
 
     @Test
-    fun aBigListReadsStepsInBatchesNotOneCallPerTask() = runTest {
+    fun aBigListReadsStepsWithItsTasksNotOneCallPerTask() = runTest {
         val graph = FakeGraphServer(pageSize = 50, expandOnDelta = false)
         try {
             val provider = MicrosoftTodoProvider.create(TestAuth(), graph.baseUrl)
-            val list = provider.createList("Big")
-            repeat(45) { provider.createTask(list.id, TaskDraft("Task $it", steps = listOf(StepDraft("Step $it")))) }
+            val list = provider.bigList(45)
             graph.prefers.clear()
 
             val page = provider.getTaskChanges(list.id, null)
 
-            assertEquals(45, page.changed.size)
-            assertTrue(page.changed.all { it.steps.single().title == "Step " + it.title.removePrefix("Task ") })
-            // One delta page plus three $batch calls of up to 20, instead of 45 separate requests.
-            assertEquals(4, graph.prefers.size)
+            assertStepsMatch(45, page.changed)
+            // One delta page plus one read of the list with its steps, instead of 45 separate requests.
+            assertEquals(listOf("GET /me/todo/lists/${list.id}/tasks"), graph.calls.takeLast(1))
+            assertEquals(2, graph.prefers.size)
             assertEquals(PREFER_LARGE_PAGES, graph.prefers.first())
         } finally {
             graph.shutdown()
         }
+    }
+
+    @Test
+    fun withoutExpandedListsStepsComeInBatches() = runTest {
+        val graph = FakeGraphServer(pageSize = 50, expandOnDelta = false, expandOnList = false)
+        try {
+            val provider = MicrosoftTodoProvider.create(TestAuth(), graph.baseUrl)
+            val list = provider.bigList(45)
+            graph.prefers.clear()
+
+            val page = provider.getTaskChanges(list.id, null)
+
+            assertStepsMatch(45, page.changed)
+            // Delta, the list read that brought no steps, then three $batch calls of up to 20.
+            assertEquals(5, graph.prefers.size)
+        } finally {
+            graph.shutdown()
+        }
+    }
+
+    @Test
+    fun aThrottledStepBatchIsAskedAgainInsteadOfFailingTheSync() = runTest {
+        val graph = FakeGraphServer(pageSize = 50, expandOnDelta = false, expandOnList = false)
+        try {
+            val provider = MicrosoftTodoProvider.create(TestAuth(), graph.baseUrl)
+            val list = provider.bigList(10)
+            // A busy mailbox turns most of the batch away; only those are asked again.
+            graph.throttleBatchItems = 6
+            graph.calls.clear()
+
+            val page = provider.getTaskChanges(list.id, null)
+
+            assertStepsMatch(10, page.changed)
+            assertEquals(2, graph.calls.count { it == "POST /\$batch" })
+        } finally {
+            graph.shutdown()
+        }
+    }
+
+    @Test
+    fun openTasksArriveWithStepsAndAreNotReadAgainByTheFullFetch() = runTest {
+        val graph = FakeGraphServer(pageSize = 200, expandOnDelta = false)
+        try {
+            val provider = MicrosoftTodoProvider.create(TestAuth(), graph.baseUrl)
+            val list = provider.bigList(30)
+            val done = provider.getTaskChanges(list.id, null).changed.take(25)
+            done.forEach { provider.updateTask(list.id, it.id, TaskPatch(completed = true)) }
+            val cursorless = provider.createList("Fresh")
+            graph.calls.clear()
+
+            val open = provider.getOpenTasks(list.id)!!
+
+            assertStepsMatch(5, open)
+            assertEquals(listOf("GET /me/todo/lists/${list.id}/tasks"), graph.calls)
+            graph.calls.clear()
+            val full = provider.getTaskChanges(list.id, null)
+            assertStepsMatch(30, full.changed)
+            // The rest of the round reads only the completed tasks' steps.
+            assertEquals(
+                listOf("GET /me/todo/lists/${list.id}/tasks/delta", "GET /me/todo/lists/${list.id}/tasks"),
+                graph.calls
+            )
+            assertEquals(emptyList<RemoteTask>(), provider.getOpenTasks(cursorless.id))
+        } finally {
+            graph.shutdown()
+        }
+    }
+
+    @Test
+    fun aListThatCannotBeFilteredFallsBackToTheFullFetch() = runTest {
+        val graph = FakeGraphServer(pageSize = 50, expandOnDelta = false, filterOnList = false)
+        try {
+            val provider = MicrosoftTodoProvider.create(TestAuth(), graph.baseUrl)
+            val list = provider.bigList(25)
+
+            assertNull(provider.getOpenTasks(list.id))
+            assertStepsMatch(25, provider.getTaskChanges(list.id, null).changed)
+        } finally {
+            graph.shutdown()
+        }
+    }
+
+    private suspend fun MicrosoftTodoProvider.bigList(size: Int): RemoteList {
+        val list = createList("Big")
+        repeat(size) { createTask(list.id, TaskDraft("Task $it", steps = listOf(StepDraft("Step $it")))) }
+        return list
+    }
+
+    private fun assertStepsMatch(count: Int, tasks: List<RemoteTask>) {
+        assertEquals(count, tasks.size)
+        assertTrue(tasks.all { it.steps.single().title == "Step " + it.title.removePrefix("Task ") })
     }
 
     @Test

@@ -15,8 +15,16 @@ interface SyncDao {
     @Query("SELECT * FROM task WHERE remoteId = :remoteId LIMIT 1")
     suspend fun taskByRemoteId(remoteId: String): TaskEntity?
 
+    /** At most 999 ids per call (SQLite's argument limit); the sync engine asks for one batch at a time. */
+    @Query("SELECT * FROM task WHERE remoteId IN (:remoteIds)")
+    suspend fun tasksByRemoteIds(remoteIds: List<String>): List<TaskEntity>
+
     @Query("SELECT * FROM task WHERE listId = :listId")
     suspend fun tasksInList(listId: String): List<TaskEntity>
+
+    /** Tasks in [listId] the service has never acknowledged: the only ones a pulled task can be ours. */
+    @Query("SELECT * FROM task WHERE listId = :listId AND remoteId IS NULL")
+    suspend fun unsyncedTasksInList(listId: String): List<TaskEntity>
 
     @Query("SELECT * FROM pending_operation WHERE seq = :seq")
     suspend fun operation(seq: Long): PendingOperationEntity?

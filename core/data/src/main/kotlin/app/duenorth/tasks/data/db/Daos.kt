@@ -145,6 +145,9 @@ interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(task: TaskEntity)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertAll(tasks: List<TaskEntity>)
+
     @Update
     suspend fun update(task: TaskEntity)
 
@@ -177,6 +180,9 @@ interface StepDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(step: StepEntity)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertAll(steps: List<StepEntity>)
 
     @Update
     suspend fun update(step: StepEntity)

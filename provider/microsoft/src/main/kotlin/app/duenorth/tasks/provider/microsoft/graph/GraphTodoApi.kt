@@ -48,6 +48,27 @@ internal interface GraphTodoApi {
         @Header("Prefer") prefer: String = PREFER_LARGE_PAGES
     ): GraphPage<TodoTaskDto>
 
+    /**
+     * Tasks of one list, optionally filtered by OData [filter] (such as `status ne 'completed'`),
+     * with their checklist items. Unlike delta, this endpoint expands checklist items, so a list's
+     * steps arrive with its tasks instead of one request per task.
+     */
+    @GET("me/todo/lists/{listId}/tasks")
+    suspend fun tasks(
+        @Path("listId") listId: String,
+        @Query("\$filter") filter: String?,
+        @Query("\$expand") expand: String = "checklistItems",
+        @Query("\$top") top: Int = LIST_PAGE,
+        @Header("Prefer") prefer: String = PREFER_LARGE_PAGES
+    ): GraphPage<TodoTaskDto>
+
+    /** Follows an `@odata.nextLink` from [tasks]. */
+    @GET
+    suspend fun tasksPage(
+        @Url url: String,
+        @Header("Prefer") prefer: String = PREFER_LARGE_PAGES
+    ): GraphPage<TodoTaskDto>
+
     @GET("me/todo/lists/{listId}/tasks/{taskId}")
     suspend fun task(
         @Path("listId") listId: String,
@@ -83,3 +104,6 @@ internal interface GraphTodoApi {
  * instead of dozens. Graph may still send fewer; paging handles that.
  */
 internal const val PREFER_LARGE_PAGES = "odata.maxpagesize=200"
+
+/** Tasks per page when reading a list with its checklist items (pages carry every step, so not too many). */
+internal const val LIST_PAGE = 100

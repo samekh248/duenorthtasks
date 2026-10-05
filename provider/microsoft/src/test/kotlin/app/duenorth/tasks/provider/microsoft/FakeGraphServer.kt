@@ -39,7 +39,11 @@ class FakeGraphServer(
     private val expandOnDelta: Boolean = true,
     withDefaultList: Boolean = false,
     /** Delta keeps answering with the same next link and never finishes, as Graph sometimes does. */
-    private val loopDelta: Boolean = false
+    private val loopDelta: Boolean = false,
+    /** Whether the list endpoint (`/tasks`) honors `$expand=checklistItems`. */
+    private val expandOnList: Boolean = true,
+    /** Whether the list endpoint accepts `$filter`; when false it answers 400 as some services do. */
+    private val filterOnList: Boolean = true
 ) : Dispatcher() {
     val server = MockWebServer()
     val baseUrl: HttpUrl get() = server.url("/v1.0/")
@@ -57,6 +61,9 @@ class FakeGraphServer(
     private val tasks = linkedMapOf<String, TaskRec>()
     private val tombstones = mutableListOf<Tombstone>()
     private val failures = ArrayDeque<MockResponse>()
+
+    /** Requests inside `$batch` calls still to be turned away with 429, as a busy mailbox does. */
+    var throttleBatchItems = 0
 
     private class ListRec(val id: String, var name: String, val wellknown: String)
 
@@ -157,6 +164,7 @@ class FakeGraphServer(
             }
             seg.size == 6 && seg[5] == "delta" && method == "GET" -> delta(listId!!, query)
             seg.size == 5 && method == "POST" -> createTask(listId!!, body!!)
+            seg.size == 5 && method == "GET" -> listTasks(listId!!, query)
             tasks[taskId]?.takeIf { it.listId == listId } == null -> Reply(404, errorJson("ErrorItemNotFound"))
             seg.size == 6 && method == "GET" -> Reply(
                 200,
@@ -301,10 +309,49 @@ class FakeGraphServer(
         )
     }
 
+    /** Supports the two filters the provider sends; `$skip` paging stands in for Graph's skip tokens. */
+    private fun listTasks(listId: String, query: Map<String, String?>): Reply {
+        val filter = query["\$filter"]
+        if (filter != null && !filterOnList) return Reply(400, errorJson("BadRequest"))
+        val all = tasks.values.filter { it.listId == listId }.filter {
+            val done = it.fields.str("status") == "completed"
+            when (filter) {
+                null -> true
+                "status ne 'completed'" -> !done
+                "status eq 'completed'" -> done
+                else -> return Reply(400, errorJson("BadRequest"))
+            }
+        }
+        val top = query["\$top"]?.toInt() ?: all.size
+        val skip = query["\$skip"]?.toInt() ?: 0
+        val expand = expandOnList && query["\$expand"] == "checklistItems"
+        return Reply(
+            200,
+            buildJsonObject {
+                if (skip + top < all.size) {
+                    val next = baseUrl.newBuilder().addPathSegments("me/todo/lists").addPathSegment(listId)
+                        .addPathSegment("tasks")
+                    query.forEach { (k, v) -> if (k != "\$skip") next.addQueryParameter(k, v) }
+                    put("@odata.nextLink", next.addQueryParameter("\$skip", "${skip + top}").build().toString())
+                }
+                put("value", JsonArray(all.drop(skip).take(top).map { it.json(expand) }))
+            }
+        )
+    }
+
     private fun batch(body: JsonObject): Reply {
         val responses = body.getValue("requests").jsonArray.map { element ->
             val req = element.jsonObject
             val url = req.str("url")!!
+            if (throttleBatchItems > 0) {
+                throttleBatchItems--
+                return@map buildJsonObject {
+                    put("id", req.str("id"))
+                    put("status", 429)
+                    putJsonObject("headers") { put("Retry-After", "0") }
+                    put("body", errorJson("ApplicationThrottled"))
+                }
+            }
             val reply = route(req.str("method")!!, url.substringBefore('?'), emptyMap(), req["body"] as? JsonObject)
             buildJsonObject {
                 put("id", req.str("id"))
