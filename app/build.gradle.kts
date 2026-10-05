@@ -140,6 +140,7 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.work.testing)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
     debugImplementation(libs.compose.ui.test.manifest)

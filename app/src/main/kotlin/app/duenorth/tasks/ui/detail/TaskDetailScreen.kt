@@ -265,7 +265,7 @@ private fun StepRow(step: StepUi, onDone: (Boolean) -> Unit, onRemove: () -> Uni
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
         ) {
-            MetroCheckBox(checked = step.done, onCheckedChange = onDone)
+            MetroCheckBox(checked = step.done, onCheckedChange = onDone, label = step.title)
             MetroText(
                 step.title,
                 MetroTheme.typography.body.copy(

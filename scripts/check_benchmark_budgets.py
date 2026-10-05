@@ -21,6 +21,8 @@ BUDGETS = {
     "scrollWhileSyncing": ("gfxFrameJankPercent", "median", 1.0),
     # The first panorama swipes right after a cold start are held to the same bar as any scroll.
     "coldStartSwipe": ("gfxFrameJankPercent", "median", 1.0),
+    # SC-008: a tap on a task's check box draws the tick within 100 ms (slowest tap per run).
+    "tapToTick": ("MetroCheckBox tickMaxMs", "median", 100),
 }
 EMULATOR_FACTOR = float(os.environ.get("BENCHMARK_EMULATOR_FACTOR", "3.0"))
 

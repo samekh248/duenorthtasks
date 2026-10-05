@@ -105,7 +105,7 @@ flowchart LR
 - [X] T035 [US1] Debug-only "demo account" option on the sync account screen, backed by `FakeProvider` with sample data (Google and Microsoft rows show "coming soon" until M3/M4)
 
 - [X] T036 [US1] Speed for US1: optimistic ViewModel state for add/complete/edit (FR-006), launch straight from Room with Baseline Profile (SC-007), task-shaped placeholders (FR-009), stable keys and `animateItem()` in every list (profile generation needs a device; runs with T037)
-- [ ] T037 [P] [US1] Macrobenchmarks: cold/warm start, 1,000-task scroll, tap-to-tick latency (SC-005, SC-007, SC-008). Start and 1,000-task scroll done (`StartupBenchmark`, `ScrollBenchmark.scroll`, seeded over adb by the benchmark-only `BenchmarkSeedReceiver`); tap-to-tick latency still to add
+- [X] T037 [P] [US1] Macrobenchmarks: cold/warm start, 1,000-task scroll, tap-to-tick latency (SC-005, SC-007, SC-008). `StartupBenchmark`, `ScrollBenchmark.scroll`, `TapBenchmark.tapToTick` (the `MetroCheckBox tick` trace section, tap to the first frame drawn ticked; slowest tap per run held to 100 ms), seeded over adb by the benchmark-only `BenchmarkSeedReceiver`
 
 **Checkpoint**: US1 acceptance scenarios pass in airplane mode, within the performance budgets.
 
@@ -157,7 +157,7 @@ flowchart LR
 
 **Independent Test**: spec.md US4; quickstart V7.
 
-- [ ] T055 [P] [US4] Test: switch with pending ops shows warning; confirm clears all tables; no provider write calls recorded on the fake
+- [X] T055 [P] [US4] Test: switch with pending ops shows warning; confirm clears all tables; no provider write calls recorded on the fake (`ProviderSwitchTest`)
 - [X] T056 [US4] `AccountManager.switchProvider()`: cancel unique sync work, sign out, delete Account row, return to "choose a service" (shipped as `AccountSession.signOut()` / `switchTo()` in app)
 - [X] T057 [US4] Picking the other service on the sync account screen: Metro confirm dialog with the "your tasks stay in that account" note and the unsynced-changes warning; sign out button
 - [ ] T058 [P] [US4] `SyncLogScreen`
@@ -178,7 +178,7 @@ flowchart LR
 
 ## Phase 8: Polish and release (M7)
 
-- [ ] T064 [P] Accessibility pass: TalkBack labels on app bar buttons and checkboxes, 48dp targets, panorama sections announced as headings, contrast check for every accent's light and dark value
+- [X] T064 [P] Accessibility pass: TalkBack labels on app bar buttons and checkboxes, 48dp targets, panorama sections announced as headings, contrast check for every accent's light and dark value (`AccessibilityTest`, `ContrastTest`, `HomeFlowTest.everyTapTargetIsLabelledAndAtLeast48dp`)
 - [ ] T065 [P] Performance pass on real mid-range and low-end phones: review benchmark trends, JankStats logs and startup traces; fix anything over budget
 - [x] T066 [P] Metro launcher icon (flat white glyph on accent square) and splash (adaptive icon with a themed-icon layer; Android 12+ shows it on the theme background as the splash)
 - [ ] T067 Privacy policy and Google OAuth verification submission for the `tasks` scope

@@ -86,12 +86,14 @@ fun MetroAppBar(
             Box(
                 Modifier
                     .align(Alignment.TopEnd)
-                    .size(width = 56.dp, height = 32.dp)
+                    .size(width = 56.dp, height = MetroDimens.TouchTarget)
                     .clickable(interactionSource = null, indication = null, role = Role.Button) {
                         expanded = !expanded
                     }
-                    .semantics { contentDescription = if (expanded) "less" else "more" },
-                contentAlignment = Alignment.Center
+                    .semantics { contentDescription = if (expanded) "less" else "more" }
+                    // A full 48dp target, with the dots where WP8.1 draws them near the top edge.
+                    .padding(top = 6.dp),
+                contentAlignment = Alignment.TopCenter
             ) {
                 MetroIconGlyph(MetroIcon.More, size = 20.dp)
             }
