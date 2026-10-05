@@ -54,6 +54,7 @@ import app.duenorth.tasks.design.components.MetroPickerDialog
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
+import app.duenorth.tasks.design.components.MetroToggle
 import app.duenorth.tasks.design.motion.continuumTarget
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
@@ -160,6 +161,16 @@ fun TaskDetailContent(
 
             Label("list")
             Chip(state.listTitle) { moving = true }
+
+            if (state.importance) {
+                Spacer(Modifier.height(12.dp))
+                MetroToggle(
+                    checked = state.important,
+                    onCheckedChange = viewModel::setImportant,
+                    label = "important",
+                    modifier = Modifier.fillMaxWidth().testTag("important")
+                )
+            }
         }
         MetroAppBar(
             buttons = listOf(

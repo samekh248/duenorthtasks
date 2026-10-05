@@ -2,6 +2,7 @@ package app.duenorth.tasks.design.components
 
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +20,8 @@ import app.duenorth.tasks.design.theme.MetroTheme
 /**
  * A Metro list row aligned to the 12dp gutter: optional leading control, a 20sp title, up to two
  * grey lines of details and a caption (for tasks: "List · when", in the accent or red when
- * overdue). Tilts when pressed; long-press opens the context menu.
+ * overdue), and an optional trailing mark such as the importance star. Tilts when pressed;
+ * long-press opens the context menu.
  */
 @Composable
 fun MetroListItem(
@@ -30,6 +32,7 @@ fun MetroListItem(
     captionColor: Color = Color.Unspecified,
     strikethrough: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     titleModifier: Modifier = Modifier
@@ -79,6 +82,9 @@ fun MetroListItem(
                     maxLines = 1
                 )
             }
+        }
+        if (trailing != null) {
+            Box(Modifier.padding(top = 8.dp, start = 8.dp)) { trailing() }
         }
     }
 }

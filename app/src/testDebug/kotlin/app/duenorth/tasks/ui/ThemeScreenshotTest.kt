@@ -20,8 +20,11 @@ import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.demo.DemoSeeder
 import app.duenorth.tasks.design.theme.Accent
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.ThemeMode
 import app.duenorth.tasks.settings.ThemeSettings
+import app.duenorth.tasks.sync.ListHolds
+import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.home.HomeActions
 import app.duenorth.tasks.ui.home.HomeContent
 import app.duenorth.tasks.ui.home.HomeViewModel
@@ -127,7 +130,7 @@ class ThemeScreenshotTest {
 
     /** The lists section with Errands two shades lighter and Work two darker. */
     private fun shadedLists(accent: Accent, dark: Boolean) {
-        val viewModel = HomeViewModel(tasks, accounts, clock)
+        val viewModel = HomeViewModel(tasks, accounts, ServiceFeatures(accounts) { FakeProvider() }, ListHolds(), clock)
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
         show(dark, accent, demoShades()) {
             val state by viewModel.state.collectAsState()
@@ -143,7 +146,14 @@ class ThemeScreenshotTest {
     private fun shadedListPage(dark: Boolean) {
         val shades = demoShades()
         val id = runBlocking { tasks.listSummaries().first().first { it.title == "Errands" }.localId }
-        val viewModel = ListViewModel(SavedStateHandle(mapOf("id" to id)), tasks, accounts, clock)
+        val viewModel = ListViewModel(
+            SavedStateHandle(mapOf("id" to id)),
+            tasks,
+            accounts,
+            ServiceFeatures(accounts) { FakeProvider() },
+            ListHolds(),
+            clock
+        )
         viewModel.toggleCompletedGroup()
         show(dark, Accent.Magenta, shades) {
             val state by viewModel.state.collectAsState()

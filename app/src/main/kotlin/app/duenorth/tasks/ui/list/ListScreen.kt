@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -51,6 +52,10 @@ import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.ui.common.PageHeader
 import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
+import app.duenorth.tasks.ui.common.frozen
+import app.duenorth.tasks.ui.common.importanceItem
+import app.duenorth.tasks.ui.common.rememberTouchHold
+import app.duenorth.tasks.ui.common.touchHold
 import app.duenorth.tasks.ui.home.EmptyNote
 import kotlinx.coroutines.launch
 
@@ -93,6 +98,10 @@ private fun ListPage(
     var renaming by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf(false) }
     var moving by remember { mutableStateOf<TaskRowUi?>(null) }
+    val listState = rememberLazyListState()
+    val hold = rememberTouchHold(listState, viewModel::holdSync)
+    val open = hold.frozen(state.open)
+    val completed = hold.frozen(state.completed)
 
     val openTask: (String) -> Unit = { id ->
         scope.launch {
@@ -105,10 +114,11 @@ private fun ListPage(
             row = task,
             onToggle = { viewModel.setCompleted(task.id, it) },
             onOpen = { openTask(task.id) },
-            menuItems = listOf(
+            menuItems = listOfNotNull(
                 ContextMenuItem("edit") { onOpenTask(task.id) },
                 ContextMenuItem("delete") { viewModel.deleteTask(task.id) },
-                ContextMenuItem("move to") { moving = task }
+                ContextMenuItem("move to") { moving = task },
+                importanceItem(state.importance, task) { viewModel.setImportant(task.id, it) }
             ),
             continuum = continuum,
             modifier = modifier
@@ -119,7 +129,8 @@ private fun ListPage(
         Column(Modifier.weight(1f).statusBarsPadding()) {
             PageHeader(state.title)
             LazyColumn(
-                Modifier.fillMaxSize().testTag("list"),
+                Modifier.fillMaxSize().touchHold(hold).testTag("list"),
+                state = listState,
                 contentPadding = PaddingValues(start = MetroDimens.Gutter, top = 8.dp, bottom = 24.dp)
             ) {
                 item(key = "add", contentType = "add") {
@@ -142,14 +153,14 @@ private fun ListPage(
                     item(key = "loading") { MetroTaskPlaceholders() }
                     return@LazyColumn
                 }
-                if (state.open.isEmpty()) {
+                if (open.isEmpty()) {
                     item(key = "empty") { EmptyNote("nothing to do here") }
                 }
-                items(state.open, key = { it.id }, contentType = { "task" }) { row(it, Modifier.animateItem()) }
-                if (state.completed.isNotEmpty()) {
+                items(open, key = { it.id }, contentType = { "task" }) { row(it, Modifier.animateItem()) }
+                if (completed.isNotEmpty()) {
                     item(key = "completed", contentType = "header") {
                         MetroText(
-                            "completed (${state.completed.size}) ${if (state.completedExpanded) "⌃" else "⌄"}",
+                            "completed (${completed.size}) ${if (state.completedExpanded) "⌃" else "⌄"}",
                             MetroTheme.typography.subheader,
                             Modifier
                                 .animateItem()
@@ -167,7 +178,7 @@ private fun ListPage(
                         )
                     }
                     if (state.completedExpanded) {
-                        items(state.completed, key = { it.id }, contentType = { "task" }) {
+                        items(completed, key = { it.id }, contentType = { "task" }) {
                             row(it, Modifier.animateItem())
                         }
                     }

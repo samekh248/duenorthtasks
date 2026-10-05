@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,6 +53,10 @@ import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.listAccent
 import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
+import app.duenorth.tasks.ui.common.frozen
+import app.duenorth.tasks.ui.common.importanceItem
+import app.duenorth.tasks.ui.common.rememberTouchHold
+import app.duenorth.tasks.ui.common.touchHold
 import kotlinx.coroutines.launch
 
 private const val TODAY = 0
@@ -96,10 +101,11 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
         }
     }
     val taskMenu: (TaskRowUi) -> List<ContextMenuItem> = { row ->
-        listOf(
+        listOfNotNull(
             ContextMenuItem("edit") { actions.openTask(row.id) },
             ContextMenuItem("delete") { viewModel.deleteTask(row.id) },
-            ContextMenuItem("move to") { moving = row }
+            ContextMenuItem("move to") { moving = row },
+            importanceItem(state.importance, row) { viewModel.setImportant(row.id, it) }
         )
     }
 
@@ -205,7 +211,15 @@ private fun TodaySection(
     openTask: (String) -> Unit,
     taskMenu: (TaskRowUi) -> List<ContextMenuItem>
 ) {
-    LazyColumn(Modifier.fillMaxSize().testTag("today"), contentPadding = PaddingValues(bottom = 24.dp)) {
+    val list = rememberLazyListState()
+    val hold = rememberTouchHold(list, viewModel::holdSync)
+    val dueToday = hold.frozen(state.dueToday)
+    val tomorrow = hold.frozen(state.tomorrow)
+    LazyColumn(
+        Modifier.fillMaxSize().touchHold(hold).testTag("today"),
+        state = list,
+        contentPadding = PaddingValues(bottom = 24.dp)
+    ) {
         item(key = "add", contentType = "add") {
             AddTaskBox(
                 serviceName = state.serviceName,
@@ -220,12 +234,12 @@ private fun TodaySection(
             item(key = "loading", contentType = "loading") { MetroTaskPlaceholders() }
             return@LazyColumn
         }
-        if (state.dueToday.isEmpty() && state.tomorrow.isEmpty()) {
+        if (dueToday.isEmpty() && tomorrow.isEmpty()) {
             item(key = "empty", contentType = "empty") {
                 EmptyNote("nothing due today")
             }
         }
-        items(state.dueToday, key = { it.id }, contentType = { "task" }) { row ->
+        items(dueToday, key = { it.id }, contentType = { "task" }) { row ->
             TaskRow(
                 row = row,
                 onToggle = { viewModel.setCompleted(row.id, it) },
@@ -235,7 +249,7 @@ private fun TodaySection(
                 modifier = Modifier.animateItem()
             )
         }
-        if (state.tomorrow.isNotEmpty()) {
+        if (tomorrow.isNotEmpty()) {
             item(key = "tomorrow", contentType = "header") {
                 MetroText(
                     "tomorrow",
@@ -244,7 +258,7 @@ private fun TodaySection(
                     color = MetroTheme.colors.secondary
                 )
             }
-            items(state.tomorrow, key = { it.id }, contentType = { "task" }) { row ->
+            items(tomorrow, key = { it.id }, contentType = { "task" }) { row ->
                 TaskRow(
                     row = row,
                     onToggle = { viewModel.setCompleted(row.id, it) },
@@ -355,15 +369,22 @@ private fun DoneSection(
     continuum: ContinuumState,
     openTask: (String) -> Unit
 ) {
-    LazyColumn(Modifier.fillMaxSize().testTag("done"), contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)) {
+    val list = rememberLazyListState()
+    val hold = rememberTouchHold(list, viewModel::holdSync)
+    val done = hold.frozen(state.done)
+    LazyColumn(
+        Modifier.fillMaxSize().touchHold(hold).testTag("done"),
+        state = list,
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
+    ) {
         if (state.loading) {
             item(key = "loading") { MetroTaskPlaceholders() }
             return@LazyColumn
         }
-        if (state.done.isEmpty()) {
+        if (done.isEmpty()) {
             item(key = "empty") { EmptyNote("nothing done yet") }
         }
-        items(state.done, key = { it.id }, contentType = { "task" }) { row ->
+        items(done, key = { it.id }, contentType = { "task" }) { row ->
             TaskRow(
                 row = row,
                 onToggle = { viewModel.setCompleted(row.id, it) },

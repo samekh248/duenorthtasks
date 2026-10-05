@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.ui.common.CompletionOverrides
+import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.toRow
 import app.duenorth.tasks.ui.common.todayFlow
@@ -39,7 +40,8 @@ data class SearchUiState(
 /** Search titles and details across every list (FR-015), grouped by list. */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
-class SearchViewModel @Inject constructor(private val tasks: TaskRepository, clock: Clock) : ViewModel() {
+class SearchViewModel @Inject constructor(private val tasks: TaskRepository, features: ServiceFeatures, clock: Clock) :
+    ViewModel() {
     private val query = MutableStateFlow("")
     val currentQuery: StateFlow<String> = query.asStateFlow()
 
@@ -49,18 +51,23 @@ class SearchViewModel @Inject constructor(private val tasks: TaskRepository, clo
         .debounce { if (it.isBlank()) 0 else DEBOUNCE_MS }
         .flatMapLatest { q -> tasks.search(q).map { q to it } }
 
-    val state: StateFlow<SearchUiState> = combine(results, todayFlow(clock), overrides.overrides) {
-            (q, found),
-            today,
-            pending
-        ->
+    val state: StateFlow<SearchUiState> = combine(
+        results,
+        todayFlow(clock),
+        overrides.overrides,
+        features.importance
+    ) { (q, found), today, pending, importance ->
         overrides.settle(found.associate { it.task.localId to it.task.completed })
         SearchUiState(
             query = q,
             groups = found
                 .groupBy { it.task.listId }
                 .map { (listId, rows) ->
-                    SearchGroup(listId, rows.first().listTitle, rows.map { it.toRow(today, pending[it.task.localId]) })
+                    SearchGroup(
+                        listId,
+                        rows.first().listTitle,
+                        rows.map { it.toRow(today, pending[it.task.localId], importance) }
+                    )
                 },
             searched = q.isNotBlank()
         )

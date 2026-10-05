@@ -7,7 +7,10 @@ import app.duenorth.tasks.data.db.ListSummary
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
+import app.duenorth.tasks.ui.common.HeldLists
+import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.serviceName
 import app.duenorth.tasks.ui.common.toRow
@@ -39,7 +42,9 @@ data class HomeUiState(
     val tomorrow: List<TaskRowUi> = emptyList(),
     val lists: List<ListRowUi> = emptyList(),
     val done: List<TaskRowUi> = emptyList(),
-    val serviceName: String = ""
+    val serviceName: String = "",
+    /** The connected service has an importance star (To Do); false hides it everywhere. */
+    val importance: Boolean = false
 )
 
 /**
@@ -48,9 +53,15 @@ data class HomeUiState(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class HomeViewModel @Inject constructor(private val tasks: TaskRepository, accounts: AccountRepository, clock: Clock) :
-    ViewModel() {
+class HomeViewModel @Inject constructor(
+    private val tasks: TaskRepository,
+    accounts: AccountRepository,
+    features: ServiceFeatures,
+    holds: ListHolds,
+    clock: Clock
+) : ViewModel() {
     private val overrides = CompletionOverrides()
+    private val heldLists = HeldLists(holds)
 
     private val today = todayFlow(clock)
 
@@ -60,19 +71,20 @@ class HomeViewModel @Inject constructor(private val tasks: TaskRepository, accou
         due,
         tasks.recentlyCompleted(),
         tasks.listSummaries(),
-        accounts.account,
+        combine(accounts.account, features.importance, ::Pair),
         overrides.overrides
-    ) { (day, dueRows), doneRows, lists, account, pending ->
+    ) { (day, dueRows), doneRows, lists, (account, importance), pending ->
         overrides.settle((dueRows + doneRows).associate { it.task.localId to it.task.completed })
         val (soon, later) = dueRows.partition { it.task.dueDate?.isAfter(day) == false }
         HomeUiState(
             loading = false,
             today = day,
-            dueToday = soon.map { it.toRow(day, pending[it.task.localId]) },
-            tomorrow = later.map { it.toRow(day, pending[it.task.localId]) },
+            dueToday = soon.map { it.toRow(day, pending[it.task.localId], importance) },
+            tomorrow = later.map { it.toRow(day, pending[it.task.localId], importance) },
             lists = lists.map(ListSummary::toUi),
-            done = doneRows.map { it.toRow(day, pending[it.task.localId]) },
-            serviceName = serviceName(account?.provider)
+            done = doneRows.map { it.toRow(day, pending[it.task.localId], importance) },
+            serviceName = serviceName(account?.provider),
+            importance = importance
         )
     }
         .flowOn(Dispatchers.Default)
@@ -93,6 +105,18 @@ class HomeViewModel @Inject constructor(private val tasks: TaskRepository, accou
             tasks.createTask(list, title, notes = details, dueDate = due)
         }
     }
+
+    fun setImportant(id: String, important: Boolean) {
+        viewModelScope.launch { runCatching { tasks.editTask(id, TaskEdit(important = important)) } }
+    }
+
+    /**
+     * Today and done mix every list, so a finger on either holds sync for all of them until it
+     * lifts and the fling settles.
+     */
+    fun holdSync(active: Boolean) = heldLists.set(active) { state.value.lists.map { it.id } }
+
+    override fun onCleared() = heldLists.releaseAll()
 
     fun deleteTask(id: String) {
         viewModelScope.launch { tasks.deleteTask(id) }

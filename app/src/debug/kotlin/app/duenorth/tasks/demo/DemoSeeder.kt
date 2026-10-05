@@ -1,6 +1,7 @@
 package app.duenorth.tasks.demo
 
 import app.duenorth.tasks.data.repo.AccountRepository
+import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.ui.account.DemoAccount
@@ -29,6 +30,7 @@ class DemoSeeder(private val accounts: AccountRepository, private val tasks: Tas
         val vet = tasks.createTask(inbox, "Call the vet", notes = "Ask about the booster.", dueDate = today.plusDays(1))
         tasks.addStep(vet, "Find the vaccination card")
         tasks.addStep(vet, "Check Thursday afternoon")
+        tasks.editTask(vet, TaskEdit(important = true))
         tasks.createTask(errands, "Pick up dry cleaning", dueDate = today.plusDays(1))
         val deck = tasks.createTask(
             work,

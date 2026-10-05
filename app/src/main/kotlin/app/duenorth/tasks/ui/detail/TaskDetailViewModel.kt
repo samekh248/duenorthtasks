@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.provider.api.Patch
+import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.todayFlow
 import app.duenorth.tasks.ui.home.ListRowUi
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,7 +43,10 @@ data class TaskDetailUiState(
     val listTitle: String = "",
     val steps: List<StepUi> = emptyList(),
     val lists: List<ListRowUi> = emptyList(),
-    val today: LocalDate = LocalDate.MIN
+    val today: LocalDate = LocalDate.MIN,
+    val important: Boolean = false,
+    /** The connected service has an importance star (To Do only, FR-014). */
+    val importance: Boolean = false
 )
 
 /** One task's page (T030), straight from Room; every change is a repository write. */
@@ -51,6 +55,7 @@ data class TaskDetailUiState(
 class TaskDetailViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val tasks: TaskRepository,
+    features: ServiceFeatures,
     clock: Clock
 ) : ViewModel() {
     val taskId: String = checkNotNull(savedState["id"]) { "task route needs an id" }
@@ -68,9 +73,9 @@ class TaskDetailViewModel @Inject constructor(
         combine(task, listTitle, ::Pair),
         tasks.steps(taskId),
         tasks.listSummaries(),
-        todayFlow(clock),
+        combine(todayFlow(clock), features.importance, ::Pair),
         completedOverride
-    ) { (task, listTitle), steps, lists, today, override ->
+    ) { (task, listTitle), steps, lists, (today, importance), override ->
         if (task == null) return@combine TaskDetailUiState(loading = false, exists = false)
         if (override == task.completed) completedOverride.value = null
         TaskDetailUiState(
@@ -83,7 +88,9 @@ class TaskDetailViewModel @Inject constructor(
             listTitle = listTitle,
             steps = steps.map { StepUi(it.localId, it.title, it.done) },
             lists = lists.map { ListRowUi(it.localId, it.title, it.openCount, it.nextTaskTitle) },
-            today = today
+            today = today,
+            important = importance && task.important,
+            importance = importance
         )
     }
         .flowOn(Dispatchers.Default)
@@ -105,6 +112,8 @@ class TaskDetailViewModel @Inject constructor(
     )
 
     fun setDue(due: LocalDate?) = edit(TaskEdit(dueDate = if (due == null) Patch.Clear else Patch.Set(due)))
+
+    fun setImportant(important: Boolean) = edit(TaskEdit(important = important))
 
     fun moveTo(listId: String) = edit(TaskEdit(listId = listId))
 
