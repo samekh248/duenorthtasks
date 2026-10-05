@@ -58,13 +58,15 @@ class SyncScheduler(
     /** Sync as soon as the network allows: foreground, pull-to-refresh and debounced edits. */
     fun syncNow() {
         scope.launch {
-            val wifiOnly = currentSettings().wifiOnly
+            val settings = currentSettings()
             val request = OneTimeWorkRequestBuilder<SyncWorker>()
-                .setConstraints(constraints(wifiOnly))
+                .setConstraints(constraints(settings.wifiOnly))
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
                 .build()
             // Appending keeps a sync that is already running, then runs once more for the new edits.
             workManager.enqueueUniqueWork(NOW, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+            // Brings the periodic sync back after cancelAll (sign-out, then signing in again).
+            schedulePeriodic(settings)
         }
     }
 

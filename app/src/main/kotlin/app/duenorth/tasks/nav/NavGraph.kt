@@ -14,6 +14,9 @@ import androidx.navigation.compose.rememberNavController
 import app.duenorth.tasks.DebugRoutes
 import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.motion.TURNSTILE_MS
+import app.duenorth.tasks.provider.api.ProviderKind
+import app.duenorth.tasks.ui.account.SyncAccountActions
+import app.duenorth.tasks.ui.account.SyncAccountScreen
 import app.duenorth.tasks.ui.detail.TaskDetailScreen
 import app.duenorth.tasks.ui.home.HomeActions
 import app.duenorth.tasks.ui.home.HomeScreen
@@ -25,6 +28,7 @@ object Routes {
     const val LIST = "list/{id}"
     const val TASK = "task/{id}"
     const val SEARCH = "search"
+    const val ACCOUNT = "account"
     const val GALLERY = "gallery"
 
     fun list(id: String) = "list/$id"
@@ -32,12 +36,15 @@ object Routes {
     fun task(id: String) = "task/$id"
 }
 
+/** App-wide actions the pages need; signing out and switching outlive the page that asked. */
+class AppActions(val syncNow: () -> Unit, val switchTo: (ProviderKind) -> Unit, val signOut: () -> Unit)
+
 /**
  * Every page after the account gate (T026). Pages swing with the turnstile: the leaving page turns
  * away first, then the new one swings in, so the NavHost keeps the old page on screen until then.
  */
 @Composable
-fun DueNorthNavHost(onSwitchAccount: () -> Unit, nav: NavHostController = rememberNavController()) {
+fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = rememberNavController()) {
     val keepOldPage = fadeOut(tween(1, delayMillis = TURNSTILE_MS))
     NavHost(
         navController = nav,
@@ -53,14 +60,15 @@ fun DueNorthNavHost(onSwitchAccount: () -> Unit, nav: NavHostController = rememb
                 openTask = { nav.navigate(Routes.task(it)) },
                 openList = { nav.navigate(Routes.list(it)) },
                 search = { nav.navigate(Routes.SEARCH) },
-                switchAccount = onSwitchAccount,
+                openSyncAccount = { nav.navigate(Routes.ACCOUNT) },
+                sync = app.syncNow,
                 menuItems = if (DebugRoutes.GALLERY_ENABLED) {
                     listOf(AppBarMenuItem("component gallery") { nav.navigate(Routes.GALLERY) })
                 } else {
                     emptyList()
                 }
             )
-            Page(this) { HomeScreen(actions) }
+            Page(this) { HomeScreen(actions, syncing) }
         }
         composable(Routes.LIST) { entry ->
             Page(this) {
@@ -69,6 +77,9 @@ fun DueNorthNavHost(onSwitchAccount: () -> Unit, nav: NavHostController = rememb
         }
         composable(Routes.TASK) { entry ->
             Page(this) { TaskDetailScreen(onClosed = { nav.closeIfOn(entry) }, animatedScope = this) }
+        }
+        composable(Routes.ACCOUNT) {
+            Page(this) { SyncAccountScreen(SyncAccountActions(switchTo = app.switchTo, signOut = app.signOut)) }
         }
         composable(Routes.SEARCH) {
             Page(this) { SearchScreen(onOpenTask = { nav.navigate(Routes.task(it)) }) }
