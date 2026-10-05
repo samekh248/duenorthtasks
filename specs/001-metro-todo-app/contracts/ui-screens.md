@@ -61,7 +61,7 @@ flowchart TD
 | Search | Header "search", text field focused, results grouped by list | none | none |
 | Sync account | "DUE NORTH" small caps, "sync account" header, one-line explanation, radio group (Google Tasks / Microsoft To Do, with "signed in as ..." or "not connected"), switching note, "sync every" picker, "sync on Wi-Fi only" toggle | sync now, sign out | none |
 | Settings | Pivot: "theme", "sync account", "about" | none | none |
-| Sync log | Header "sync log", rows by time | clear | none |
+| Sync log | Header "sync log", rows newest first under day headers ("today", "yesterday", weekday, date); each row a "conflict · 8:35 am" caption (red for "sync problem") over the summary; a conflict with a replaced version opens in place to show it; empty note when there is nothing | clear (asks first) | none |
 
 ## Adding a task
 
