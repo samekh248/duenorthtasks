@@ -160,7 +160,7 @@ flowchart LR
 - [X] T055 [P] [US4] Test: switch with pending ops shows warning; confirm clears all tables; no provider write calls recorded on the fake (`ProviderSwitchTest`)
 - [X] T056 [US4] `AccountManager.switchProvider()`: cancel unique sync work, sign out, delete Account row, return to "choose a service" (shipped as `AccountSession.signOut()` / `switchTo()` in app)
 - [X] T057 [US4] Picking the other service on the sync account screen: Metro confirm dialog with the "your tasks stay in that account" note and the unsynced-changes warning; sign out button
-- [ ] T058 [P] [US4] `SyncLogScreen`
+- [X] T058 [P] [US4] `SyncLogScreen`: "sync log" page (home overflow menu and settings > sync account) with entries newest first under day headers; a conflict opens to show the version it replaced; "clear" asks first
 
 ---
 

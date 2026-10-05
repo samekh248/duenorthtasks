@@ -79,6 +79,7 @@ class HomeActions(
     val sync: (() -> Unit)? = null,
     val openSettings: () -> Unit = {},
     val openListShade: (String) -> Unit = {},
+    val openSyncLog: () -> Unit = {},
     val menuItems: List<AppBarMenuItem> = emptyList()
 )
 
@@ -223,7 +224,8 @@ private fun HomeAppBar(pager: PagerState, actions: HomeActions, onNewTask: () ->
     val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", onClick = it) }
     val menu = listOf(
         AppBarMenuItem("settings", actions.openSettings),
-        AppBarMenuItem("sync account", actions.openSyncAccount)
+        AppBarMenuItem("sync account", actions.openSyncAccount),
+        AppBarMenuItem("sync log", actions.openSyncLog)
     ) + actions.menuItems
     val first = when (pager.currentPage) {
         TODAY -> AppBarButton(MetroIcon.Add, "new task", onClick = onNewTask)

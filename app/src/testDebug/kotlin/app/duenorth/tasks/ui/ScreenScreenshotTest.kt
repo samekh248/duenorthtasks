@@ -16,7 +16,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.duenorth.tasks.data.db.DueNorthDatabase
+import app.duenorth.tasks.data.db.SyncLogEntity
+import app.duenorth.tasks.data.db.SyncLogType
 import app.duenorth.tasks.data.repo.AccountRepository
+import app.duenorth.tasks.data.repo.SyncLogRepository
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.demo.DemoSeeder
 import app.duenorth.tasks.design.theme.MetroTheme
@@ -37,6 +40,8 @@ import app.duenorth.tasks.ui.list.ListContent
 import app.duenorth.tasks.ui.list.ListViewModel
 import app.duenorth.tasks.ui.search.SearchScreen
 import app.duenorth.tasks.ui.search.SearchViewModel
+import app.duenorth.tasks.ui.synclog.SyncLogContent
+import app.duenorth.tasks.ui.synclog.SyncLogViewModel
 import com.github.takahirom.roborazzi.captureRoboImage
 import java.time.Clock
 import java.time.Instant
@@ -163,6 +168,62 @@ class ScreenScreenshotTest {
             )
         }
         snap("sync_account", dark)
+    }
+
+    @Test
+    fun syncLogLight() = syncLog(dark = false)
+
+    @Test
+    fun syncLogDark() = syncLog(dark = true)
+
+    @Test
+    fun syncLogEmpty() {
+        val viewModel = SyncLogViewModel(SyncLogRepository(db), clock)
+        show(dark = false) {
+            val state by viewModel.state.collectAsState()
+            SyncLogContent(state, onClear = {})
+        }
+        compose.waitUntilAtLeastOneExists(hasText("Nothing here", substring = true), TIMEOUT)
+        snap("sync_log_empty", dark = false)
+    }
+
+    private fun syncLog(dark: Boolean) {
+        val now = clock.instant()
+        val replacedJson = """{"title":"Book the dentist","notes":"Ask for a Friday morning slot",""" +
+            """"dueDate":"2026-10-08","completed":false,"steps":[{"title":"Find the insurance card",""" +
+            """"done":true},{"title":"Call before noon","done":false}]}"""
+        val entries = listOf(
+            SyncLogEntity(
+                at = now.minusSeconds(25 * 60),
+                type = SyncLogType.CONFLICT,
+                summary = "“Book the dentist” changed here and elsewhere; kept the newer version from your account",
+                losingVersionJson = replacedJson
+            ),
+            SyncLogEntity(
+                at = now.minusSeconds(2 * 3600),
+                type = SyncLogType.RECOVERED,
+                summary = "“Pay water bill” was deleted elsewhere but had changes here, so it was put back"
+            ),
+            SyncLogEntity(
+                at = now.minusSeconds(20 * 3600),
+                type = SyncLogType.ERROR,
+                summary = "Gave up on a change after 5 tries: the service said the list is read-only"
+            ),
+            SyncLogEntity(
+                at = now.minusSeconds(21 * 3600),
+                type = SyncLogType.CONFLICT,
+                summary = "List renamed here and elsewhere; kept “Groceries” over “Shopping”"
+            )
+        )
+        runBlocking { entries.forEach { db.syncLogDao().insert(it) } }
+        val viewModel = SyncLogViewModel(SyncLogRepository(db), clock)
+        val firstId = runBlocking { db.syncLogDao().observeAll().first().first().id }
+        show(dark) {
+            val state by viewModel.state.collectAsState()
+            SyncLogContent(state, onClear = {}, initiallyOpen = listOf(firstId))
+        }
+        compose.waitUntilAtLeastOneExists(hasText("Call before noon"), TIMEOUT)
+        snap("sync_log", dark)
     }
 
     private fun home(dark: Boolean, name: String? = "home_today") {

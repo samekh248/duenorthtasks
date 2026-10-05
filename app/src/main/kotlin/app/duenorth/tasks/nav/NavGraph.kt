@@ -24,6 +24,7 @@ import app.duenorth.tasks.ui.list.ListScreen
 import app.duenorth.tasks.ui.search.SearchScreen
 import app.duenorth.tasks.ui.settings.SettingsScreen
 import app.duenorth.tasks.ui.shade.ListShadeScreen
+import app.duenorth.tasks.ui.synclog.SyncLogScreen
 
 object Routes {
     const val HOME = "home"
@@ -34,6 +35,7 @@ object Routes {
     const val GALLERY = "gallery"
     const val SETTINGS = "settings"
     const val LIST_SHADE = "list/{id}/shade"
+    const val SYNC_LOG = "sync-log"
 
     fun list(id: String) = "list/$id"
 
@@ -70,6 +72,7 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
                 sync = app.syncNow,
                 openSettings = { nav.navigate(Routes.SETTINGS) },
                 openListShade = { nav.navigate(Routes.listShade(it)) },
+                openSyncLog = { nav.navigate(Routes.SYNC_LOG) },
                 menuItems = if (DebugRoutes.GALLERY_ENABLED) {
                     listOf(AppBarMenuItem("component gallery") { nav.navigate(Routes.GALLERY) })
                 } else {
@@ -91,7 +94,15 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
             Page(this) { ListShadeScreen() }
         }
         composable(Routes.SETTINGS) {
-            Page(this) { SettingsScreen(onOpenSyncAccount = { nav.navigate(Routes.ACCOUNT) }) }
+            Page(this) {
+                SettingsScreen(
+                    onOpenSyncAccount = { nav.navigate(Routes.ACCOUNT) },
+                    onOpenSyncLog = { nav.navigate(Routes.SYNC_LOG) }
+                )
+            }
+        }
+        composable(Routes.SYNC_LOG) {
+            Page(this) { SyncLogScreen() }
         }
         composable(Routes.TASK) { entry ->
             Page(this) { TaskDetailScreen(onClosed = { nav.closeIfOn(entry) }, animatedScope = this) }

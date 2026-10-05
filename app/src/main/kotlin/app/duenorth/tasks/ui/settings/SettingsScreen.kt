@@ -35,13 +35,18 @@ import app.duenorth.tasks.settings.ThemeSettings
 
 /** The settings pivot (contracts/ui-screens.md "Settings"). */
 @Composable
-fun SettingsScreen(onOpenSyncAccount: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreen(
+    onOpenSyncAccount: () -> Unit,
+    onOpenSyncLog: () -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel()
+) {
     val theme by viewModel.theme.collectAsStateWithLifecycle()
     SettingsContent(
         theme ?: ThemeSettings(),
         onMode = viewModel::setMode,
         onAccent = viewModel::setAccent,
-        onOpenSyncAccount = onOpenSyncAccount
+        onOpenSyncAccount = onOpenSyncAccount,
+        onOpenSyncLog = onOpenSyncLog
     )
 }
 
@@ -50,7 +55,8 @@ fun SettingsContent(
     theme: ThemeSettings,
     onMode: (ThemeMode) -> Unit,
     onAccent: (Accent) -> Unit,
-    onOpenSyncAccount: () -> Unit = {}
+    onOpenSyncAccount: () -> Unit = {},
+    onOpenSyncLog: () -> Unit = {}
 ) {
     MetroPivot(
         headers = listOf("theme", "sync account", "about"),
@@ -59,7 +65,7 @@ fun SettingsContent(
     ) { index ->
         when (index) {
             0 -> ThemePage(theme, onMode, onAccent)
-            1 -> SyncAccountLink(onOpenSyncAccount)
+            1 -> SyncLinks(onOpenSyncAccount, onOpenSyncLog)
             else -> AboutPage()
         }
     }
@@ -110,28 +116,39 @@ private fun ThemePage(theme: ThemeSettings, onMode: (ThemeMode) -> Unit, onAccen
     }
 }
 
-/** The sync account page has its own route; this pivot item leads to it. */
+/** The sync account and sync log pages have their own routes; this pivot item leads to them. */
 @Composable
-private fun SyncAccountLink(onOpen: () -> Unit) {
+private fun SyncLinks(onOpenAccount: () -> Unit, onOpenLog: () -> Unit) {
     Column(
         Modifier
             .fillMaxSize()
             .background(MetroTheme.colors.background)
             .padding(top = MetroDimens.Grid)
     ) {
-        Column(
-            Modifier
-                .metroTilt()
-                .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onOpen)
-                .heightIn(min = MetroDimens.TouchTarget)
-        ) {
-            MetroText("sync account", MetroTheme.typography.listName, color = MetroTheme.accent.text)
-            MetroText(
-                "choose Google Tasks or Microsoft To Do, sign in or out, and how often to sync",
-                MetroTheme.typography.caption,
-                color = MetroTheme.colors.secondary
-            )
-        }
+        LinkRow(
+            "sync account",
+            "choose Google Tasks or Microsoft To Do, sign in or out, and how often to sync",
+            onOpenAccount
+        )
+        LinkRow(
+            "sync log",
+            "changes sync settled for you, and syncs that ran into trouble",
+            onOpenLog,
+            Modifier.padding(top = MetroDimens.Gutter)
+        )
+    }
+}
+
+@Composable
+private fun LinkRow(title: String, caption: String, onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier
+            .metroTilt()
+            .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onOpen)
+            .heightIn(min = MetroDimens.TouchTarget)
+    ) {
+        MetroText(title, MetroTheme.typography.listName, color = MetroTheme.accent.text)
+        MetroText(caption, MetroTheme.typography.caption, color = MetroTheme.colors.secondary)
     }
 }
 
