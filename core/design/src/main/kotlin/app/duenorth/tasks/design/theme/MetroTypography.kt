@@ -2,12 +2,14 @@ package app.duenorth.tasks.design.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import app.duenorth.tasks.design.R
 
-/** Segoe's weights; Selawik ships the same four. */
+/** Segoe's weights; Selawik ships the same four (plus bold, unused by the ramp). */
 object MetroWeights {
     val Light = FontWeight.Light
     val Semilight = FontWeight(350)
@@ -72,9 +74,15 @@ data class MetroTypography(
 }
 
 /**
- * Font family for the whole app. Research R2 picks Selawik (Microsoft's open Segoe UI stand-in);
- * until its TTFs land in res/font (T007), the platform sans-serif is used in the same weights.
+ * Font family for the whole app: Selawik, Microsoft's open Segoe UI stand-in (research R2),
+ * bundled in res/font under the SIL Open Font License (assets/licenses/selawik_OFL.txt).
  */
 object MetroFonts {
-    val family: FontFamily = FontFamily.SansSerif
+    val family: FontFamily = FontFamily(
+        Font(R.font.selawik_light, MetroWeights.Light),
+        Font(R.font.selawik_semilight, MetroWeights.Semilight),
+        Font(R.font.selawik_regular, MetroWeights.Regular),
+        Font(R.font.selawik_semibold, MetroWeights.Semibold),
+        Font(R.font.selawik_bold, FontWeight.Bold)
+    )
 }
