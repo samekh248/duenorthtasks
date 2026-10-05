@@ -36,13 +36,17 @@ object PanoramaDefaults {
     val PeekWidth = 40.dp
     val SectionSpacing = 12.dp
 
-    /** The title moves at about a third of the sections' speed. */
-    const val TITLE_PARALLAX = 1f / 3f
+    /**
+     * How much of the title's own width it slides by between the first and last section. The
+     * title drifts slower than the sections (the panorama feel) but stays mostly on screen, so
+     * "tasks" is still readable on the last section ("done") instead of scrolled off.
+     */
+    const val TITLE_TRAVEL = 0.15f
 }
 
 /**
  * The WP8.1 Panorama hub (constitution Principle I, "Light Panorama"): one wide surface with an
- * oversized title that slides slower than the sections under it, sections that snap one at a time
+ * oversized title that drifts a little as the sections under it slide by, sections that snap one at a time
  * and the next section always peeking in. Parallax is applied in the draw phase from the pager's
  * offset, so swiping never recomposes or relayouts the title.
  */
@@ -64,9 +68,10 @@ fun MetroPanorama(
                 .wrapContentWidth(Alignment.Start, unbounded = true)
                 .padding(start = MetroDimens.Gutter - 4.dp)
                 .graphicsLayer {
-                    val stridePx = state.layoutInfo.pageSize + state.layoutInfo.pageSpacing
-                    val scrolled = (state.currentPage + state.currentPageOffsetFraction) * stridePx
-                    translationX = -scrolled * PanoramaDefaults.TITLE_PARALLAX
+                    // Spread the title's travel evenly over the swipes from first to last section.
+                    val lastPage = (state.pageCount - 1).coerceAtLeast(1)
+                    val progress = (state.currentPage + state.currentPageOffsetFraction) / lastPage
+                    translationX = -progress.coerceIn(0f, 1f) * size.width * PanoramaDefaults.TITLE_TRAVEL
                 }
         ) {
             MetroText(title, type.panoramaTitle, maxLines = 1, softWrap = false)
