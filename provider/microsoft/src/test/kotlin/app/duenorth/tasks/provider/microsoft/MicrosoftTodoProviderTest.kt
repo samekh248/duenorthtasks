@@ -6,6 +6,7 @@ import app.duenorth.tasks.provider.api.StepDraft
 import app.duenorth.tasks.provider.api.StepPatch
 import app.duenorth.tasks.provider.api.TaskDraft
 import app.duenorth.tasks.provider.api.TaskPatch
+import app.duenorth.tasks.provider.microsoft.graph.PREFER_LARGE_PAGES
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
@@ -359,6 +360,46 @@ class MicrosoftTodoStepsTest {
             raw.getValue("dueDateTime").jsonObject.getValue("dateTime").jsonPrimitive.content
         )
         assertEquals(LocalDate.of(2026, 10, 6), provider.getTaskChanges(list.id, null).changed.single().dueDate)
+    }
+
+    @Test
+    fun aBigListReadsStepsInBatchesNotOneCallPerTask() = runTest {
+        val graph = FakeGraphServer(pageSize = 50, expandOnDelta = false)
+        try {
+            val provider = MicrosoftTodoProvider.create(TestAuth(), graph.baseUrl)
+            val list = provider.createList("Big")
+            repeat(45) { provider.createTask(list.id, TaskDraft("Task $it", steps = listOf(StepDraft("Step $it")))) }
+            graph.prefers.clear()
+
+            val page = provider.getTaskChanges(list.id, null)
+
+            assertEquals(45, page.changed.size)
+            assertTrue(page.changed.all { it.steps.single().title == "Step " + it.title.removePrefix("Task ") })
+            // One delta page plus three $batch calls of up to 20, instead of 45 separate requests.
+            assertEquals(4, graph.prefers.size)
+            assertEquals(PREFER_LARGE_PAGES, graph.prefers.first())
+        } finally {
+            graph.shutdown()
+        }
+    }
+
+    @Test
+    fun aDeltaThatNeverEndsStopsInsteadOfSpinning() = runTest {
+        val graph = FakeGraphServer(pageSize = 2, loopDelta = true)
+        try {
+            val provider = MicrosoftTodoProvider.create(TestAuth(), graph.baseUrl)
+            val list = provider.createList("Loop")
+            repeat(3) { provider.createTask(list.id, TaskDraft("Task $it")) }
+
+            var pages = 0
+            assertThrows<ProviderError.Transient> {
+                var page = provider.getTaskChanges(list.id, null)
+                while (page.hasMore && pages++ < 20) page = provider.getTaskChanges(list.id, page.nextCursor)
+            }
+            assertTrue(pages <= 2, "stopped after $pages extra pages")
+        } finally {
+            graph.shutdown()
+        }
     }
 
     @Test
