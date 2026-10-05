@@ -87,7 +87,7 @@ Keep an offline copy of the keystore and its passwords; the keystore must never 
 |---|---|---|
 | Developer account | play.google.com/console | One-time US$25 fee and identity check. New personal accounts must run a closed test with 12 testers for 14 days before production; internal testing has no such wait |
 | Create the app | Home > Create app | Name "Due North Tasks", app, free, package `app.duenorth.tasks` (fixed by the first upload) |
-| Store listing | Grow users > Store listing | Short description (80 chars), full description, 512 × 512 icon (`/mnt/project-files/logos/`, from the logo thread), 1024 × 500 feature graphic, at least 2 phone screenshots |
+| Store listing | Grow users > Store listing | Short description (80 chars), full description, 512 × 512 icon (`/mnt/project-files/logos/due-north-play-512.png`), 1024 × 500 feature graphic, at least 2 phone screenshots |
 | Privacy policy URL | App content > Privacy policy | Where you host [privacy-policy.md](privacy-policy.md) |
 | App access | App content > App access | "All or some functionality is restricted"; reviewers can use any Google or Microsoft account |
 | Ads | App content > Ads | No ads |
