@@ -19,6 +19,8 @@ BUDGETS = {
     # (FrameTimingGfxInfoMetric's jank percentage, in percent rather than ms).
     "scroll": ("gfxFrameJankPercent", "median", 1.0),
     "scrollWhileSyncing": ("gfxFrameJankPercent", "median", 1.0),
+    # The first panorama swipes right after a cold start are held to the same bar as any scroll.
+    "coldStartSwipe": ("gfxFrameJankPercent", "median", 1.0),
 }
 EMULATOR_FACTOR = float(os.environ.get("BENCHMARK_EMULATOR_FACTOR", "3.0"))
 

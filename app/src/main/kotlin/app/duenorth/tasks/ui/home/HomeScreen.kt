@@ -15,14 +15,17 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -109,6 +112,22 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
         )
     }
 
+    LaunchedEffect(pager, viewModel) {
+        // Hold sync batches while the sections slide, like a finger on a list does, so a sync
+        // started by the cold start never lands mid-swipe.
+        var holding = false
+        try {
+            snapshotFlow { pager.isScrollInProgress }.collect { moving ->
+                if (moving != holding) {
+                    holding = moving
+                    viewModel.holdSync(moving)
+                }
+            }
+        } finally {
+            if (holding) viewModel.holdSync(false)
+        }
+    }
+
     Column(Modifier.fillMaxSize().imePadding()) {
         Box(Modifier.weight(1f).statusBarsPadding()) {
             MetroPanorama(
@@ -136,18 +155,7 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
             )
             if (syncing) MetroProgressDots()
         }
-        val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
-        val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", onClick = it) }
-        val menu = listOf(
-            AppBarMenuItem("settings", actions.openSettings),
-            AppBarMenuItem("sync account", actions.openSyncAccount)
-        ) + actions.menuItems
-        val first = when (pager.currentPage) {
-            TODAY -> AppBarButton(MetroIcon.Add, "new task") { addFocus.requestFocus() }
-            LISTS -> AppBarButton(MetroIcon.Add, "new list") { newList = true }
-            else -> null
-        }
-        MetroAppBar(buttons = listOfNotNull(first, sync, search), menuItems = menu)
+        HomeAppBar(pager, actions, onNewTask = { addFocus.requestFocus() }, onNewList = { newList = true })
     }
 
     if (newList) {
@@ -200,6 +208,26 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
             onDismiss = { moving = null }
         )
     }
+}
+
+/**
+ * Its own composable so that the swipe passing the middle of a section, which swaps the first
+ * button, recomposes only the app bar and never the panorama under the finger.
+ */
+@Composable
+private fun HomeAppBar(pager: PagerState, actions: HomeActions, onNewTask: () -> Unit, onNewList: () -> Unit) {
+    val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
+    val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", onClick = it) }
+    val menu = listOf(
+        AppBarMenuItem("settings", actions.openSettings),
+        AppBarMenuItem("sync account", actions.openSyncAccount)
+    ) + actions.menuItems
+    val first = when (pager.currentPage) {
+        TODAY -> AppBarButton(MetroIcon.Add, "new task", onClick = onNewTask)
+        LISTS -> AppBarButton(MetroIcon.Add, "new list", onClick = onNewList)
+        else -> null
+    }
+    MetroAppBar(buttons = listOfNotNull(first, sync, search), menuItems = menu)
 }
 
 @Composable

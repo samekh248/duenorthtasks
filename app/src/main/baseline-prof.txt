@@ -1,0 +1,8 @@
+# Hand-written Baseline Profile rules (research R12, constitution Principle II).
+#
+# Compiles all of the app's own code (every module lives under app.duenorth.tasks) ahead of time,
+# so startup and the first panorama swipes after a cold start never run interpreted. Compose,
+# the pager and the other AndroidX libraries ship their own profiles, which the build merges in.
+# BaselineProfileGenerator replaces these with a measured profile once it has run on a device.
+HSPLapp/duenorth/tasks/**;->**(**)**
+Lapp/duenorth/tasks/**;
