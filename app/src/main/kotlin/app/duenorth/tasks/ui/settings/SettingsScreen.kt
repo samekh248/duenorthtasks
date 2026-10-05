@@ -167,6 +167,12 @@ private fun AboutPage() {
             Modifier.padding(top = MetroDimens.Gutter),
             color = MetroTheme.colors.secondary
         )
+        MetroText(
+            "Set in Selawik, © 2015 Microsoft Corporation, used under the SIL Open Font License 1.1.",
+            MetroTheme.typography.caption,
+            Modifier.padding(top = MetroDimens.Gutter),
+            color = MetroTheme.colors.secondary
+        )
     }
 }
 
