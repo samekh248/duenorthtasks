@@ -1,3 +1,4 @@
+import com.android.build.api.variant.BuildConfigField
 import java.util.Properties
 
 plugins {
@@ -31,7 +32,8 @@ android {
         applicationId = "app.duenorth.tasks"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
+        // CI passes APP_VERSIONCODE so every Play upload gets a higher number (T068).
+        versionCode = secret("app.versionCode").toIntOrNull() ?: 1
         versionName = "0.1.0"
 
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${secret("google.webClientId")}\"")
@@ -43,13 +45,26 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release signing (T068). With Play App Signing this is the upload key; the keystore and its
+    // passwords come from local.properties or CI secrets. Without them, release builds fall back to
+    // the debug key so local builds and benchmarks keep working.
+    signingConfigs {
+        if (secret("release.storeFile").isNotEmpty()) {
+            create("release") {
+                storeFile = file(secret("release.storeFile"))
+                storePassword = secret("release.storePassword")
+                keyAlias = secret("release.keyAlias")
+                keyPassword = secret("release.keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signed with the debug key until release signing lands (T060); lets benchmarks run on release builds.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
@@ -94,6 +109,18 @@ androidComponents {
     onVariants { variant ->
         if (variant.buildType in benchmarkBuildTypes) {
             variant.sources.manifests.addStaticManifestFile("src/benchmarkRelease/AndroidManifest.xml")
+            // Benchmark builds (the "optimized" APK people try) keep the debug key, whose hashes are
+            // the ones registered with Google and Microsoft.
+            variant.signingConfig.setConfig(android.signingConfigs.getByName("debug"))
+        }
+        // MSAL's redirect must carry the hash of the key that signs the installed app. For a Play
+        // install that is Google's app signing key, not the upload key, so release builds can take
+        // their own hash (msal.releaseSignatureHash); everything else uses msal.signatureHash.
+        val releaseHash = secret("msal.releaseSignatureHash")
+        if (variant.buildType == "release" && releaseHash.isNotEmpty()) {
+            variant.manifestPlaceholders.put("msalSignatureHash", releaseHash)
+            val field = BuildConfigField("String", "\"$releaseHash\"", null)
+            variant.buildConfigFields?.put("MSAL_SIGNATURE_HASH", field)
         }
     }
 }

@@ -38,7 +38,8 @@ flowchart LR
    signature hash from step 1. Save.
 4. API permissions > Add a permission > Microsoft Graph > Delegated > `Tasks.ReadWrite`. Add.
 5. Copy the Application (client) ID from Overview into `msal.clientId`, and the hash into
-   `msal.signatureHash`. A release key has its own hash: add it as a second Android redirect.
+   `msal.signatureHash`. A release key has its own hash: add it as a second Android redirect (see
+   [docs/release](../../docs/release/README.md) for release and Play signing).
 
 ## Commands
 

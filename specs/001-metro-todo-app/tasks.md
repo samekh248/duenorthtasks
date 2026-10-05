@@ -181,9 +181,9 @@ flowchart LR
 - [X] T064 [P] Accessibility pass: TalkBack labels on app bar buttons and checkboxes, 48dp targets, panorama sections announced as headings, contrast check for every accent's light and dark value (`AccessibilityTest`, `ContrastTest`, `HomeFlowTest.everyTapTargetIsLabelledAndAtLeast48dp`)
 - [ ] T065 [P] Performance pass on real mid-range and low-end phones: review benchmark trends, JankStats logs and startup traces; fix anything over budget
 - [x] T066 [P] Metro launcher icon (flat white glyph on accent square) and splash (adaptive icon with a themed-icon layer; Android 12+ shows it on the theme background as the splash)
-- [ ] T067 Privacy policy and Google OAuth verification submission for the `tasks` scope
-- [ ] T068 Play Console internal testing track and release signing via CI secrets
-- [ ] T069 Run every quickstart.md scenario and record results
+- [ ] T067 Privacy policy and Google OAuth verification submission for the `tasks` scope. Repo side done: `docs/release/privacy-policy.md` and the submission notes in `docs/release/README.md`; hosting the policy and submitting wait on the owner
+- [ ] T068 Play Console internal testing track and release signing via CI secrets. Repo side done: release signing config, `.github/workflows/release.yml` (signed bundle, optional draft upload to internal testing); the Play account, secrets and key registration wait on the owner
+- [ ] T069 Run every quickstart.md scenario and record results in `validation.md` (cloud-runnable ones recorded; phone scenarios V3-V8 wait on a device run)
 
 ---
 
