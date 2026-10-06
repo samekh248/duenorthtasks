@@ -292,7 +292,10 @@ class ScreenScreenshotTest {
             val state by viewModel.state.collectAsState()
             ListContent(state, viewModel, onOpenTask = {})
         }
-        compose.waitUntilAtLeastOneExists(hasText("Mail the birthday card"), TIMEOUT)
+        compose.waitUntilAtLeastOneExists(
+            hasText(if (reorder) "completed tasks stay where they are" else "Mail the birthday card"),
+            TIMEOUT
+        )
         snap(if (reorder) "list_reorder" else "list", dark)
     }
 
