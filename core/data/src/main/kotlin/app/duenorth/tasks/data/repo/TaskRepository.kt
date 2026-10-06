@@ -159,6 +159,42 @@ class TaskRepository(
         return id
     }
 
+    /**
+     * Adds [task] with its steps to the top of [listId] in one write, like a typed task (spec 004
+     * FR-322, FR-323). [id] lets the screen show it before the write commits.
+     */
+    suspend fun createTaskWithSteps(listId: String, task: NewTask, id: String = newId()): String {
+        val clean = task.cleaned()
+        write {
+            requireList(listId)
+            insertNew(listId, clean, id, now())
+        }
+        return id
+    }
+
+    /**
+     * Makes a list holding [tasks], first one on top, in one write (spec 004 FR-320, FR-323). The
+     * tasks are queued last first: Google puts each created task at the top, so the first one
+     * must arrive last to end up first there too.
+     */
+    suspend fun createListWithTasks(title: String, tasks: List<NewTask>, id: String = newId()): String {
+        val cleanTitle = Validation.listTitle(title)
+        val clean = tasks.map { it.cleaned() }
+        require(clean.size <= Validation.MAX_TEMPLATE_TASKS) {
+            "A list template has at most ${Validation.MAX_TEMPLATE_TASKS} tasks"
+        }
+        write {
+            val at = now()
+            lists.insert(TaskListEntity(localId = id, title = cleanTitle, localUpdatedAt = at))
+            outbox.enqueue(EntityType.LIST, id, OperationKind.CREATE, at)
+            // Unsynced tasks with no key sort newest first, so each later one gets a later time.
+            clean.asReversed().forEachIndexed { index, task ->
+                insertNew(id, task, newId(), at.minusMillis((clean.size - 1 - index).toLong()))
+            }
+        }
+        return id
+    }
+
     /** Applies only the non-null parts of [edit]; unchanged values queue nothing. */
     suspend fun editTask(localId: String, edit: TaskEdit) = write {
         val task = requireTask(localId)
@@ -318,6 +354,28 @@ class TaskRepository(
 
     // Helpers
 
+    /** Inserts a validated new task and its steps at the top of [listId] and queues their creates. */
+    private suspend fun insertNew(listId: String, task: NewTask, id: String, at: Instant) {
+        tasks.insert(
+            TaskEntity(
+                localId = id,
+                listId = listId,
+                title = task.title,
+                notes = task.notes,
+                dueDate = task.dueDate,
+                important = task.important,
+                position = topKey(listId),
+                localUpdatedAt = at
+            )
+        )
+        outbox.enqueue(EntityType.TASK, id, OperationKind.CREATE, at)
+        task.steps.forEachIndexed { index, title ->
+            val stepId = newId()
+            steps.insert(StepEntity(localId = stepId, taskId = id, title = title, sortOrder = index))
+            outbox.enqueue(EntityType.STEP, stepId, OperationKind.CREATE, at)
+        }
+    }
+
     private fun now(): Instant = clock.instant()
 
     /**
@@ -361,6 +419,24 @@ class TaskRepository(
     private companion object {
         const val CHUNK = 900
         const val DEFAULT_LIST_TITLE = "Tasks"
+    }
+}
+
+/** A task to create with its steps, as a template makes it (spec 004). */
+data class NewTask(
+    val title: String,
+    val notes: String? = null,
+    val dueDate: LocalDate? = null,
+    val important: Boolean = false,
+    val steps: List<String> = emptyList()
+) {
+    internal fun cleaned(): NewTask {
+        require(steps.size <= Validation.MAX_STEPS) { "A task has at most ${Validation.MAX_STEPS} steps" }
+        return copy(
+            title = Validation.taskTitle(title),
+            notes = Validation.notes(notes),
+            steps = steps.map(Validation::stepTitle)
+        )
     }
 }
 

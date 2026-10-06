@@ -14,13 +14,18 @@ import androidx.room.TypeConverters
         TaskEntity::class,
         StepEntity::class,
         PendingOperationEntity::class,
-        SyncLogEntity::class
+        SyncLogEntity::class,
+        TemplateListEntity::class,
+        TemplateTaskEntity::class,
+        TemplateStepEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
     autoMigrations = [
         // Spec 002: list sharing flags and task assignment, all with defaults.
-        AutoMigration(from = 1, to = 2)
+        AutoMigration(from = 1, to = 2),
+        // Spec 004: three new template tables.
+        AutoMigration(from = 2, to = 3)
     ]
 )
 @TypeConverters(Converters::class)
@@ -38,6 +43,8 @@ abstract class DueNorthDatabase : RoomDatabase() {
     abstract fun syncLogDao(): SyncLogDao
 
     abstract fun syncDao(): SyncDao
+
+    abstract fun templateDao(): TemplateDao
 
     companion object {
         const val NAME = "duenorth.db"

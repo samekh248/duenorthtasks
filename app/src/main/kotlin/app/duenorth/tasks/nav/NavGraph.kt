@@ -23,12 +23,19 @@ import app.duenorth.tasks.ui.detail.TaskDetailScreen
 import app.duenorth.tasks.ui.home.HomeActions
 import app.duenorth.tasks.ui.home.HomeScreen
 import app.duenorth.tasks.ui.list.ListScreen
+import app.duenorth.tasks.ui.list.TemplateLinks
 import app.duenorth.tasks.ui.order.ReorderListsScreen
 import app.duenorth.tasks.ui.search.SearchScreen
 import app.duenorth.tasks.ui.settings.SettingsScreen
 import app.duenorth.tasks.ui.shade.ListShadeScreen
 import app.duenorth.tasks.ui.sharing.SharingScreen
 import app.duenorth.tasks.ui.synclog.SyncLogScreen
+import app.duenorth.tasks.ui.templates.ListTemplateActions
+import app.duenorth.tasks.ui.templates.ListTemplateScreen
+import app.duenorth.tasks.ui.templates.TemplateTaskScreen
+import app.duenorth.tasks.ui.templates.TemplatesActions
+import app.duenorth.tasks.ui.templates.TemplatesScreen
+import app.duenorth.tasks.ui.templates.UseListTemplateScreen
 
 object Routes {
     const val HOME = "home"
@@ -42,6 +49,10 @@ object Routes {
     const val LIST_SHARING = "list/{id}/sharing"
     const val SYNC_LOG = "sync-log"
     const val REORDER_LISTS = "lists/reorder?from={from}"
+    const val TEMPLATES = "templates"
+    const val LIST_TEMPLATE = "templates/list/{id}"
+    const val USE_LIST_TEMPLATE = "templates/list/{id}/use"
+    const val TEMPLATE_TASK = "templates/task/{id}"
 
     fun list(id: String) = "list/$id"
 
@@ -50,6 +61,12 @@ object Routes {
     fun listSharing(id: String) = "list/$id/sharing"
 
     fun task(id: String) = "task/$id"
+
+    fun listTemplate(id: String) = "templates/list/$id"
+
+    fun useListTemplate(id: String) = "templates/list/$id/use"
+
+    fun templateTask(id: String) = "templates/task/$id"
 
     fun reorderLists(from: String?) = if (from == null) "lists/reorder" else "lists/reorder?from=$from"
 }
@@ -85,6 +102,8 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
                 openListInfo = { nav.navigate(Routes.listSharing(it)) },
                 openSyncLog = { nav.navigate(Routes.SYNC_LOG) },
                 reorderLists = { nav.navigate(Routes.reorderLists(it)) },
+                openTemplates = { nav.navigate(Routes.TEMPLATES) },
+                openTemplateTask = { nav.navigate(Routes.templateTask(it)) },
                 menuItems = if (DebugRoutes.GALLERY_ENABLED) {
                     listOf(AppBarMenuItem("component gallery") { nav.navigate(Routes.GALLERY) })
                 } else {
@@ -99,9 +118,53 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
                     onOpenTask = { nav.navigate(Routes.task(it)) },
                     onClosed = { nav.closeIfOn(entry) },
                     onShade = { id -> nav.navigate(Routes.listShade(id)) },
-                    onInfo = { id -> nav.navigate(Routes.listSharing(id)) }
+                    onInfo = { id -> nav.navigate(Routes.listSharing(id)) },
+                    onTemplates = TemplateLinks(
+                        openListTemplate = { nav.navigate(Routes.listTemplate(it)) },
+                        openTemplateTask = { nav.navigate(Routes.templateTask(it)) }
+                    )
                 )
             }
+        }
+        composable(Routes.TEMPLATES) {
+            Page(this) {
+                TemplatesScreen(
+                    TemplatesActions(
+                        useList = { nav.navigate(Routes.useListTemplate(it)) },
+                        editList = { nav.navigate(Routes.listTemplate(it)) },
+                        editTask = { nav.navigate(Routes.templateTask(it)) }
+                    )
+                )
+            }
+        }
+        composable(Routes.LIST_TEMPLATE) { entry ->
+            val id = checkNotNull(entry.arguments?.getString("id"))
+            Page(this) {
+                ListTemplateScreen(
+                    ListTemplateActions(
+                        use = { nav.navigate(Routes.useListTemplate(id)) },
+                        editTask = { nav.navigate(Routes.templateTask(it)) },
+                        closed = { nav.closeIfOn(entry) }
+                    )
+                )
+            }
+        }
+        composable(Routes.USE_LIST_TEMPLATE) { entry ->
+            Page(this) {
+                UseListTemplateScreen(
+                    onCreated = { listId ->
+                        // The new list replaces this form, so back goes to where the template was picked.
+                        if (nav.currentBackStackEntry?.id == entry.id) {
+                            nav.popBackStack()
+                            nav.navigate(Routes.list(listId))
+                        }
+                    },
+                    onCancel = { nav.closeIfOn(entry) }
+                )
+            }
+        }
+        composable(Routes.TEMPLATE_TASK) { entry ->
+            Page(this) { TemplateTaskScreen(onClosed = { nav.closeIfOn(entry) }) }
         }
         composable(Routes.LIST_SHADE) {
             Page(this) { ListShadeScreen() }

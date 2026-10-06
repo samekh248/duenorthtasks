@@ -7,6 +7,7 @@ import app.duenorth.tasks.data.db.ListSummary
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.settings.ListOrder
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
@@ -20,6 +21,8 @@ import app.duenorth.tasks.ui.common.TickLinger
 import app.duenorth.tasks.ui.common.serviceName
 import app.duenorth.tasks.ui.common.toRow
 import app.duenorth.tasks.ui.common.todayFlow
+import app.duenorth.tasks.ui.templates.TaskTemplatePick
+import app.duenorth.tasks.ui.templates.taskTemplatePicks
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -58,7 +61,9 @@ data class HomeUiState(
     /** The connected service has an importance star (To Do); false hides it everywhere. */
     val importance: Boolean = false,
     /** Tasks added on this screen, which a touch hold lets in at once. */
-    val added: Set<String> = emptySet()
+    val added: Set<String> = emptySet(),
+    /** Offered under the "add a task" box (spec 004 FR-324). */
+    val taskTemplates: List<TaskTemplatePick> = emptyList()
 )
 
 /**
@@ -69,6 +74,7 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val tasks: TaskRepository,
+    private val templates: TemplateRepository,
     accounts: AccountRepository,
     features: ServiceFeatures,
     holds: ListHolds,
@@ -94,9 +100,9 @@ class HomeViewModel @Inject constructor(
         due,
         tasks.recentlyCompleted(),
         combine(tasks.listSummaries(), listOrder.rank) { lists, rank -> ListOrder.sort(lists, rank) { it.localId } },
-        combine(accounts.account, features.importance, ::Pair),
+        combine(accounts.account, features.importance, taskTemplatePicks(templates, features.importance), ::Triple),
         combine(overrides.overrides, linger.ticked, adds.pending, ::Triple)
-    ) { (day, dueRows), doneRows, lists, (account, importance), (pending, ticked, added) ->
+    ) { (day, dueRows), doneRows, lists, (account, importance, picks), (pending, ticked, added) ->
         knownLists = lists
         overrides.settle((dueRows + doneRows).associate { it.task.localId to it.task.completed })
         adds.settle(dueRows.mapTo(HashSet()) { it.task.localId })
@@ -133,7 +139,8 @@ class HomeViewModel @Inject constructor(
             ),
             serviceName = serviceName(account?.provider),
             importance = importance,
-            added = added.added
+            added = added.added,
+            taskTemplates = picks
         ).also { shown = it }
     }
         .flowOn(Dispatchers.Default)
@@ -153,6 +160,30 @@ class HomeViewModel @Inject constructor(
      */
     fun addTask(title: String, details: String? = null, due: LocalDate? = state.value.today, listId: String? = null) {
         if (title.isBlank()) return
+        add(title, details, due, listId) { list, id ->
+            tasks.createTask(list, title, notes = details, dueDate = due, id = id)
+        }
+    }
+
+    /** Adds task template [pick] like a typed task, due today plus its offset (spec 004 US2). */
+    fun addFromTemplate(pick: TaskTemplatePick, listId: String? = null) {
+        val today = state.value.today
+        val due = pick.dueOffset?.let { today.plusDays(it.toLong()) }
+        add(pick.title, pick.details, due, listId) { list, id -> templates.useTaskTemplate(pick.id, list, today, id) }
+    }
+
+    /** Saves task [id] as a task template and hands the template's id to [then] (spec 004 US3). */
+    fun saveAsTemplate(id: String, then: (String) -> Unit) {
+        viewModelScope.launch { runCatching { templates.saveTaskAsTemplate(id) }.onSuccess(then) }
+    }
+
+    private fun add(
+        title: String,
+        details: String?,
+        due: LocalDate?,
+        listId: String?,
+        write: suspend (listId: String, id: String) -> Unit
+    ) {
         val id = UUID.randomUUID().toString()
         val today = state.value.today
         val list = knownLists.firstOrNull { if (listId != null) it.localId == listId else it.isDefault }
@@ -174,10 +205,7 @@ class HomeViewModel @Inject constructor(
         }
         adds.add(id, row)
         viewModelScope.launch {
-            runCatching {
-                val list = listId ?: tasks.defaultListIdOrCreate()
-                tasks.createTask(list, title, notes = details, dueDate = due, id = id)
-            }.onFailure { adds.clear(id) }
+            runCatching { write(listId ?: tasks.defaultListIdOrCreate(), id) }.onFailure { adds.clear(id) }
         }
     }
 

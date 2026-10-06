@@ -30,6 +30,7 @@ import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderKind
@@ -79,6 +80,7 @@ class HomeFlowTest {
         runBlocking { accounts.connect(ProviderKind.FAKE, "demo", null) }
         viewModel = HomeViewModel(
             tasks,
+            TemplateRepository(db, tasks, clock),
             accounts,
             ServiceFeatures(accounts) { FakeProvider() },
             holds,

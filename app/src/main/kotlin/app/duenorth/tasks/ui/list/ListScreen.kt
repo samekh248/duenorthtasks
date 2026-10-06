@@ -71,6 +71,7 @@ import app.duenorth.tasks.ui.common.importanceItem
 import app.duenorth.tasks.ui.common.rememberTouchHold
 import app.duenorth.tasks.ui.common.touchHold
 import app.duenorth.tasks.ui.home.EmptyNote
+import app.duenorth.tasks.ui.home.TemplatePicker
 import kotlinx.coroutines.launch
 
 /** One list (contracts/ui-screens.md "List page"): header, open tasks, collapsible "completed". */
@@ -80,12 +81,16 @@ fun ListScreen(
     onClosed: () -> Unit,
     onShade: (String) -> Unit = {},
     onInfo: (String) -> Unit = {},
+    onTemplates: TemplateLinks = TemplateLinks(),
     viewModel: ListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
-    ListContent(state, viewModel, onOpenTask, onShade, onInfo)
+    ListContent(state, viewModel, onOpenTask, onShade, onInfo, onTemplates)
 }
+
+/** Where "save as template" leads: the new template's editor (spec 004 US3). */
+class TemplateLinks(val openListTemplate: (String) -> Unit = {}, val openTemplateTask: (String) -> Unit = {})
 
 /** The whole page, check boxes and captions included, uses the list's shade of the accent. */
 @Composable
@@ -94,7 +99,8 @@ fun ListContent(
     viewModel: ListViewModel,
     onOpenTask: (String) -> Unit,
     onShade: (String) -> Unit = {},
-    onInfo: (String) -> Unit = {}
+    onInfo: (String) -> Unit = {},
+    onTemplates: TemplateLinks = TemplateLinks()
 ) {
     ListAccent(viewModel.listId) {
         if (state.reordering) {
@@ -103,7 +109,7 @@ fun ListContent(
                 viewModel
             )
         } else {
-            ListPage(state, viewModel, onOpenTask, onShade, onInfo)
+            ListPage(state, viewModel, onOpenTask, onShade, onInfo, onTemplates)
         }
         if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
     }
@@ -150,7 +156,8 @@ private fun ListPage(
     viewModel: ListViewModel,
     onOpenTask: (String) -> Unit,
     onShade: (String) -> Unit,
-    onInfo: (String) -> Unit
+    onInfo: (String) -> Unit,
+    onTemplates: TemplateLinks
 ) {
     val scope = rememberCoroutineScope()
     val continuum = rememberContinuumState()
@@ -181,7 +188,10 @@ private fun ListPage(
                 ContextMenuItem("edit") { onOpenTask(task.id) },
                 ContextMenuItem("delete") { viewModel.deleteTask(task.id) },
                 ContextMenuItem("move to") { moving = task },
-                importanceItem(state.importance, task) { viewModel.setImportant(task.id, it) }
+                importanceItem(state.importance, task) { viewModel.setImportant(task.id, it) },
+                ContextMenuItem("save as template") {
+                    viewModel.saveTaskAsTemplate(task.id, onTemplates.openTemplateTask)
+                }
             ),
             continuum = continuum,
             modifier = modifier
@@ -212,6 +222,11 @@ private fun ListPage(
                             draft = ""
                         })
                     )
+                    if (draft.isEmpty()) {
+                        Column(Modifier.padding(end = MetroDimens.Gutter)) {
+                            TemplatePicker(state.taskTemplates, onUse = viewModel::addFromTemplate)
+                        }
+                    }
                 }
                 if (state.loading) {
                     item(key = "loading") { MetroTaskPlaceholders() }
@@ -262,6 +277,7 @@ private fun ListPage(
                 AppBarMenuItem("rename list") { renaming = true }.takeIf { state.sharing.canManage },
                 AppBarMenuItem("list shade") { onShade(viewModel.listId) },
                 AppBarMenuItem("list info") { onInfo(viewModel.listId) },
+                AppBarMenuItem("save as template") { viewModel.saveAsTemplate(onTemplates.openListTemplate) },
                 AppBarMenuItem("delete list") { deleting = true }.takeIf { state.sharing.canManage }
             )
         )

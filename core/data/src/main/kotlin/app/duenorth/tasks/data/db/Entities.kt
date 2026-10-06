@@ -195,3 +195,87 @@ object Fields {
     /** Never sent as a field; marks a task whose queued `MOVE` keeps its place over a pull's. */
     const val POSITION = "position"
 }
+
+/*
+ * Templates (specs/004-templates/data-model.md): recipes kept on this phone only. No remote ids,
+ * never in the outbox or the sync log. They hang off the account row like everything else, so
+ * signing out or switching services removes them (FR-303).
+ */
+
+/** A list template: a name, a shade, and its [TemplateTaskEntity] rows. */
+@Entity(
+    tableName = "template_list",
+    foreignKeys = [
+        ForeignKey(
+            entity = AccountEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["accountId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("accountId")]
+)
+data class TemplateListEntity(
+    @PrimaryKey val id: String,
+    val accountId: Int = AccountEntity.ACCOUNT_ID,
+    val name: String,
+    /** Spec 001 list shade step, -3..3; 0 is the app accent. */
+    val shadeStep: Int = 0,
+    val updatedAt: Instant
+)
+
+/** A task inside a list template, or a task template on its own when [templateListId] is null. */
+@Entity(
+    tableName = "template_task",
+    foreignKeys = [
+        ForeignKey(
+            entity = AccountEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["accountId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = TemplateListEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["templateListId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("accountId"), Index("templateListId")]
+)
+data class TemplateTaskEntity(
+    @PrimaryKey val id: String,
+    val accountId: Int = AccountEntity.ACCOUNT_ID,
+    val templateListId: String? = null,
+    val title: String,
+    val notes: String? = null,
+    /** Only offered while connected to a service with importance (Microsoft To Do). */
+    val important: Boolean = false,
+    /**
+     * Days from the start date (list template, may be negative) or from the day it is used (task
+     * template, 0 or more). Null means no due date.
+     */
+    val dueOffsetDays: Int? = null,
+    val sortOrder: Int = 0,
+    /** Orders the "use a template" picker, most recently used first. */
+    val lastUsedAt: Instant? = null
+)
+
+@Entity(
+    tableName = "template_step",
+    foreignKeys = [
+        ForeignKey(
+            entity = TemplateTaskEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["templateTaskId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("templateTaskId")]
+)
+data class TemplateStepEntity(
+    @PrimaryKey val id: String,
+    val templateTaskId: String,
+    val title: String,
+    val sortOrder: Int
+)
