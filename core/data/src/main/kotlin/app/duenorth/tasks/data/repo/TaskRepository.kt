@@ -2,11 +2,13 @@ package app.duenorth.tasks.data.repo
 
 import androidx.room.withTransaction
 import app.duenorth.tasks.data.db.AccountEntity
+import app.duenorth.tasks.data.db.CompletedStat
 import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.db.EntityType
 import app.duenorth.tasks.data.db.Fields
 import app.duenorth.tasks.data.db.ListKey
 import app.duenorth.tasks.data.db.ListSummary
+import app.duenorth.tasks.data.db.OpenStat
 import app.duenorth.tasks.data.db.OperationKind
 import app.duenorth.tasks.data.db.StepEntity
 import app.duenorth.tasks.data.db.TaskEntity
@@ -73,6 +75,12 @@ class TaskRepository(
     fun tasksDueBy(lastDay: LocalDate): Flow<List<TaskWithList>> = tasks.observeDueBy(lastDay.toEpochDay())
 
     fun recentlyCompleted(limit: Int = 50): Flow<List<TaskWithList>> = tasks.observeRecentlyCompleted(limit)
+
+    /** Completed tasks as stats needs them (spec 005). */
+    fun completedStats(): Flow<List<CompletedStat>> = tasks.observeCompletedStats()
+
+    /** Open tasks' due dates, for the stats "right now" counts (spec 005). */
+    fun openStats(): Flow<List<OpenStat>> = tasks.observeOpenStats()
 
     fun task(localId: String): Flow<TaskEntity?> = tasks.observe(localId)
 

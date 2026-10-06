@@ -1,0 +1,204 @@
+<!doctype html>
+<!-- Mockups for specs/005-stats. Render: NODE_PATH=$(npm root -g) node render.js (writes stats-mockups.png). -->
+<html><head><meta charset="utf-8"><style>
+@font-face{font-family:Selawik;font-weight:300;src:url(../../../core/design/src/main/res/font/selawik_light.ttf)}
+@font-face{font-family:Selawik;font-weight:350;src:url(../../../core/design/src/main/res/font/selawik_semilight.ttf)}
+@font-face{font-family:Selawik;font-weight:400;src:url(../../../core/design/src/main/res/font/selawik_regular.ttf)}
+*{box-sizing:border-box;margin:0}
+body{font-family:Selawik;background:#ECECEC;padding:36px;width:2050px;color:#111}
+h1{font-weight:300;font-size:44px;margin-bottom:6px}
+.sub{font-size:20px;color:#5C5C5C;margin-bottom:28px}
+.flow{display:flex;align-items:center;gap:14px;margin-bottom:36px;font-size:20px}
+.box{background:#fff;padding:14px 20px;min-width:220px;border-left:8px solid #B0005E}
+.box b{font-weight:400;font-size:26px;display:block;margin-bottom:2px}
+.box small{color:#5C5C5C;font-size:16px;line-height:1.35;display:block}
+.box.new{border:3px solid #B0005E;border-left-width:8px}
+.arrow{font-size:40px;color:#5C5C5C;font-weight:300}
+.arrow span{display:block;font-size:15px;text-align:center}
+.row{display:flex;gap:30px;margin-bottom:30px}
+.cap{width:360px;font-size:18px;color:#333;margin-top:12px;line-height:1.35}
+.cap b{font-weight:400;color:#B0005E}
+.rowlabel{font-size:15px;letter-spacing:1px;color:#5C5C5C;margin-bottom:10px}
+.ph{--bg:#fff;--fg:#111;--sub:#5C5C5C;--bar:#E5E5E5;--acc:#B0005E;--late:#D80000;--empty:#EAEAEA;
+  --s1:#F2C6DD;--s2:#E58DBB;--s3:#D04D93;--s4:#B0005E;--s5:#7A0041;
+  width:360px;height:760px;background:var(--bg);color:var(--fg);position:relative;overflow:hidden}
+.dark .ph{--bg:#000;--fg:#fff;--sub:#A6A6A6;--bar:#1F1F1F;--acc:#F0389A;--late:#FF4040;--empty:#1C1C1C;
+  --s1:#4A1230;--s2:#7E1F52;--s3:#B42C75;--s4:#F0389A;--s5:#F894C6}
+.ptitle{position:absolute;top:-6px;left:-150px;font-size:118px;font-weight:300;line-height:1;white-space:nowrap}
+.psub{position:absolute;top:112px;left:-14px;font-size:22px;color:var(--sub)}
+.sec{position:absolute;top:142px;left:18px;font-size:46px;font-weight:300}
+.peek{position:absolute;top:142px;left:332px;font-size:46px;font-weight:300}
+.body{position:absolute;top:210px;left:18px;width:300px;bottom:76px;overflow:hidden}
+.big{font-size:64px;font-weight:300;line-height:1;color:var(--acc)}
+.lab{font-size:20px;font-weight:350}
+.g{color:var(--sub);font-size:15px}
+.sh{font-size:21px;font-weight:350;margin:14px 0 6px;color:var(--sub)}
+.bars{display:flex;align-items:flex-end;gap:8px;height:96px;margin-top:14px}
+.bars div{flex:1;background:var(--s3);position:relative}
+.bars div.today{background:var(--acc)}
+.bars div.fut{background:none;border-top:2px solid var(--empty)}
+.bars div span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:13px;color:var(--sub)}
+.days{display:flex;gap:8px;margin-top:4px}
+.days span{flex:1;text-align:center;font-size:13px;color:var(--sub)}
+.days span.today{color:var(--acc)}
+.pair{display:flex;gap:28px;margin-top:20px}
+.pair .big{font-size:48px}
+.grid{display:grid;grid-template-columns:repeat(12,17px);grid-template-rows:repeat(7,17px);grid-auto-flow:column;gap:3px;margin-top:4px}
+.grid i{display:block;background:var(--empty)}
+.grid i.sel{outline:2px solid var(--fg);outline-offset:1px}
+.grid i.wait{background:repeating-linear-gradient(0deg,var(--empty),var(--empty) 3px,transparent 3px,transparent 5px)}
+.legend{display:flex;gap:4px;align-items:center;font-size:13px;color:var(--sub);margin-top:6px}
+.legend i{width:12px;height:12px;display:inline-block}
+.lrow{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:18px;font-weight:350}
+.lrow .tile{width:22px;height:22px;flex:none}
+.lrow .nm{width:92px;white-space:nowrap;overflow:hidden}
+.lrow .lb{height:14px}
+.lrow .n{font-size:15px;color:var(--sub)}
+.late{color:var(--late)}
+.acc{color:var(--acc)}
+.dots{display:flex;gap:7px;margin:2px 0 10px}
+.dots i{width:5px;height:5px;background:var(--acc);display:block}
+.ph .topdots{position:absolute;top:4px;left:120px;display:flex;gap:9px}
+.ph .topdots i{width:5px;height:5px;background:var(--acc);display:block}
+.ph-ph{background:var(--empty);height:16px;margin:8px 0}
+.appbar{position:absolute;left:0;right:0;bottom:0;height:72px;background:var(--bar);display:flex;justify-content:center;align-items:center}
+.ic{width:46px;height:46px;border:2px solid var(--fg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px}
+.more{position:absolute;right:18px;top:8px;font-size:22px;letter-spacing:2px}
+</style></head><body>
+<h1>stats</h1>
+<div class="sub">A fourth panorama section after "done". Everything is counted on the phone from tasks already synced; nothing new is sent to Google or Microsoft.</div>
+<div class="flow">
+ <div class="box"><b>today</b><small>add box, overdue, due today, tomorrow</small></div>
+ <div class="arrow">→</div>
+ <div class="box"><b>lists</b><small>list tiles in their shades</small></div>
+ <div class="arrow">→</div>
+ <div class="box"><b>done</b><small>recently completed</small></div>
+ <div class="arrow">→</div>
+ <div class="box new"><b>stats</b><small>new: this week, streak, on time,<br>last 12 weeks, by list</small></div>
+ <div class="arrow">→<span>wraps</span></div>
+ <div class="box"><b>today</b><small>"today" peeks in from the right<br>of stats, like any section</small></div>
+</div>
+<div id="rows"></div>
+
+<template id="screens">
+<div class="row">
+
+<div><div class="ph">
+ <div class="ptitle">tasks</div><div class="psub">due north</div>
+ <div class="sec">stats</div><div class="peek">to</div>
+ <div class="body">
+  <div class="big">23</div>
+  <div class="lab">done this week</div>
+  <div class="g">18 last week</div>
+  <div class="bars" data-bars="3,6,4,5,5,0,0" data-today="4"></div>
+  <div class="days"><span>S</span><span>M</span><span>T</span><span>W</span><span class="today">T</span><span>F</span><span>S</span></div>
+  <div class="pair">
+   <div><div class="big">5</div><div class="lab">day streak</div><div class="g">best 12</div></div>
+   <div><div class="big">86%</div><div class="lab">on time</div><div class="g">last 30 days</div></div>
+  </div>
+ </div>
+ <div class="appbar"><div class="ic"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="9" r="6"/><path d="M8.5 13.5 3 19"/></svg></div><div class="more">···</div></div>
+</div><div class="cap"><b>1. this week.</b> A big count, last week beside it, and a bar per day (today in the accent, days ahead empty). Streak = days in a row with at least one task done; today doesn't break it until it ends.</div></div>
+
+<div><div class="ph">
+ <div class="ptitle">tasks</div><div class="psub">due north</div>
+ <div class="sec">stats</div><div class="peek">to</div>
+ <div class="body" style="top:200px">
+  <div class="sh" style="margin-top:0">last 12 weeks</div>
+  <div class="grid" data-grid="1" data-sel="66"></div>
+  <div class="legend">less <i style="background:var(--empty)"></i><i style="background:var(--s1)"></i><i style="background:var(--s2)"></i><i style="background:var(--s3)"></i><i style="background:var(--s4)"></i><i style="background:var(--s5)"></i> more</div>
+  <div class="lab acc" style="margin-top:4px">Tue Sep 30 · 6 done</div>
+  <div class="sh">right now</div>
+  <div class="lab">14 open · <span class="late">3 overdue</span></div>
+  <div class="g">5 with no due date</div>
+  <div class="sh">by list · last 30 days</div>
+  <div class="lrow"><span class="tile" style="background:var(--s4)"></span><span class="nm">Home</span><span class="lb" style="width:110px;background:var(--s4)"></span><span class="n">31</span></div>
+  <div class="lrow"><span class="tile" style="background:var(--s5)"></span><span class="nm">Work</span><span class="lb" style="width:82px;background:var(--s5)"></span><span class="n">23</span></div>
+  <div class="lrow"><span class="tile" style="background:var(--s3)"></span><span class="nm">Errands</span><span class="lb" style="width:46px;background:var(--s3)"></span><span class="n">13</span></div>
+  <div class="lrow"><span class="tile" style="background:var(--s2)"></span><span class="nm">Inbox</span><span class="lb" style="width:18px;background:var(--s2)"></span><span class="n">5</span></div>
+ </div>
+ <div class="appbar"><div class="ic"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="9" r="6"/><path d="M8.5 13.5 3 19"/></svg></div><div class="more">···</div></div>
+</div><div class="cap"><b>2. scrolled down.</b> 12 weeks as flat squares in 5 shades of the accent; tap one to read its day. Bars per list use each list's own shade; tap a row to open the list. Overdue keeps the red the today section uses.</div></div>
+
+<div><div class="ph">
+ <div class="ptitle">tasks</div><div class="psub">due north</div>
+ <div class="sec">stats</div><div class="peek">to</div>
+ <div class="body" style="top:200px">
+  <div class="sh" style="margin-top:0">all time</div>
+  <div class="big" style="font-size:52px">1,284</div>
+  <div class="lab">tasks done since Mar 2021</div>
+  <div class="g">about 6 a week</div>
+  <div class="pair" style="margin-top:22px">
+   <div><div class="big" style="font-size:40px">Tue</div><div class="lab">busiest day</div><div class="g">4.1 done on average</div></div>
+   <div><div class="big" style="font-size:40px">31</div><div class="lab">best week</div><div class="g">Aug 10 to 16</div></div>
+  </div>
+  <div class="sh">this week vs your average</div>
+  <div class="lab">23 <span class="g">this week</span></div>
+  <div style="height:14px;width:230px;background:var(--acc);margin:4px 0 8px"></div>
+  <div class="lab">17 <span class="g">a typical week (12-week average)</span></div>
+  <div style="height:14px;width:170px;background:var(--s2);margin:4px 0"></div>
+ </div>
+ <div class="appbar"><div class="ic"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="9" r="6"/><path d="M8.5 13.5 3 19"/></svg></div><div class="more">···</div></div>
+</div><div class="cap"><b>3. bottom of the section.</b> All-time total from the oldest completed task the service gave us, busiest weekday, best week, and this week against a typical one.</div></div>
+
+<div><div class="ph">
+ <div class="topdots"><i></i><i></i><i></i><i></i><i></i></div>
+ <div class="ptitle">tasks</div><div class="psub">due north</div>
+ <div class="sec">stats</div><div class="peek">to</div>
+ <div class="body">
+  <div class="big">23</div>
+  <div class="lab">done this week</div>
+  <div class="g">18 last week</div>
+  <div class="bars" data-bars="3,6,4,5,5,0,0" data-today="4"></div>
+  <div class="days"><span>S</span><span>M</span><span>T</span><span>W</span><span class="today">T</span><span>F</span><span>S</span></div>
+  <div class="pair">
+   <div><div class="big">5+</div><div class="lab">day streak</div><div class="g">still counting</div></div>
+   <div><div class="big">86%</div><div class="lab">on time</div><div class="g">last 30 days</div></div>
+  </div>
+  <div class="sh">last 12 weeks</div>
+  <div class="grid" data-grid="1" data-wait="5"></div>
+  <div class="g" style="margin-top:8px">Older tasks are still coming in from Microsoft To Do. These numbers may grow.</div>
+ </div>
+ <div class="appbar"><div class="ic"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="9" r="6"/><path d="M8.5 13.5 3 19"/></svg></div><div class="more">···</div></div>
+</div><div class="cap"><b>4. history still loading.</b> Right after sign-in, completed tasks load in the background. What's known shows now; weeks not loaded yet are striped placeholders, streak reads "5+", and a gray line says why. No spinner.</div></div>
+
+<div><div class="ph">
+ <div class="ptitle">tasks</div><div class="psub">due north</div>
+ <div class="sec">stats</div><div class="peek">to</div>
+ <div class="body">
+  <div class="big" style="color:var(--sub)">0</div>
+  <div class="lab">done this week</div>
+  <div class="bars" data-bars="0,0,0,0,0,0,0" data-today="4"></div>
+  <div class="days"><span>S</span><span>M</span><span>T</span><span>W</span><span class="today">T</span><span>F</span><span>S</span></div>
+  <div class="lab" style="margin-top:30px;color:var(--sub);font-size:22px;font-weight:300;line-height:1.3">Tick off a task and this page starts filling in.</div>
+ </div>
+ <div class="appbar"><div class="ic"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="9" r="6"/><path d="M8.5 13.5 3 19"/></svg></div><div class="more">···</div></div>
+</div><div class="cap"><b>5. nothing done yet.</b> A new account shows the week with empty bars and one gray line, not a page of zeros.</div></div>
+
+</div>
+</template>
+
+<script>
+const tpl=document.getElementById('screens').innerHTML, rows=document.getElementById('rows');
+rows.innerHTML='<div class="rowlabel">LIGHT</div>'+tpl+'<div class="rowlabel">DARK</div><div class="dark">'+tpl+'</div>';
+document.querySelectorAll('.dark .cap').forEach(c=>c.style.visibility='hidden');
+document.querySelectorAll('[data-bars]').forEach(el=>{
+  const v=el.dataset.bars.split(',').map(Number), t=+el.dataset.today, max=Math.max(6,...v);
+  v.forEach((n,i)=>{const d=document.createElement('div');
+    if(i>t){d.className='fut';d.style.height='0'} else {d.style.height=Math.max(2,n/max*84)+'px'; if(i==t)d.className='today';
+      const s=document.createElement('span');s.textContent=n;d.appendChild(s)}
+    el.appendChild(d)});
+});
+// 12 weeks x 7 days, deterministic pseudo-random counts; the last week stops at Thursday.
+let seed=7; const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;
+document.querySelectorAll('[data-grid]').forEach(el=>{
+  seed=7; const wait=+(el.dataset.wait||0), sel=+(el.dataset.sel||-1);
+  for(let i=0;i<84;i++){const g=document.createElement('i'), week=Math.floor(i/7), day=i%7;
+    if(week==11&&day>4){g.style.background='none'} else if(week<wait){g.className='wait'} else {
+      const r=rnd(), lvl=r<.18?0:r<.4?1:r<.65?2:r<.85?3:r<.95?4:5;
+      if(lvl) g.style.background='var(--s'+lvl+')'}
+    if(i==sel) g.classList.add('sel'), g.style.background='var(--s5)';
+    el.appendChild(g)}
+});
+</script>
+</body></html>

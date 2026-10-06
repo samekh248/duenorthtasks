@@ -7,6 +7,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Upsert
+import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -82,6 +84,12 @@ interface TaskListDao {
 /** A task with the title of its list, for rows that show "List · when". */
 data class TaskWithList(@Embedded val task: TaskEntity, val listTitle: String)
 
+/** What stats (spec 005) needs of a completed task: when, whether it was due, and where. */
+data class CompletedStat(val completedAt: Instant, val dueDate: LocalDate?, val listId: String)
+
+/** What stats needs of an open task. */
+data class OpenStat(val dueDate: LocalDate?)
+
 @Dao
 interface TaskDao {
     @Query(
@@ -122,6 +130,24 @@ interface TaskDao {
         """
     )
     fun observeRecentlyCompleted(limit: Int): Flow<List<TaskWithList>>
+
+    /** Every completed task's date, due date and list, for stats (spec 005 FR-410). */
+    @Query(
+        """
+        SELECT t.completedAt, t.dueDate, t.listId FROM task t JOIN task_list l ON l.localId = t.listId
+        WHERE t.completed = 1 AND t.deletedLocally = 0 AND l.deletedLocally = 0 AND t.completedAt IS NOT NULL
+        """
+    )
+    fun observeCompletedStats(): Flow<List<CompletedStat>>
+
+    /** Every open task's due date, for the stats "right now" counts (spec 005 FR-416). */
+    @Query(
+        """
+        SELECT t.dueDate FROM task t JOIN task_list l ON l.localId = t.listId
+        WHERE t.completed = 0 AND t.deletedLocally = 0 AND l.deletedLocally = 0
+        """
+    )
+    fun observeOpenStats(): Flow<List<OpenStat>>
 
     /** Titles and details containing [pattern] (a LIKE pattern escaped with a backslash), grouped by list. */
     @Query(

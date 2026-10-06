@@ -11,9 +11,12 @@ import java.util.UUID
 import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -57,6 +60,9 @@ class SyncEngine(
      * [backfill] does not count, so the dots stop once open tasks are in.
      */
     val isSyncing: StateFlow<Boolean> = running.asStateFlow()
+
+    /** True while some lists' completed history is still loading; stats count it as partial (spec 005 FR-420). */
+    val historyLoading: Flow<Boolean> = deferred.map { it.isNotEmpty() }.distinctUntilChanged()
 
     /**
      * True while a [backfill] runs. The dots ignore it so the app reads as ready, but the sync
