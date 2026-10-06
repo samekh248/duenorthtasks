@@ -11,6 +11,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.duenorth.tasks.design.components.MetroAppBarHost
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.ui.AppRoot
 import app.duenorth.tasks.ui.settings.AppearanceViewModel
@@ -39,7 +40,7 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
             }
             MetroTheme(darkTheme = dark, accent = settings.theme.accent, listShades = settings.listShades) {
-                AppRoot()
+                MetroAppBarHost { AppRoot() }
             }
         }
     }

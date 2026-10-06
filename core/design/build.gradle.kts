@@ -41,6 +41,7 @@ dependencies {
     api(libs.compose.foundation)
     api(libs.compose.animation)
     api(libs.compose.ui)
+    implementation(libs.activity.compose)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
 

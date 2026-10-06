@@ -1,5 +1,6 @@
 package app.duenorth.tasks.design.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,6 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -65,7 +69,8 @@ private const val SPIN_MS = 1200
 
 /**
  * The WP8.1 Application Bar: up to four round outlined buttons along the bottom and an ellipsis
- * that expands the bar to show their labels and the overflow menu (research R3).
+ * that expands the bar to show their labels and the overflow menu (research R3). Back closes an
+ * expanded bar, and so does touching anything outside it inside a [MetroAppBarHost].
  */
 @Composable
 fun MetroAppBar(
@@ -78,9 +83,25 @@ fun MetroAppBar(
     val colors = MetroTheme.colors
     val type = MetroTheme.typography
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+    BackHandler(enabled = expanded) { expanded = false }
+    val host = LocalAppBarHost.current
+    val registration = remember { ExpandedAppBar(collapse = { expanded = false }) }
+    if (host != null) {
+        DisposableEffect(host, expanded) {
+            if (expanded) host.expanded = registration
+            onDispose { if (host.expanded === registration) host.expanded = null }
+        }
+    }
     Column(
         modifier
             .fillMaxWidth()
+            .then(
+                if (host != null) {
+                    Modifier.onGloballyPositioned { registration.boundsInWindow = it.boundsInWindow() }
+                } else {
+                    Modifier
+                }
+            )
             .background(colors.chrome)
             .navigationBarsPadding()
             .animateContentSize(tween(EXPAND_MS, easing = MetroEasing))

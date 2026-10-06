@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.abs
@@ -39,7 +40,9 @@ fun Modifier.metroTilt(enabled: Boolean = true): Modifier = this.composed {
     Modifier
         .pointerInput(Unit) {
             awaitEachGesture {
-                val down = awaitFirstDown(requireUnconsumed = false)
+                // Initial pass, so a touch an expanded app bar's host swallowed never tilts anything.
+                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                if (down.isConsumed) return@awaitEachGesture
                 tilt.press(scope, down.position, size, density)
                 waitForUpOrCancellation()
                 tilt.release(scope)
