@@ -28,6 +28,8 @@ data class SyncAccountUiState(
     /** Changes made on the phone that the service hasn't seen yet. */
     val pendingChanges: Int = 0,
     val syncing: Boolean = false,
+    /** A first sync's completed tasks are still arriving; the sync button keeps turning. */
+    val loadingHistory: Boolean = false,
     /** The service stores task and step order (specs/003-reordering FR-232). */
     val storesOrder: Boolean = false
 )
@@ -49,9 +51,9 @@ class SyncAccountViewModel @Inject constructor(
         accounts.account,
         settingsStore.settings,
         tasks.pendingCount,
-        engine.isSyncing,
+        combine(engine.isSyncing, engine.isLoadingHistory, ::Pair),
         features.storesOrder
-    ) { account, settings, pending, syncing, storesOrder ->
+    ) { account, settings, pending, (syncing, loadingHistory), storesOrder ->
         SyncAccountUiState(
             loading = false,
             provider = account?.provider,
@@ -59,6 +61,7 @@ class SyncAccountViewModel @Inject constructor(
             settings = settings,
             pendingChanges = pending,
             syncing = syncing,
+            loadingHistory = loadingHistory,
             storesOrder = storesOrder
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SyncAccountUiState())

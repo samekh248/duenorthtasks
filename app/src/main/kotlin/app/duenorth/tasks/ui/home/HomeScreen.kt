@@ -106,11 +106,28 @@ class HomeActions(
 )
 
 @Composable
-fun HomeScreen(actions: HomeActions, syncing: Boolean, viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(
+    actions: HomeActions,
+    syncing: Boolean,
+    syncButtonTurning: Boolean = syncing,
+    showLists: Boolean = false,
+    onListsShown: () -> Unit = {},
+    viewModel: HomeViewModel = hiltViewModel()
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val statsViewModel: StatsViewModel = hiltViewModel()
     val stats by statsViewModel.state.collectAsStateWithLifecycle()
-    HomeContent(state, viewModel, actions, syncing, stats, onStatsSeen = statsViewModel::start)
+    HomeContent(
+        state,
+        viewModel,
+        actions,
+        syncing,
+        syncButtonTurning,
+        showLists,
+        onListsShown,
+        stats,
+        onStatsSeen = statsViewModel::start
+    )
 }
 
 /**
@@ -124,6 +141,10 @@ fun HomeContent(
     viewModel: HomeViewModel,
     actions: HomeActions,
     syncing: Boolean = false,
+    syncButtonTurning: Boolean = syncing,
+    /** Jump to the lists section, as after making a list from a template; [onListsShown] then clears it. */
+    showLists: Boolean = false,
+    onListsShown: () -> Unit = {},
     stats: StatsUi? = null,
     onStatsSeen: () -> Unit = {}
 ) {
@@ -150,6 +171,13 @@ fun HomeContent(
             importanceItem(state.importance, row) { viewModel.setImportant(row.id, it) },
             ContextMenuItem("save as template") { viewModel.saveAsTemplate(row.id, actions.openTemplateTask) }
         )
+    }
+
+    LaunchedEffect(showLists) {
+        if (showLists) {
+            pager.scrollToSection(LISTS)
+            onListsShown()
+        }
     }
 
     // Each return to "today" replays the empty-today logo (spec 005 US4); the first showing plays by itself.
@@ -214,7 +242,10 @@ fun HomeContent(
             )
             if (syncing) MetroProgressDots()
         }
-        HomeAppBar(pager, actions, syncing, onNewTask = { addFocus.requestFocus() }, onNewList = { newList = true })
+        HomeAppBar(pager, actions, syncButtonTurning, onNewTask = { addFocus.requestFocus() }, onNewList = {
+            newList =
+                true
+        })
     }
 
     if (newList) {

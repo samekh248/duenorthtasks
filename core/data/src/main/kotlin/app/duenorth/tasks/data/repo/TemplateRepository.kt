@@ -263,14 +263,22 @@ class TemplateRepository(
      * Adds task template [id] to [listId], due [today] plus its offset, under [taskId] so the screen
      * can show it first (spec 004 US2). Marks the template as just used.
      */
-    suspend fun useTaskTemplate(id: String, listId: String, today: LocalDate, taskId: String): String {
-        val newTask = db.withTransaction {
+    suspend fun useTaskTemplate(id: String, listId: String, today: LocalDate, taskId: String): String =
+        // One write, so the task and the template's "used" time land together.
+        db.withTransaction {
             val template = requireTask(id)
             templates.updateTask(template.copy(lastUsedAt = now()))
-            template.toNewTask(today, templates.stepsFor(id).map { it.title })
+            tasks.createTaskWithSteps(
+                listId,
+                template.toNewTask(
+                    today,
+                    templates.stepsFor(id).map {
+                        it.title
+                    }
+                ),
+                taskId
+            )
         }
-        return tasks.createTaskWithSteps(listId, newTask, taskId)
-    }
 
     // Helpers
 

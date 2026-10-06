@@ -24,3 +24,4 @@
 
 - [x] P020 `TemplatesScreenshotTest`: every template screen light and dark, and adding from the picker
 - [ ] P021 Benchmark: create a list from a 200-task template within 300 ms on the CI emulator (FR-340); needs a seeded template
+- [x] P022 Back from a list made from a template goes to home lists, not the templates pages (FR-325); `TemplateNavigationTest`

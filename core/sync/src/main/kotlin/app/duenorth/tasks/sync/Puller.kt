@@ -17,6 +17,7 @@ import app.duenorth.tasks.provider.api.RemoteTask
 import app.duenorth.tasks.provider.api.TaskProvider
 import app.duenorth.tasks.sync.ConflictResolver.Decision
 import app.duenorth.tasks.sync.SyncStore.Companion.toJson
+import java.time.Instant
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -260,7 +261,9 @@ internal class Puller(
             store.transaction {
                 // Looking rows up and inserting them one at a time was most of a first sync.
                 val known = store.sync.tasksByRemoteIds(batch.map { it.id }).associateBy { it.remoteId }
-                val fresh = NewRows(list, firstFetch)
+                // Read now, not at the start of the pull: "clear completed" may have run since.
+                val clearedAt = store.lists.get(list.localId)?.clearedCompletedAt
+                val fresh = NewRows(list, firstFetch, clearedAt)
                 batch.forEach { applyTask(list, it, known[it.id], mayAdopt, fresh) }
                 fresh.write()
             }
@@ -434,9 +437,15 @@ internal class Puller(
     }
 
     /** Tasks new to this phone, with their steps, written together at the end of a batch. */
-    private inner class NewRows(private val list: TaskListEntity, private val firstFetch: Boolean) {
+    private inner class NewRows(
+        private val list: TaskListEntity,
+        private val firstFetch: Boolean,
+        /** When "clear completed" last ran in [list]; tasks done by then are deleted as they arrive. */
+        private val clearedAt: Instant?
+    ) {
         private val tasks = mutableListOf<TaskEntity>()
         private val steps = mutableListOf<StepEntity>()
+        private val cleared = mutableListOf<String>()
         private var top: String? = null
         private var topRead = false
 
@@ -461,8 +470,32 @@ internal class Puller(
             return OrderKeys.between(null, top).also { top = it }
         }
 
+        /**
+         * A completed task the list's history brings in only after "clear completed" ran, though
+         * it was done by then: the clear covered it, so it is queued for deletion, never shown.
+         */
+        private fun wasCleared(remote: RemoteTask): Boolean = clearedAt != null &&
+            remote.completed &&
+            !(remote.completedAt ?: remote.updatedAt).isAfter(clearedAt)
+
         suspend fun add(remote: RemoteTask) {
             val id = store.newLocalId()
+            if (wasCleared(remote)) {
+                tasks += TaskEntity(
+                    localId = id,
+                    listId = list.localId,
+                    remoteId = remote.id,
+                    title = remote.title,
+                    completed = true,
+                    completedAt = remote.completedAt,
+                    etag = remote.etag,
+                    remoteUpdatedAt = remote.updatedAt,
+                    localUpdatedAt = store.now(),
+                    deletedLocally = true
+                )
+                cleared += id
+                return
+            }
             tasks += TaskEntity(
                 localId = id,
                 listId = list.localId,
@@ -496,6 +529,7 @@ internal class Puller(
         suspend fun write() {
             if (tasks.isNotEmpty()) store.tasks.insertAll(tasks)
             if (steps.isNotEmpty()) store.steps.insertAll(steps)
+            cleared.forEach { store.enqueue(EntityType.TASK, it, OperationKind.DELETE) }
         }
     }
 

@@ -126,6 +126,9 @@ class FirstSyncTest : SyncTestBase() {
         assertTrue(engine.backfillPending)
         val history = launch(Dispatchers.Default) { engine.backfill() }
         withTimeout(5_000) { stalled.await() }
+        // The sync button keeps turning through the history load; the dots don't.
+        assertTrue(engine.isLoadingHistory.value)
+        assertFalse(engine.isSyncing.value)
 
         io { repo.createTask(list("Errands").localId, "Added during the first sync") }
         clock.tick()
@@ -135,6 +138,7 @@ class FirstSyncTest : SyncTestBase() {
         assertTrue(remoteTasks(errands.id).any { it.title == "Added during the first sync" })
         letGo.complete(Unit)
         history.join()
+        assertFalse(engine.isLoadingHistory.value)
         assertFalse(engine.backfillPending)
         assertEquals(5, tasks("Errands").size)
         assertTrue(lists().all { it.tasksCursor != null })
