@@ -3,7 +3,6 @@ package app.duenorth.tasks.ui.sharing
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.design.components.MetroIcon
@@ -166,7 +166,7 @@ private fun LinkRow(text: String, icon: MetroIcon?, onClick: () -> Unit) {
 /** The To Do app when it's installed, otherwise To Do on the web (spec 002 FR-112). */
 private fun openToDo(context: Context, handOff: HandOff) {
     val app = context.packageManager.getLaunchIntentForPackage(handOff.appPackage)
-    val intent = app ?: Intent(Intent.ACTION_VIEW, Uri.parse(handOff.webUrl))
+    val intent = app ?: Intent(Intent.ACTION_VIEW, handOff.webUrl.toUri())
     try {
         context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     } catch (_: ActivityNotFoundException) {
