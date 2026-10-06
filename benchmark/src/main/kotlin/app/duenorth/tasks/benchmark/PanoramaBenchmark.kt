@@ -14,7 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * The first panorama swipes right after a cold start: today to done and back, as soon as the home
+ * The first panorama swipes right after a cold start: round the ring both ways, as soon as the home
  * screen shows. They must be as smooth as any later swipe (constitution Principle II).
  * scripts/check_benchmark_budgets.py turns the frame timings into pass or fail.
  */
@@ -55,16 +55,19 @@ internal fun MacrobenchmarkScope.waitForHome() {
     check(device.wait(Until.hasObject(By.text("today")), TIMEOUT_MS)) { "The home panorama never showed" }
 }
 
-/** Swipes from "today" to "done" and back, one section at a time. */
+/**
+ * Swipes from "today" round the ring back to "today", then the other way round, one section at a
+ * time, so the seam between "done" and "today" is crossed both ways.
+ */
 internal fun MacrobenchmarkScope.swipePanorama() {
     val y = device.displayHeight / 2
     val right = device.displayWidth * 4 / 5
     val left = device.displayWidth / 5
-    repeat(2) {
+    repeat(3) {
         device.swipe(right, y, left, y, SWIPE_STEPS)
         device.waitForIdle()
     }
-    repeat(2) {
+    repeat(3) {
         device.swipe(left, y, right, y, SWIPE_STEPS)
         device.waitForIdle()
     }
