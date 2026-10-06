@@ -48,11 +48,15 @@ internal class Puller(
     /** Google keeps order and sends it; To Do doesn't, so the phone's order keys are the only ones. */
     private val storesOrder = provider.capabilities.manualOrder
 
-    /** Pulls everything except the history of lists whose open tasks just came in; returns those lists. */
-    suspend fun pullAll(): List<TaskListEntity> {
+    /**
+     * Pulls everything except the history of lists whose open tasks just came in; returns those lists.
+     * Lists in [loading] are skipped: their open tasks are in and a [backfill] is fetching them in
+     * full, so asking again would only compete with it for the service's request allowance.
+     */
+    suspend fun pullAll(loading: Set<String> = emptySet()): List<TaskListEntity> {
         reconcileLists(provider.getLists())
         val lists = store.sync.allLists()
-            .filter { !it.deletedLocally && it.remoteId != null }
+            .filter { !it.deletedLocally && it.remoteId != null && it.localId !in loading }
             .sortedWith(compareByDescending<TaskListEntity> { it.isDefault }.thenBy { it.title.lowercase() })
         val gate = Semaphore(PARALLEL_LISTS)
         val loadedOpen = coroutineScope {
@@ -67,8 +71,12 @@ internal class Puller(
         return backfill
     }
 
-    /** The full fetch of [lists], which brings in their completed tasks and their change cursor. */
-    suspend fun backfill(lists: List<TaskListEntity>) = pullLists(lists, Semaphore(PARALLEL_LISTS))
+    /**
+     * The full fetch of [lists], which brings in their completed tasks and their change cursor. One
+     * list at a time: it is not urgent, and Microsoft allows only about four requests at once per
+     * mailbox, so this leaves room for a sync of changes made on the phone to run beside it.
+     */
+    suspend fun backfill(lists: List<TaskListEntity>) = pullLists(lists, Semaphore(1))
 
     private suspend fun pullLists(lists: List<TaskListEntity>, gate: Semaphore) = coroutineScope {
         lists.map { list -> async { gate.withPermit { if (stillConnected()) pullList(list) } } }.awaitAll()

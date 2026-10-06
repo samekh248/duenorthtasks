@@ -70,7 +70,7 @@ class SyncEngine(
                     // elsewhere (FR-023), and creates whose answer was lost are recognised before
                     // being retried. Lists seen for the first time bring only their open tasks here;
                     // their history is left to [backfill], which never holds a sync up.
-                    val later = Puller(store, provider, holds, stillConnected).pullAll()
+                    val later = Puller(store, provider, holds, stillConnected).pullAll(loading = deferred.value)
                     deferred.update { it + later.map { list -> list.localId } }
                     if (!stillConnected()) return@guarded SyncResult.NoAccount
                     val waited = Pusher(store, provider).pushAll()
