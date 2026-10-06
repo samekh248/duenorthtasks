@@ -11,6 +11,10 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.duenorth.tasks.data.db.DueNorthDatabase
@@ -38,10 +42,11 @@ import java.util.UUID
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExternalResource
+import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -53,8 +58,20 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(application = Application::class, qualifiers = "w411dp-h891dp-xxhdpi")
 class StatsScreenshotTest {
+    private val compose = createComposeRule()
+
+    /** Closes the database only after the compose rule has torn down, so no stats query outlives it. */
+    private val database = object : ExternalResource() {
+        override fun after() {
+            viewModels.clear()
+            if (::db.isInitialized) db.close()
+        }
+    }
+
     @get:Rule
-    val compose = createComposeRule()
+    val rules: RuleChain = RuleChain.outerRule(database).around(compose)
+
+    private val viewModels = ViewModelStore()
 
     private val clock = Clock.fixed(Instant.parse("2026-10-08T18:00:00Z"), ZoneOffset.UTC)
     private val today = LocalDate.of(2026, 10, 8)
@@ -69,11 +86,6 @@ class StatsScreenshotTest {
         tasks = TaskRepository(db, clock)
         accounts = AccountRepository(db)
         runBlocking { DemoSeeder(accounts, tasks, clock).connect() }
-    }
-
-    @After
-    fun tearDown() {
-        db.close()
     }
 
     @Test
@@ -124,15 +136,23 @@ class StatsScreenshotTest {
 
     private fun home(dark: Boolean, partial: Boolean = false) {
         val features = ServiceFeatures(accounts) { FakeProvider() }
-        val viewModel = HomeViewModel(
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            accounts,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            clock
-        )
+        val viewModel =
+            ViewModelProvider(
+                viewModels,
+                viewModelFactory {
+                    initializer {
+                        HomeViewModel(
+                            tasks,
+                            TemplateRepository(db, tasks, clock),
+                            accounts,
+                            features,
+                            ListHolds(),
+                            testListOrder(tasks, accounts),
+                            clock
+                        )
+                    }
+                }
+            )[HomeViewModel::class.java]
         val source = StatsSource(tasks, flowOf(partial), clock) { DayOfWeek.SUNDAY }
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
         compose.setContent {
