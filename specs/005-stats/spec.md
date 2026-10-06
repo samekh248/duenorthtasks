@@ -6,7 +6,7 @@
 
 **Status**: Draft, waiting for Dustin's OK
 
-**Input**: User description: "create a spec to show a stats view after the done view"
+**Input**: User description: "create a spec to show a stats view after the done view. Also give me ideas to show something fun if the today view has no tasks." Follow-up: "show me options of an empty day that includes a large animated version of the logo" / "I like the first one, but center the logo in the view"
 
 ## At a glance
 
@@ -94,6 +94,27 @@ on time.
 3. **Given** an account with no completed tasks, **Then** the section shows "0 done this week",
    empty bars and "Tick off a task and this page starts filling in." and nothing else.
 
+### User Story 4 - An empty today (Priority: P2)
+
+When nothing is due, "today" shows the check-north logo drawing itself, large and centered, with
+"all clear." under it. Dustin picked this (option 1 of five, 2026-10-06) and asked for it centered.
+
+![Empty today in light and dark: the logo centered under the add box, "all clear." under
+it](mockups/empty-today.png)
+
+**Acceptance Scenarios**:
+
+1. **Given** no open tasks due today, overdue or tomorrow, and tasks have finished loading,
+   **When** the user arrives at "today", **Then** the logo appears centered across the section
+   (the part left of the next section's peek) and centered between the add box and the app bar,
+   with "all clear." and a gray "nothing due today" centered under it.
+2. **Then** it plays the launch splash motion once: the arrowhead climbs out of the check leaving
+   a fading trail, and the short stroke ticks in behind it, in under 1 s; then it rests.
+3. **When** the user taps the logo, **Then** it plays again.
+4. **Given** the system "remove animations" setting, **Then** the logo shows at rest, no motion.
+5. **When** a task becomes due today (added, synced or re-dated), **Then** the logo fades out and
+   the task row takes its place.
+
 ### Edge Cases
 
 - **Deleted tasks** no longer count: neither service keeps them, so stats can only count what still
@@ -161,6 +182,18 @@ on time.
 - **FR-433**: Stats MUST recompute at most once per second while tasks change (for example during
   a sync), and never move content under the user's finger.
 
+**Empty today**
+
+- **FR-440**: When today has no rows (overdue, today, tomorrow) and is not loading, it MUST show
+  the empty state of User Story 4 in place of the "nothing due today" note.
+- **FR-441**: The logo MUST be about 170 dp tall, in the app accent (not a list shade), drawn from
+  the launcher icon's vector paths with the same strokes and the splash animation's motion
+  (`splash_icon_animated.xml`), centered as in User Story 4.
+- **FR-442**: The animation MUST start only after the home screen's first frame, run on the render
+  thread (no image or animation files), play at most once per arrival and on tap, and skip when
+  animations are off. Cold start and panorama swipe budgets MUST still hold.
+- **FR-443**: TalkBack reads the empty state as "All clear. Nothing due today."
+
 ### Key Entities
 
 No new stored data. Stats are derived from `task` and `task_list` rows; see
@@ -175,6 +208,8 @@ No new stored data. Stats are derived from `task` and `task_list` rows; see
 - **SC-403**: Cold start, panorama swipe and scroll benchmarks stay within budget in CI with the
   fourth section.
 - **SC-404**: Every block can be read with TalkBack alone.
+- **SC-405**: The empty today shows within the first frame after tasks load, and its animation
+  drops no frames on the CI emulator.
 
 ## Assumptions
 
