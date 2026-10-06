@@ -100,7 +100,7 @@ private fun GalleryContent(
             MetroAppBar(
                 buttons = listOf(
                     AppBarButton(MetroIcon.Add, "new task") {},
-                    AppBarButton(MetroIcon.Sync, "sync") { syncing = !syncing },
+                    AppBarButton(MetroIcon.Sync, "sync", spinning = syncing) { syncing = !syncing },
                     AppBarButton(MetroIcon.Search, "search") {}
                 ),
                 menuItems = listOf(
