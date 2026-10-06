@@ -21,3 +21,14 @@ fun testListOrderStore(): ListOrderStore {
 
 fun testListOrder(tasks: TaskRepository, accounts: AccountRepository, store: ListOrderStore = testListOrderStore()) =
     ListOrder(store, tasks, accounts)
+
+/** List shades in their own temp file, for tests that build ViewModels by hand. */
+fun testListShades(tasks: TaskRepository, accounts: AccountRepository): ListShades {
+    val dir = Files.createTempDirectory("list-shades").toFile().apply { deleteOnExit() }
+    val store = ListShadeStore(
+        PreferenceDataStoreFactory.create(scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)) {
+            File(dir, "shades.preferences_pb")
+        }
+    )
+    return ListShades(store, tasks, accounts)
+}

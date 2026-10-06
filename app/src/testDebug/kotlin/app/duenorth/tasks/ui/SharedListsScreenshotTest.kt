@@ -21,12 +21,14 @@ import app.duenorth.tasks.data.db.AssignmentSource
 import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.demo.DemoSeeder
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderCapabilities
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.testListOrder
+import app.duenorth.tasks.settings.testListShades
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.detail.TaskDetailContent
@@ -155,7 +157,16 @@ class SharedListsScreenshotTest {
     }
 
     private fun homeLists(dark: Boolean, name: String? = "home_lists_shared") {
-        val viewModel = HomeViewModel(tasks, accounts, features, ListHolds(), testListOrder(tasks, accounts), clock)
+        val viewModel =
+            HomeViewModel(
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                accounts,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                clock
+            )
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
         show(dark) {
             val state by viewModel.state.collectAsState()
@@ -171,7 +182,7 @@ class SharedListsScreenshotTest {
     private fun list(title: String, dark: Boolean) {
         val viewModel = ListViewModel(
             SavedStateHandle(mapOf("id" to listId(title))),
-            tasks,
+            tasks, TemplateRepository(db, tasks, clock), testListShades(tasks, accounts),
             accounts,
             features,
             ListHolds(),

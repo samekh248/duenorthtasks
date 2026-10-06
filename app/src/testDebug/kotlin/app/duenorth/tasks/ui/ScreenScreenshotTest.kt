@@ -21,11 +21,13 @@ import app.duenorth.tasks.data.db.SyncLogType
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.SyncLogRepository
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.demo.DemoSeeder
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.testListOrder
+import app.duenorth.tasks.settings.testListShades
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.account.AccountScreen
 import app.duenorth.tasks.ui.account.SyncAccountActions
@@ -249,7 +251,16 @@ class ScreenScreenshotTest {
     }
 
     private fun home(dark: Boolean, name: String? = "home_today") {
-        val viewModel = HomeViewModel(tasks, accounts, features, ListHolds(), testListOrder(tasks, accounts), clock)
+        val viewModel =
+            HomeViewModel(
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                accounts,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                clock
+            )
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
         show(dark) {
             val state by viewModel.state.collectAsState()
@@ -280,6 +291,8 @@ class ScreenScreenshotTest {
             ListViewModel(
                 SavedStateHandle(mapOf("id" to id)),
                 tasks,
+                TemplateRepository(db, tasks, clock),
+                testListShades(tasks, accounts),
                 accounts,
                 features,
                 ListHolds(),

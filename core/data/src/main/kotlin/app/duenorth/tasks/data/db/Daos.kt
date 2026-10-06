@@ -148,6 +148,11 @@ interface TaskDao {
     @Query("SELECT * FROM task WHERE listId = :listId AND completed = 0 AND deletedLocally = 0")
     suspend fun openInList(listId: String): List<TaskEntity>
 
+    @Query(
+        "SELECT * FROM task WHERE listId = :listId AND completed = 1 AND deletedLocally = 0 ORDER BY completedAt DESC"
+    )
+    suspend fun completedInList(listId: String): List<TaskEntity>
+
     /** The smallest order key in [listId], completed tasks included: a new first task goes above it. */
     @Query("SELECT MIN(position) FROM task WHERE listId = :listId AND position IS NOT NULL")
     suspend fun firstPosition(listId: String): String?

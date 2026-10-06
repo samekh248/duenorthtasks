@@ -7,6 +7,9 @@ object Validation {
     const val MAX_NOTES = 8192
     const val MAX_STEPS = 100
 
+    /** Spec 004: tasks in one list template. */
+    const val MAX_TEMPLATE_TASKS = 200
+
     fun listTitle(title: String): String = title.trim().also {
         require(it.isNotEmpty()) { "List title is empty" }
         require(it.length <= MAX_LIST_TITLE) { "List title is longer than $MAX_LIST_TITLE characters" }

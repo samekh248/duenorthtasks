@@ -6,6 +6,7 @@ import app.duenorth.tasks.data.provider.ProviderRegistry
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.SyncLogRepository
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.data.repo.TemplateRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,6 +30,11 @@ object DataModule {
     @Singleton
     fun taskRepository(db: DueNorthDatabase, clock: Clock, registry: ProviderRegistry): TaskRepository =
         TaskRepository(db, clock, serviceStoresOrder = { registry.current()?.capabilities?.manualOrder != false })
+
+    @Provides
+    @Singleton
+    fun templateRepository(db: DueNorthDatabase, tasks: TaskRepository, clock: Clock): TemplateRepository =
+        TemplateRepository(db, tasks, clock)
 
     @Provides
     @Singleton

@@ -17,6 +17,7 @@ import androidx.test.core.app.ApplicationProvider
 import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.demo.DemoSeeder
 import app.duenorth.tasks.design.theme.Accent
 import app.duenorth.tasks.design.theme.MetroTheme
@@ -24,6 +25,7 @@ import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.ThemeMode
 import app.duenorth.tasks.settings.ThemeSettings
 import app.duenorth.tasks.settings.testListOrder
+import app.duenorth.tasks.settings.testListShades
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.home.HomeActions
@@ -133,6 +135,7 @@ class ThemeScreenshotTest {
     private fun shadedLists(accent: Accent, dark: Boolean) {
         val viewModel = HomeViewModel(
             tasks,
+            TemplateRepository(db, tasks, clock),
             accounts,
             ServiceFeatures(accounts) { FakeProvider() },
             ListHolds(),
@@ -157,6 +160,8 @@ class ThemeScreenshotTest {
         val viewModel = ListViewModel(
             SavedStateHandle(mapOf("id" to id)),
             tasks,
+            TemplateRepository(db, tasks, clock),
+            testListShades(tasks, accounts),
             accounts,
             ServiceFeatures(accounts) { FakeProvider() },
             ListHolds(),

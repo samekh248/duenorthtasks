@@ -86,6 +86,9 @@ class HomeActions(
     val openSyncLog: () -> Unit = {},
     /** The reorder lists page, with the long-pressed list (or none) in view. */
     val reorderLists: (String?) -> Unit = {},
+    /** The templates page and a task template's editor (spec 004). */
+    val openTemplates: () -> Unit = {},
+    val openTemplateTask: (String) -> Unit = {},
     val menuItems: List<AppBarMenuItem> = emptyList()
 )
 
@@ -118,7 +121,8 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
             ContextMenuItem("edit") { actions.openTask(row.id) },
             ContextMenuItem("delete") { viewModel.deleteTask(row.id) },
             ContextMenuItem("move to") { moving = row },
-            importanceItem(state.importance, row) { viewModel.setImportant(row.id, it) }
+            importanceItem(state.importance, row) { viewModel.setImportant(row.id, it) },
+            ContextMenuItem("save as template") { viewModel.saveAsTemplate(row.id, actions.openTemplateTask) }
         )
     }
 
@@ -232,6 +236,7 @@ private fun HomeAppBar(pager: PanoramaState, actions: HomeActions, onNewTask: ()
     val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", onClick = it) }
     val menu = listOfNotNull(
         AppBarMenuItem("reorder lists") { actions.reorderLists(null) }.takeIf { pager.currentSection == LISTS },
+        AppBarMenuItem("templates", actions.openTemplates),
         AppBarMenuItem("settings", actions.openSettings),
         AppBarMenuItem("sync account", actions.openSyncAccount),
         AppBarMenuItem("sync log", actions.openSyncLog)
@@ -269,7 +274,9 @@ private fun TodaySection(
                 lists = state.lists,
                 onAdd = { title, details, due, list -> viewModel.addTask(title, details, due, list) },
                 focusRequester = addFocus,
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                templates = state.taskTemplates,
+                onUseTemplate = { viewModel.addFromTemplate(it) }
             )
         }
         if (state.loading) {

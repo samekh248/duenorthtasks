@@ -15,6 +15,7 @@ import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.provider.AccountProviderRegistry
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.api.SignInHost
@@ -108,6 +109,12 @@ class ProviderSwitchTest {
             tasks.createTask(list, "Call the vet", notes = "Ask about the booster")
             tasks.setCompleted(first, true)
             tasks.addStep(first, "Find the receipt")
+            // Templates belong to the account too (specs/004-templates FR-303).
+            val templates = TemplateRepository(db, tasks)
+            templates.addTemplateStep(
+                templates.createTemplateTask("Pay rent", templates.createListTemplate("Trip")),
+                "Transfer"
+            )
         }
     }
 
@@ -188,6 +195,16 @@ class ProviderSwitchTest {
 
     private companion object {
         val ROOM_TABLES = setOf("android_metadata", "room_master_table")
-        val TABLES = setOf("account", "task_list", "task", "step", "pending_operation", "sync_log")
+        val TABLES = setOf(
+            "account",
+            "task_list",
+            "task",
+            "step",
+            "pending_operation",
+            "sync_log",
+            "template_list",
+            "template_task",
+            "template_step"
+        )
     }
 }

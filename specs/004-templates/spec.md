@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-06
 
-**Status**: Draft
+**Status**: Approved (Dustin, 2026-10-06); implemented
 
 **Input**: User description: "help me plan the concept of a list template and a task template"
 
@@ -47,7 +47,7 @@ Decisions Dustin made on 2026-10-06:
 
 | WP8.1 pattern | How it appears here |
 |---|---|
-| Secondary commands live in the long-press context menu and the app bar's ••• menu, in lowercase. | "save as template" in the task context menu and the list page's ••• menu; "templates" in the lists section's ••• menu and in settings. |
+| Secondary commands live in the long-press context menu and the app bar's ••• menu, in lowercase. | "save as template" in the task context menu and the list page's ••• menu; "templates" in the home ••• menu. |
 | Collections of a few kinds are a **pivot**. | The templates page is a pivot with "lists" and "tasks". |
 | An editor looks like the thing it edits. | A list template opens on a page laid out like a list page, with the small header "LIST TEMPLATE" and dimmed checkboxes; a task template opens like the task page. |
 | A full-page form with text fields and a pair of buttons. | "new list from template": name, start date, create and cancel. |
@@ -94,7 +94,7 @@ Every month Dustin adds "pay rent". He taps the "add a task" box, taps "use a te
 
 1. **When** the user long-presses a task and picks "save as template", **Then** a task template is
    made from its title, details and steps (all unticked) and important flag, with no due offset,
-   and a short "saved as a template" toast confirms it.
+   and its editor opens so the user can adjust it.
 2. **When** the user picks "save as template" from a list page's ••• menu, **Then** a list template
    is made with the list's name, shade, and every task in it, open and completed, all unticked, in
    the list's current order. Due offsets are counted from the earliest due date in the list, which
@@ -105,7 +105,7 @@ Every month Dustin adds "pay rent". He taps the "add a task" box, taps "use a te
 
 **Acceptance Scenarios**:
 
-1. **When** the user opens "templates" (settings, or the lists section's ••• menu), **Then** a
+1. **When** the user opens "templates" from the home ••• menu, **Then** a
    pivot shows "lists" and "tasks", each sorted by name.
 2. Tapping a list template opens "new list from template"; tapping a task template opens it for
    editing. Long-press offers "edit", "rename" and "delete".
@@ -147,10 +147,10 @@ Every month Dustin adds "pay rent". He taps the "add a task" box, taps "use a te
 
 **Making templates**
 
-- **FR-310**: The task context menu MUST add "save as template" after "edit".
+- **FR-310**: The task context menu MUST add "save as template".
 - **FR-311**: The list page's ••• menu MUST add "save as template".
 - **FR-312**: The templates page MUST offer "+ new" for the current pivot's kind.
-- **FR-313**: Saving MUST follow User Story 3 and confirm with a toast within 100 ms.
+- **FR-313**: Saving MUST follow User Story 3 and open the new template's editor.
 
 **Using templates**
 
@@ -162,14 +162,14 @@ Every month Dustin adds "pay rent". He taps the "add a task" box, taps "use a te
 - **FR-323**: Created lists, tasks and steps MUST be written to the database and shown at once,
   then queued in the outbox like hand-made ones (Principle II and IV). The new list gets the
   template's shade.
-- **FR-324**: The add box on today and on list pages MUST show an accent "use a template" link when
-  it has focus and at least one task template exists. Picking one adds the task where a typed task
+- **FR-324**: The add box on today and on list pages MUST show an accent "use a template" link while
+  it is empty and at least one task template exists. Picking one adds the task where a typed task
   would go.
 
 **Managing templates**
 
-- **FR-330**: A "templates" page MUST be reachable from settings and from the lists section's •••
-  menu, as a pivot with "lists" and "tasks".
+- **FR-330**: A "templates" page MUST be reachable from the home ••• menu, as a pivot with "lists"
+  and "tasks".
 - **FR-331**: Template editors MUST reuse the list page and task page layouts, with a "LIST
   TEMPLATE" / "TASK TEMPLATE" header, dimmed non-tappable checkboxes, and offsets in place of
   dates.
@@ -194,7 +194,7 @@ See [data-model.md](data-model.md).
 
 ## Success Criteria *(mandatory)*
 
-- **SC-301**: From the home panorama, a list is created from a template in 3 taps plus typing a
+- **SC-301**: From the home panorama, a list is created from a template in 4 taps plus typing a
   name (••• → templates → tap template → create).
 - **SC-302**: A task template is added in 2 taps from the add box.
 - **SC-303**: Lists and tasks created from templates reach the fake Google and Microsoft servers

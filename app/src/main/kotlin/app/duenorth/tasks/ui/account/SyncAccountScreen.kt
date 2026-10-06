@@ -149,7 +149,8 @@ fun SyncAccountContent(
         MetroDialog(
             title = "switch to ${serviceLabel(kind)}?",
             message = "Switching signs out of $currentName. Your tasks stay in that account and come back when " +
-                "you switch again." + unsyncedWarning(state.pendingChanges),
+                "you switch again. Your templates are kept only on this phone, so they are removed." +
+                unsyncedWarning(state.pendingChanges),
             confirmLabel = "switch",
             onConfirm = {
                 switching = null
@@ -161,8 +162,8 @@ fun SyncAccountContent(
     if (signingOut) {
         MetroDialog(
             title = "sign out of $currentName?",
-            message = "This clears its tasks from this phone. Tasks already synced stay in that account." +
-                unsyncedWarning(state.pendingChanges),
+            message = "This clears its tasks and your templates from this phone. Tasks already synced stay in " +
+                "that account." + unsyncedWarning(state.pendingChanges),
             confirmLabel = "sign out",
             onConfirm = {
                 signingOut = false

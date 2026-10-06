@@ -9,9 +9,12 @@ import app.duenorth.tasks.data.order.OrderKeys
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.settings.ListOrder
+import app.duenorth.tasks.settings.ListShades
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
+import app.duenorth.tasks.ui.common.DueText
 import app.duenorth.tasks.ui.common.HeldLists
 import app.duenorth.tasks.ui.common.ListSharing
 import app.duenorth.tasks.ui.common.PendingAdds
@@ -22,6 +25,8 @@ import app.duenorth.tasks.ui.common.toRow
 import app.duenorth.tasks.ui.common.todayFlow
 import app.duenorth.tasks.ui.home.ListRowUi
 import app.duenorth.tasks.ui.home.toUi
+import app.duenorth.tasks.ui.templates.TaskTemplatePick
+import app.duenorth.tasks.ui.templates.taskTemplatePicks
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -32,6 +37,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -67,7 +73,9 @@ data class ListUiState(
     /** The one-time "order stays on this phone" note (FR-231), for services that don't store order. */
     val orderNote: Boolean = false,
     /** Tasks added on this page, which a touch hold lets in at once. */
-    val added: Set<String> = emptySet()
+    val added: Set<String> = emptySet(),
+    /** Offered under the "add a task" box (spec 004 FR-324). */
+    val taskTemplates: List<TaskTemplatePick> = emptyList()
 )
 
 private data class ListPrefs(
@@ -84,6 +92,8 @@ private data class OrderFeatures(val storesOrder: Boolean, val noteShown: Boolea
 class ListViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val tasks: TaskRepository,
+    private val templates: TemplateRepository,
+    private val shades: ListShades,
     accounts: AccountRepository,
     features: ServiceFeatures,
     private val holds: ListHolds,
@@ -117,8 +127,8 @@ class ListViewModel @Inject constructor(
             combine(features.storesOrder, listOrder.noteShown, ::OrderFeatures)
         ) { account, importance, order -> Triple(account, importance, order) },
         prefs,
-        combine(overrides.overrides, adds.pending, ::Pair)
-    ) { content, lists, (account, importance, order), prefs, (pending, added) ->
+        combine(overrides.overrides, adds.pending, taskTemplatePicks(templates, features.importance), ::Triple)
+    ) { content, lists, (account, importance, order), prefs, (pending, added, picks) ->
         overrides.settle((content.open + content.done).associate { it.task.localId to it.task.completed })
         val all = content.open + content.done
         adds.settle(all.mapTo(HashSet()) { it.task.localId })
@@ -133,7 +143,7 @@ class ListViewModel @Inject constructor(
             open = PendingAdds.merge(
                 sorted(open, all, prefs.sort),
                 // The list's name may have changed since the add; the caption follows it.
-                added.rows.map { it.copy(caption = title) }
+                added.rows.map { it.copy(caption = DueText.caption(title, it.due, content.today, completed = false)) }
             ) { new, row ->
                 when (prefs.sort) {
                     ListSort.MY_ORDER -> true // a new task's order key is the list's top
@@ -151,7 +161,8 @@ class ListViewModel @Inject constructor(
             reordering = prefs.reordering,
             reorderFrom = prefs.reorderFrom,
             orderNote = prefs.reordering && !order.storesOrder && !order.noteShown,
-            added = added.added
+            added = added.added,
+            taskTemplates = picks
         )
     }
         .flowOn(Dispatchers.Default)
@@ -197,19 +208,50 @@ class ListViewModel @Inject constructor(
     /** Shows the task at once, before the write; the stored row replaces it under the same id. */
     fun addTask(title: String) {
         if (title.isBlank()) return
+        add(title, details = null, due = null) { id -> tasks.createTask(listId, title, id = id) }
+    }
+
+    /** Adds task template [pick] to this list like a typed task, due today plus its offset (spec 004 US2). */
+    fun addFromTemplate(pick: TaskTemplatePick) {
+        val today = state.value.today
+        val due = pick.dueOffset?.let { today.plusDays(it.toLong()) }
+        add(pick.title, pick.details, due) { id -> templates.useTaskTemplate(pick.id, listId, today, id) }
+    }
+
+    /** Saves task [id] as a task template and hands the template's id to [then] (spec 004 US3). */
+    fun saveTaskAsTemplate(id: String, then: (String) -> Unit) {
+        viewModelScope.launch { runCatching { templates.saveTaskAsTemplate(id) }.onSuccess(then) }
+    }
+
+    /** Saves this list, with its shade, as a list template and hands its id to [then] (spec 004 US3). */
+    fun saveAsTemplate(then: (String) -> Unit) {
+        viewModelScope.launch {
+            runCatching {
+                val step = shades.byList.first()[listId] ?: 0
+                templates.saveListAsTemplate(listId, step).id
+            }.onSuccess(then)
+        }
+    }
+
+    private fun add(title: String, details: String?, due: LocalDate?, write: suspend (id: String) -> Unit) {
         val id = UUID.randomUUID().toString()
+        val today = state.value.today
+        val title = title.trim()
         val row = TaskRowUi(
             id = id,
             listId = listId,
-            title = title.trim(),
-            details = null,
-            caption = state.value.title,
-            overdue = false,
-            completed = false
+            title = title,
+            details = details?.trimEnd()?.takeIf { it.isNotBlank() },
+            caption = due?.let {
+                DueText.caption(state.value.title, it, today, completed = false)
+            } ?: state.value.title,
+            overdue = due != null && due.isBefore(today),
+            completed = false,
+            due = due
         )
         adds.add(id, row)
         viewModelScope.launch {
-            runCatching { tasks.createTask(listId, title, id = id) }.onFailure { adds.clear(id) }
+            runCatching { write(id) }.onFailure { adds.clear(id) }
         }
     }
 

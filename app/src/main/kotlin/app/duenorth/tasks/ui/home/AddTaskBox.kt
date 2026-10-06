@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.components.MetroButton
 import app.duenorth.tasks.design.components.MetroDatePicker
 import app.duenorth.tasks.design.components.MetroLink
+import app.duenorth.tasks.design.components.MetroListItem
 import app.duenorth.tasks.design.components.MetroPickerDialog
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
@@ -32,6 +33,7 @@ import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.ui.common.Chip
 import app.duenorth.tasks.ui.common.DueText
+import app.duenorth.tasks.ui.templates.TaskTemplatePick
 import java.time.LocalDate
 
 /**
@@ -46,7 +48,9 @@ fun AddTaskBox(
     lists: List<ListRowUi>,
     onAdd: (title: String, details: String?, due: LocalDate?, listId: String?) -> Unit,
     focusRequester: FocusRequester,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    templates: List<TaskTemplatePick> = emptyList(),
+    onUseTemplate: (TaskTemplatePick) -> Unit = {}
 ) {
     var title by rememberSaveable { mutableStateOf("") }
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -94,6 +98,8 @@ fun AddTaskBox(
                     Spacer(Modifier.weight(1f))
                     MetroText("enter adds it", MetroTheme.typography.caption, color = MetroTheme.colors.secondary)
                 }
+            } else {
+                TemplatePicker(templates, onUse = onUseTemplate)
             }
         } else {
             Column(
@@ -157,5 +163,37 @@ fun AddTaskBox(
             },
             onDismiss = { pickingList = false }
         )
+    }
+}
+
+/**
+ * spec 004 FR-324: an accent "use a template" link under an empty add box; it opens the task
+ * templates right there, and tapping one adds it at once.
+ */
+@Composable
+fun TemplatePicker(templates: List<TaskTemplatePick>, onUse: (TaskTemplatePick) -> Unit) {
+    if (templates.isEmpty()) return
+    var open by rememberSaveable { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth()) {
+        MetroLink(if (open) "hide templates" else "use a template", { open = !open })
+        if (open) {
+            MetroText(
+                "TASK TEMPLATES",
+                MetroTheme.typography.caption,
+                Modifier.padding(bottom = 4.dp),
+                color = MetroTheme.colors.secondary
+            )
+            templates.forEach { pick ->
+                MetroListItem(
+                    title = pick.title,
+                    caption = pick.caption,
+                    captionColor = MetroTheme.colors.secondary,
+                    onClick = {
+                        open = false
+                        onUse(pick)
+                    }
+                )
+            }
+        }
     }
 }
