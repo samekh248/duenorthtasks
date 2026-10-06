@@ -126,18 +126,34 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
         }
 
         MetroIcon.Sync -> {
-            drawArc(color, 200f, 150f, false, topLeft = p(4f, 4f), size = Size(16f * u, 16f * u), style = stroke)
-            drawArc(color, 20f, 150f, false, topLeft = p(4f, 4f), size = Size(16f * u, 16f * u), style = stroke)
-            // Arrow heads at the end of each arc.
-            path {
-                moveTo(16.5f * u, 3.5f * u)
-                lineTo(19.5f * u, 5.5f * u)
-                lineTo(17.5f * u, 8.5f * u)
-            }
-            path {
-                moveTo(7.5f * u, 20.5f * u)
-                lineTo(4.5f * u, 18.5f * u)
-                lineTo(6.5f * u, 15.5f * u)
+            // Two arcs chasing each other clockwise, each ending in a solid head that sits on the
+            // arc's end and points along it (WP8.1 sync), so the glyph reads the same mid-spin.
+            val r = 7.5f
+            for (end in listOf(SYNC_TOP_END, SYNC_TOP_END + 180f)) {
+                drawArc(
+                    color,
+                    end - SYNC_SWEEP,
+                    SYNC_SWEEP,
+                    false,
+                    topLeft = p(12f - r, 12f - r),
+                    size = Size(2 * r * u, 2 * r * u),
+                    style = stroke
+                )
+                val a = Math.toRadians(end.toDouble())
+                val (nx, ny) = cos(a).toFloat() to sin(a).toFloat() // outward from the centre
+                val (tx, ty) = -ny to nx // clockwise along the arc
+                val ex = 12f + r * nx
+                val ey = 12f + r * ny
+                drawPath(
+                    Path().apply {
+                        moveTo((ex + tx * SYNC_HEAD_LENGTH) * u, (ey + ty * SYNC_HEAD_LENGTH) * u)
+                        lineTo((ex + nx * SYNC_HEAD_HALF) * u, (ey + ny * SYNC_HEAD_HALF) * u)
+                        lineTo((ex - nx * SYNC_HEAD_HALF) * u, (ey - ny * SYNC_HEAD_HALF) * u)
+                        close()
+                    },
+                    color,
+                    style = Fill
+                )
             }
         }
 
@@ -225,3 +241,9 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
         }
     }
 }
+
+/** The top arc ends just above three o'clock; the bottom one mirrors it. */
+private const val SYNC_TOP_END = 335f
+private const val SYNC_SWEEP = 130f
+private const val SYNC_HEAD_LENGTH = 3.6f
+private const val SYNC_HEAD_HALF = 3f
