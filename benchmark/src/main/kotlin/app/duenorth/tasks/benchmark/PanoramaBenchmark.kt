@@ -50,6 +50,9 @@ class PanoramaBenchmark {
 private const val TIMEOUT_MS = 10_000L
 private const val SWIPE_STEPS = 6
 
+/** today, lists, done and stats (spec 005 FR-432). */
+private const val SECTIONS = 4
+
 /** Waits until the home panorama shows its first section. */
 internal fun MacrobenchmarkScope.waitForHome() {
     check(device.wait(Until.hasObject(By.text("today")), TIMEOUT_MS)) { "The home panorama never showed" }
@@ -63,11 +66,11 @@ internal fun MacrobenchmarkScope.swipePanorama() {
     val y = device.displayHeight / 2
     val right = device.displayWidth * 4 / 5
     val left = device.displayWidth / 5
-    repeat(3) {
+    repeat(SECTIONS) {
         device.swipe(right, y, left, y, SWIPE_STEPS)
         device.waitForIdle()
     }
-    repeat(3) {
+    repeat(SECTIONS) {
         device.swipe(left, y, right, y, SWIPE_STEPS)
         device.waitForIdle()
     }

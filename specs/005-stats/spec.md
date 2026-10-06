@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-06
 
-**Status**: Draft, waiting for Dustin's OK
+**Status**: Approved (Dustin, 2026-10-06); implemented
 
 **Input**: User description: "create a spec to show a stats view after the done view. Also give me ideas to show something fun if the today view has no tasks." Follow-up: "show me options of an empty day that includes a large animated version of the logo" / "I like the first one, but center the logo in the view"
 
@@ -154,7 +154,7 @@ it](mockups/empty-today.png)
   were done on or before it, rounded to a whole percent; shown only when there are at least 5 such
   tasks.
 - **FR-414**: The 12-week grid MUST use 6 levels: none, then 5 shades of the app accent from light
-  to dark (dark theme: dark to bright) by quintile of the user's own non-zero days.
+  to dark (dark theme: dark to bright) by share of the busiest day in the 12 weeks (level = ceil(5 × count / busiest)).
 - **FR-415**: "by list" MUST show up to 5 lists with the most done in the last 30 days, each in its
   list shade (spec 001 per-list shades), and "+ N more lists" if there are more.
 - **FR-416**: "right now" MUST count open tasks, overdue open tasks (due before today) and open
