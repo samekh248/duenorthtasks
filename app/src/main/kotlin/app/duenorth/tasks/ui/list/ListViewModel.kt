@@ -11,12 +11,14 @@ import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
 import app.duenorth.tasks.ui.common.HeldLists
+import app.duenorth.tasks.ui.common.ListSharing
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.serviceName
 import app.duenorth.tasks.ui.common.toRow
 import app.duenorth.tasks.ui.common.todayFlow
 import app.duenorth.tasks.ui.home.ListRowUi
+import app.duenorth.tasks.ui.home.toUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -43,6 +45,8 @@ data class ListUiState(
     /** False once the list is gone (deleted here or remotely); the page closes itself. */
     val exists: Boolean = true,
     val title: String = "",
+    /** Shared, and by whom (spec 002); decides the header line and whether rename/delete show. */
+    val sharing: ListSharing = ListSharing.PRIVATE,
     val open: List<TaskRowUi> = emptyList(),
     val completed: List<TaskRowUi> = emptyList(),
     val completedExpanded: Boolean = false,
@@ -77,7 +81,10 @@ class ListViewModel @Inject constructor(
         tasks.openTasks(listId),
         tasks.completedTasks(listId),
         todayFlow(clock)
-    ) { list, open, done, today -> ListContent(list?.takeUnless { it.deletedLocally }?.title, open, done, today) }
+    ) { list, open, done, today ->
+        val shown = list?.takeUnless { it.deletedLocally }
+        ListContent(shown?.title, open, done, today, ListSharing.of(shown?.isShared == true, shown?.isOwner != false))
+    }
 
     val state: StateFlow<ListUiState> = combine(
         content,
@@ -94,11 +101,12 @@ class ListViewModel @Inject constructor(
             loading = false,
             exists = content.title != null,
             title = content.title.orEmpty(),
+            sharing = content.sharing,
             open = sorted(open, all, prefs.sort),
             completed = done,
             completedExpanded = prefs.completedExpanded,
             sort = prefs.sort,
-            lists = lists.map { ListRowUi(it.localId, it.title, it.openCount, it.nextTaskTitle) },
+            lists = lists.map { it.toUi() },
             serviceName = serviceName(account?.provider),
             today = content.today,
             importance = importance
@@ -166,5 +174,6 @@ private data class ListContent(
     val title: String?,
     val open: List<TaskWithList>,
     val done: List<TaskWithList>,
-    val today: LocalDate
+    val today: LocalDate,
+    val sharing: ListSharing
 )

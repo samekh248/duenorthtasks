@@ -39,6 +39,8 @@ internal interface GoogleTasksApi {
         @Query("showDeleted") showDeleted: Boolean = false,
         @Query("showHidden") showHidden: Boolean = true,
         @Query("showCompleted") showCompleted: Boolean = true,
+        /** Tasks assigned to the user from Google Docs or Chat are left out unless asked for (spec 002, R11). */
+        @Query("showAssigned") showAssigned: Boolean = true,
         @Query("maxResults") maxResults: Int = 100,
         @Query("pageToken") pageToken: String? = null
     ): Response<TasksDto>
@@ -104,7 +106,17 @@ internal data class TaskDto(
     val parent: String? = null,
     val position: String? = null,
     val deleted: Boolean = false,
-    val hidden: Boolean = false
+    val hidden: Boolean = false,
+    /** Read-only; set when the task was assigned to the user from a Doc or a Chat space. */
+    val assignmentInfo: AssignmentInfoDto? = null
+)
+
+/** Google says where an assigned task came from, not who assigned it. */
+@Serializable
+internal data class AssignmentInfoDto(
+    val linkToTask: String? = null,
+    /** DOCUMENT, SPACE, GMAIL or CONTEXT_TYPE_UNSPECIFIED. */
+    val surfaceType: String? = null
 )
 
 @Serializable

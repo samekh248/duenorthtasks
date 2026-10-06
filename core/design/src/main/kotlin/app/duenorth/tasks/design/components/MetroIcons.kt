@@ -23,7 +23,26 @@ import kotlin.math.sin
  * The app's glyphs, drawn as thin flat strokes like the WP8.1 app bar icons. Drawn in code so the
  * design module needs no Material icon library.
  */
-enum class MetroIcon { Add, Sync, Search, Settings, Check, Delete, Edit, Sort, Close, More, Back, Star }
+enum class MetroIcon {
+    Add,
+    Sync,
+    Search,
+    Settings,
+    Check,
+    Delete,
+    Edit,
+    Sort,
+    Close,
+    More,
+    Back,
+    Star,
+
+    /** Two people: a shared list (spec 002). */
+    People,
+
+    /** A box with an arrow leaving it: opens another app or the web. */
+    OpenOutside
+}
 
 @Composable
 fun MetroIconGlyph(
@@ -49,6 +68,31 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
     fun path(block: Path.() -> Unit) = drawPath(Path().apply(block), color, style = if (filled) Fill else stroke)
 
     when (icon) {
+        MetroIcon.People -> {
+            // The person in front: head and shoulders.
+            drawCircle(color, radius = 3.2f * u, center = p(9f, 8.5f), style = stroke)
+            drawArc(color, 180f, 180f, false, topLeft = p(3f, 14.5f), size = Size(12f * u, 11f * u), style = stroke)
+            // The person behind, to the right.
+            drawCircle(color, radius = 2.6f * u, center = p(16.5f, 7.5f), style = stroke)
+            drawArc(color, 270f, 90f, false, topLeft = p(12.5f, 13f), size = Size(9f * u, 12f * u), style = stroke)
+        }
+
+        MetroIcon.OpenOutside -> {
+            path {
+                moveTo(11f * u, 5f * u)
+                lineTo(5f * u, 5f * u)
+                lineTo(5f * u, 19f * u)
+                lineTo(19f * u, 19f * u)
+                lineTo(19f * u, 13f * u)
+            }
+            line(12f, 12f, 19.5f, 4.5f)
+            path {
+                moveTo(14f * u, 4.5f * u)
+                lineTo(19.5f * u, 4.5f * u)
+                lineTo(19.5f * u, 10f * u)
+            }
+        }
+
         MetroIcon.Add -> {
             line(12f, 4f, 12f, 20f)
             line(4f, 12f, 20f, 12f)

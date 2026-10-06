@@ -2,8 +2,10 @@ package app.duenorth.tasks.ui.list
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -23,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -39,6 +42,7 @@ import app.duenorth.tasks.design.components.ContextMenuItem
 import app.duenorth.tasks.design.components.MetroAppBar
 import app.duenorth.tasks.design.components.MetroDialog
 import app.duenorth.tasks.design.components.MetroIcon
+import app.duenorth.tasks.design.components.MetroIconGlyph
 import app.duenorth.tasks.design.components.MetroInputDialog
 import app.duenorth.tasks.design.components.MetroPickerDialog
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
@@ -49,9 +53,12 @@ import app.duenorth.tasks.design.motion.rememberContinuumState
 import app.duenorth.tasks.design.theme.ListAccent
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.ui.common.ListSharing
 import app.duenorth.tasks.ui.common.PageHeader
 import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
+import app.duenorth.tasks.ui.common.deleteListMessage
+import app.duenorth.tasks.ui.common.deleteListTitle
 import app.duenorth.tasks.ui.common.frozen
 import app.duenorth.tasks.ui.common.importanceItem
 import app.duenorth.tasks.ui.common.rememberTouchHold
@@ -65,11 +72,12 @@ fun ListScreen(
     onOpenTask: (String) -> Unit,
     onClosed: () -> Unit,
     onShade: (String) -> Unit = {},
+    onInfo: (String) -> Unit = {},
     viewModel: ListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
-    ListContent(state, viewModel, onOpenTask, onShade)
+    ListContent(state, viewModel, onOpenTask, onShade, onInfo)
 }
 
 /** The whole page, check boxes and captions included, uses the list's shade of the accent. */
@@ -78,9 +86,10 @@ fun ListContent(
     state: ListUiState,
     viewModel: ListViewModel,
     onOpenTask: (String) -> Unit,
-    onShade: (String) -> Unit = {}
+    onShade: (String) -> Unit = {},
+    onInfo: (String) -> Unit = {}
 ) {
-    ListAccent(viewModel.listId) { ListPage(state, viewModel, onOpenTask, onShade) }
+    ListAccent(viewModel.listId) { ListPage(state, viewModel, onOpenTask, onShade, onInfo) }
 }
 
 @Composable
@@ -88,7 +97,8 @@ private fun ListPage(
     state: ListUiState,
     viewModel: ListViewModel,
     onOpenTask: (String) -> Unit,
-    onShade: (String) -> Unit
+    onShade: (String) -> Unit,
+    onInfo: (String) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val continuum = rememberContinuumState()
@@ -128,6 +138,7 @@ private fun ListPage(
     Column(Modifier.fillMaxSize().background(MetroTheme.colors.background).imePadding()) {
         Column(Modifier.weight(1f).statusBarsPadding()) {
             PageHeader(state.title)
+            if (state.sharing.isShared) SharedLine(state.sharing) { onInfo(viewModel.listId) }
             LazyColumn(
                 Modifier.fillMaxSize().touchHold(hold).testTag("list"),
                 state = listState,
@@ -186,14 +197,18 @@ private fun ListPage(
             }
         }
         MetroAppBar(
-            buttons = listOf(
+            buttons = listOfNotNull(
                 AppBarButton(MetroIcon.Add, "new task") { addFocus.requestFocus() },
+                AppBarButton(MetroIcon.People, "sharing") { onInfo(viewModel.listId) }
+                    .takeIf { state.sharing.isShared },
                 AppBarButton(MetroIcon.Sort, "sort") { sorting = true }
             ),
-            menuItems = listOf(
-                AppBarMenuItem("rename list") { renaming = true },
+            // Only the owner can rename or delete a shared list (spec 002 FR-120).
+            menuItems = listOfNotNull(
+                AppBarMenuItem("rename list") { renaming = true }.takeIf { state.sharing.canManage },
                 AppBarMenuItem("list shade") { onShade(viewModel.listId) },
-                AppBarMenuItem("delete list") { deleting = true }
+                AppBarMenuItem("list info") { onInfo(viewModel.listId) },
+                AppBarMenuItem("delete list") { deleting = true }.takeIf { state.sharing.canManage }
             )
         )
     }
@@ -225,8 +240,8 @@ private fun ListPage(
     }
     if (deleting) {
         MetroDialog(
-            title = "delete ${state.title}?",
-            message = "This deletes the list and its ${state.open.size} open tasks here and in ${state.serviceName}.",
+            title = deleteListTitle(state.title, state.sharing),
+            message = deleteListMessage(state.title, state.open.size, state.sharing, state.serviceName),
             confirmLabel = "delete",
             onConfirm = {
                 deleting = false
@@ -247,5 +262,23 @@ private fun ListPage(
             },
             onDismiss = { moving = null }
         )
+    }
+}
+
+/** "shared with you · details" under the title, in the list's shade; opens the sharing page. */
+@Composable
+private fun SharedLine(sharing: ListSharing, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .padding(start = MetroDimens.Gutter, end = MetroDimens.Gutter)
+            .heightIn(min = MetroDimens.TouchTarget)
+            .metroTilt()
+            .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick)
+            .testTag("shared line"),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        MetroIconGlyph(MetroIcon.People, color = MetroTheme.accent.text, size = 20.dp)
+        MetroText("${sharing.caption} · details", MetroTheme.typography.body, color = MetroTheme.accent.text)
     }
 }

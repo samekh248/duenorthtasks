@@ -8,7 +8,11 @@ data class RemoteList(
     val title: String,
     val isDefault: Boolean,
     val etag: String?,
-    val updatedAt: Instant
+    val updatedAt: Instant,
+    /** Shared with other people (Microsoft To Do `isShared`; Google lists can't be shared). Read-only. */
+    val isShared: Boolean = false,
+    /** The signed-in user owns the list (To Do `isOwner`). Only the owner can rename or delete it. Read-only. */
+    val isOwner: Boolean = true
 )
 
 data class RemoteTask(
@@ -27,8 +31,15 @@ data class RemoteTask(
     val rawStatus: String?,
     val steps: List<RemoteStep>,
     val etag: String?,
-    val updatedAt: Instant
+    val updatedAt: Instant,
+    /** Where someone assigned this task to the user (Google Docs or Chat), if they did. Read-only. */
+    val assignment: Assignment? = null
 )
+
+/** A task assigned to the user from elsewhere. The services don't say who assigned it (spec 002). */
+data class Assignment(val source: AssignmentSource, val link: String?)
+
+enum class AssignmentSource { DOCUMENT, SPACE, OTHER }
 
 data class RemoteStep(val id: String, val title: String, val done: Boolean)
 

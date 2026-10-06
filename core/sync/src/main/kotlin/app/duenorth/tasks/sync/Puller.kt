@@ -1,5 +1,6 @@
 package app.duenorth.tasks.sync
 
+import app.duenorth.tasks.data.db.AssignmentSource
 import app.duenorth.tasks.data.db.EntityType
 import app.duenorth.tasks.data.db.Fields
 import app.duenorth.tasks.data.db.OperationKind
@@ -7,6 +8,8 @@ import app.duenorth.tasks.data.db.StepEntity
 import app.duenorth.tasks.data.db.SyncLogType
 import app.duenorth.tasks.data.db.TaskEntity
 import app.duenorth.tasks.data.db.TaskListEntity
+import app.duenorth.tasks.provider.api.Assignment
+import app.duenorth.tasks.provider.api.AssignmentSource as RemoteAssignmentSource
 import app.duenorth.tasks.provider.api.ProviderError
 import app.duenorth.tasks.provider.api.RemoteList
 import app.duenorth.tasks.provider.api.RemoteTask
@@ -82,7 +85,13 @@ internal class Puller(
                 if (pendingCreate != null) {
                     // A create whose answer was lost: this is ours (FR-022).
                     store.lists.update(
-                        pendingCreate.copy(remoteId = rl.id, etag = rl.etag, remoteUpdatedAt = rl.updatedAt)
+                        pendingCreate.copy(
+                            remoteId = rl.id,
+                            etag = rl.etag,
+                            remoteUpdatedAt = rl.updatedAt,
+                            isShared = rl.isShared,
+                            isOwner = rl.isOwner
+                        )
                     )
                     store.dropOps(EntityType.LIST, pendingCreate.localId)
                     if (pendingCreate.title !=
@@ -105,7 +114,9 @@ internal class Puller(
                             isDefault = rl.isDefault,
                             etag = rl.etag,
                             remoteUpdatedAt = rl.updatedAt,
-                            localUpdatedAt = rl.updatedAt
+                            localUpdatedAt = rl.updatedAt,
+                            isShared = rl.isShared,
+                            isOwner = rl.isOwner
                         )
                     )
                 }
@@ -143,7 +154,10 @@ internal class Puller(
                     isDefault = rl.isDefault,
                     etag = rl.etag,
                     remoteUpdatedAt = remoteUpdatedAt,
-                    localUpdatedAt = if (takeRemote) remoteUpdatedAt else existing.localUpdatedAt
+                    localUpdatedAt = if (takeRemote) remoteUpdatedAt else existing.localUpdatedAt,
+                    // Sharing is read-only here, so the service always wins (spec 002).
+                    isShared = rl.isShared,
+                    isOwner = rl.isOwner
                 )
             )
         }
@@ -171,8 +185,11 @@ internal class Puller(
             val count = if (unsynced.size == 1) "1 task" else "${unsynced.size} tasks"
             store.log(
                 SyncLogType.RECOVERED,
-                "“${list.title}” was deleted elsewhere. $count with unsynced changes moved to “${recovered.title}”."
+                "${goneReason(list)} $count with unsynced changes moved to “${recovered.title}”."
             )
+        } else if (!list.deletedLocally && list.isShared && !list.isOwner) {
+            // The owner stopped sharing or removed this person (spec 002 FR-123): say so once.
+            store.log(SyncLogType.RECOVERED, goneReason(list))
         }
         tasks.filter { it !in unsynced }.forEach {
             store.dropStepOps(it.localId)
@@ -180,6 +197,12 @@ internal class Puller(
         }
         store.dropOps(EntityType.LIST, list.localId)
         store.lists.delete(list.localId)
+    }
+
+    private fun goneReason(list: TaskListEntity) = if (list.isShared && !list.isOwner) {
+        "“${list.title}” is no longer shared with you."
+    } else {
+        "“${list.title}” was deleted elsewhere."
     }
 
     // Tasks
@@ -393,7 +416,9 @@ internal class Puller(
                 remoteStatusRaw = remote.rawStatus,
                 etag = remote.etag,
                 remoteUpdatedAt = remote.updatedAt,
-                localUpdatedAt = remote.updatedAt
+                localUpdatedAt = remote.updatedAt,
+                assignmentSource = remote.assignment.source(),
+                assignmentLink = remote.assignment?.link
             )
             remote.steps.forEachIndexed { index, step ->
                 steps += StepEntity(
@@ -450,9 +475,18 @@ internal class Puller(
                 remoteStatusRaw = remote.rawStatus,
                 etag = remote.etag,
                 remoteUpdatedAt = remote.updatedAt,
-                localUpdatedAt = if (keep.isEmpty()) remote.updatedAt else local.localUpdatedAt
+                localUpdatedAt = if (keep.isEmpty()) remote.updatedAt else local.localUpdatedAt,
+                assignmentSource = remote.assignment.source(),
+                assignmentLink = remote.assignment?.link
             )
         )
+    }
+
+    private fun Assignment?.source(): AssignmentSource = when (this?.source) {
+        null -> AssignmentSource.NONE
+        RemoteAssignmentSource.DOCUMENT -> AssignmentSource.DOCUMENT
+        RemoteAssignmentSource.SPACE -> AssignmentSource.SPACE
+        RemoteAssignmentSource.OTHER -> AssignmentSource.OTHER
     }
 
     private fun differingFields(local: TaskEntity, remote: RemoteTask, fields: Set<String>): Set<String> =

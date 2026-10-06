@@ -1,6 +1,8 @@
 package app.duenorth.tasks.provider.google
 
 import app.duenorth.tasks.provider.api.AccountInfo
+import app.duenorth.tasks.provider.api.Assignment
+import app.duenorth.tasks.provider.api.AssignmentSource
 import app.duenorth.tasks.provider.api.ListPatch
 import app.duenorth.tasks.provider.api.Patch
 import app.duenorth.tasks.provider.api.ProviderCapabilities
@@ -45,7 +47,8 @@ class GoogleTasksProvider internal constructor(
     private val clock: Clock = Clock.systemUTC()
 ) : TaskProvider {
     override val kind = ProviderKind.GOOGLE
-    override val capabilities = ProviderCapabilities(importance = false, manualOrder = true, dueTime = false)
+    override val capabilities =
+        ProviderCapabilities(importance = false, manualOrder = true, dueTime = false, assignedTasks = true)
 
     override suspend fun signIn(host: SignInHost): AccountInfo = auth.signIn(host)
 
@@ -299,7 +302,17 @@ class GoogleTasksProvider internal constructor(
         rawStatus = status,
         steps = children.map { RemoteStep(it.id, it.title.orEmpty(), it.status == GoogleStatus.COMPLETED) },
         etag = etag,
-        updatedAt = parseTimestamp(updated)
+        updatedAt = parseTimestamp(updated),
+        assignment = assignmentInfo?.let { info ->
+            Assignment(
+                source = when (info.surfaceType) {
+                    "DOCUMENT" -> AssignmentSource.DOCUMENT
+                    "SPACE" -> AssignmentSource.SPACE
+                    else -> AssignmentSource.OTHER
+                },
+                link = info.linkToTask?.takeIf { it.startsWith("https://") }
+            )
+        }
     )
 
     companion object {

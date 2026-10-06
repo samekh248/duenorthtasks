@@ -53,7 +53,11 @@ data class ProviderCapabilities(
     /** Google Tasks only. */
     val manualOrder: Boolean,
     /** False for both in v1: the UI edits dates only. */
-    val dueTime: Boolean
+    val dueTime: Boolean,
+    /** Lists can be shared with other people (Microsoft To Do). */
+    val sharedLists: Boolean = false,
+    /** Tasks can be assigned to the user from Docs or Chat (Google Tasks). */
+    val assignedTasks: Boolean = false
 )
 
 /** Opaque handle to whatever the platform sign-in flow needs (an Activity on Android). */

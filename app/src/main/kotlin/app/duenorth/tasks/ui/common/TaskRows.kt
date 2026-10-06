@@ -63,7 +63,8 @@ fun TaskWithList.toRow(
         listId = task.listId,
         title = task.title,
         details = task.notes,
-        caption = DueText.caption(listTitle, due, today, done),
+        caption = listOfNotNull(DueText.caption(listTitle, due, today, done), assignedFrom(task.assignmentSource))
+            .joinToString(" · "),
         overdue = !done && due != null && due.isBefore(today),
         completed = done,
         important = showImportance && task.important,

@@ -1,5 +1,7 @@
 package app.duenorth.tasks.provider.google
 
+import app.duenorth.tasks.provider.api.Assignment
+import app.duenorth.tasks.provider.api.AssignmentSource
 import app.duenorth.tasks.provider.api.Patch
 import app.duenorth.tasks.provider.api.ProviderError
 import app.duenorth.tasks.provider.api.StepDraft
@@ -38,6 +40,35 @@ class GoogleTasksProviderTest {
         assertFalse(provider.capabilities.importance)
         assertTrue(provider.capabilities.manualOrder)
         assertFalse(provider.capabilities.dueTime)
+    }
+
+    @Test
+    fun tasksAssignedFromDocsAndChatAreIncludedWithTheirSource() = runTest {
+        val list = provider.getLists().single()
+        val doc = provider.createTask(list.id, TaskDraft("Review section 3"))
+        val chat = provider.createTask(list.id, TaskDraft("Book the room"))
+        provider.createTask(list.id, TaskDraft("Plain task"))
+        server.assignOnWeb(doc.id, "DOCUMENT", "https://docs.google.com/document/d/abc")
+        server.assignOnWeb(chat.id, "SPACE", null)
+
+        val tasks = provider.getTaskChanges(list.id, null).changed.associateBy { it.title }
+
+        // Google leaves assigned tasks out unless asked (spec 002, R11).
+        assertTrue(server.requests.any { it.url.queryParameter("showAssigned") == "true" })
+        assertEquals(
+            Assignment(AssignmentSource.DOCUMENT, "https://docs.google.com/document/d/abc"),
+            tasks.getValue("Review section 3").assignment
+        )
+        assertEquals(Assignment(AssignmentSource.SPACE, null), tasks.getValue("Book the room").assignment)
+        assertEquals(null, tasks.getValue("Plain task").assignment)
+        assertTrue(provider.capabilities.assignedTasks)
+        assertFalse(provider.capabilities.sharedLists)
+    }
+
+    @Test
+    fun listsAreNeverShared() = runTest {
+        provider.createList("Errands")
+        assertTrue(provider.getLists().none { it.isShared || !it.isOwner })
     }
 
     @Test

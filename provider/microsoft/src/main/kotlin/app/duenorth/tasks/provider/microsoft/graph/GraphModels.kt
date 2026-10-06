@@ -24,6 +24,10 @@ internal data class TodoTaskListDto(
     val displayName: String = "",
     /** "defaultList" for the built-in Tasks list, "flaggedEmails" for flagged mail, else "none". */
     val wellknownListName: String? = null,
+    /** True when the list is shared with other people. Graph has no members list (spec 002, R2). */
+    val isShared: Boolean = false,
+    /** True when the signed-in user owns the list. */
+    val isOwner: Boolean = true,
     @SerialName("@odata.etag") val etag: String? = null
 )
 

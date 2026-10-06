@@ -59,6 +59,8 @@ import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.listAccent
 import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
+import app.duenorth.tasks.ui.common.deleteListMessage
+import app.duenorth.tasks.ui.common.deleteListTitle
 import app.duenorth.tasks.ui.common.frozen
 import app.duenorth.tasks.ui.common.importanceItem
 import app.duenorth.tasks.ui.common.rememberTouchHold
@@ -79,6 +81,8 @@ class HomeActions(
     val sync: (() -> Unit)? = null,
     val openSettings: () -> Unit = {},
     val openListShade: (String) -> Unit = {},
+    /** The list's sharing page (spec 002): who owns it and what can be done where. */
+    val openListInfo: (String) -> Unit = {},
     val openSyncLog: () -> Unit = {},
     val menuItems: List<AppBarMenuItem> = emptyList()
 )
@@ -149,6 +153,7 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
                             onNew = { newList = true },
                             onRename = { renaming = it },
                             onShade = { actions.openListShade(it.id) },
+                            onInfo = { actions.openListInfo(it.id) },
                             onDelete = { deleting = it }
                         )
                     },
@@ -189,8 +194,8 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
     }
     deleting?.let { list ->
         MetroDialog(
-            title = "delete ${list.title}?",
-            message = "This deletes the list and its ${list.openCount} open tasks here and in ${state.serviceName}.",
+            title = deleteListTitle(list.title, list.sharing),
+            message = deleteListMessage(list.title, list.openCount, list.sharing, state.serviceName),
             confirmLabel = "delete",
             onConfirm = {
                 viewModel.deleteList(list.id)
@@ -312,6 +317,7 @@ private fun ListsSection(
     onNew: () -> Unit,
     onRename: (ListRowUi) -> Unit,
     onShade: (ListRowUi) -> Unit,
+    onInfo: (ListRowUi) -> Unit,
     onDelete: (ListRowUi) -> Unit
 ) {
     LazyColumn(
@@ -329,6 +335,7 @@ private fun ListsSection(
                 onOpen = { onOpen(list.id) },
                 onRename = { onRename(list) },
                 onShade = { onShade(list) },
+                onInfo = { onInfo(list) },
                 onDelete = { onDelete(list) }
             )
         }
@@ -355,6 +362,7 @@ private fun ListRow(
     onOpen: () -> Unit,
     onRename: () -> Unit,
     onShade: () -> Unit,
+    onInfo: () -> Unit,
     onDelete: () -> Unit
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -369,8 +377,13 @@ private fun ListRow(
                     onLongClick = { menu = true },
                     onClick = onOpen
                 )
-                // TalkBack reads the name first, then "3 open" instead of a bare number from the tile.
-                .semantics { stateDescription = "${list.openCount} open" },
+                // TalkBack reads the name first, then "shared with you, 3 open" instead of a bare
+                // number from the tile.
+                .semantics {
+                    stateDescription = listOf(list.sharing.spoken, "${list.openCount} open")
+                        .filter { it.isNotEmpty() }
+                        .joinToString(", ")
+                },
             horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
         ) {
             val shade = listAccent(list.id)
@@ -378,12 +391,16 @@ private fun ListRow(
                 count = list.openCount,
                 modifier = Modifier.clearAndSetSemantics {},
                 fill = shade.fill,
-                onFill = shade.onFill
+                onFill = shade.onFill,
+                shared = list.sharing.isShared
             )
             Column(Modifier.weight(1f)) {
                 MetroText(list.title, MetroTheme.typography.listName, maxLines = 1)
                 MetroText(
-                    list.next?.let { "next: $it" } ?: "no open tasks",
+                    listOfNotNull(
+                        list.sharing.caption.ifEmpty { null },
+                        list.next?.let { "next: $it" } ?: "no open tasks"
+                    ).joinToString(" · "),
                     MetroTheme.typography.caption,
                     color = MetroTheme.colors.secondary,
                     maxLines = 1
@@ -393,10 +410,12 @@ private fun ListRow(
         MetroContextMenu(
             expanded = menu,
             onDismiss = { menu = false },
-            items = listOf(
-                ContextMenuItem("rename", onRename),
+            // Only the owner can rename or delete a shared list; "list info" says so (spec 002 FR-120).
+            items = listOfNotNull(
+                ContextMenuItem("rename", onRename).takeIf { list.sharing.canManage },
                 ContextMenuItem("list shade", onShade),
-                ContextMenuItem("delete", onDelete)
+                ContextMenuItem("list info", onInfo),
+                ContextMenuItem("delete", onDelete).takeIf { list.sharing.canManage }
             )
         )
     }

@@ -10,6 +10,7 @@ import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
 import app.duenorth.tasks.ui.common.HeldLists
+import app.duenorth.tasks.ui.common.ListSharing
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.TickLinger
@@ -32,7 +33,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @Immutable
-data class ListRowUi(val id: String, val title: String, val openCount: Int, val next: String?)
+data class ListRowUi(
+    val id: String,
+    val title: String,
+    val openCount: Int,
+    val next: String?,
+    val sharing: ListSharing = ListSharing.PRIVATE
+)
 
 @Immutable
 data class HomeUiState(
@@ -163,4 +170,10 @@ class HomeViewModel @Inject constructor(
     }
 }
 
-private fun ListSummary.toUi() = ListRowUi(id = localId, title = title, openCount = openCount, next = nextTaskTitle)
+internal fun ListSummary.toUi() = ListRowUi(
+    id = localId,
+    title = title,
+    openCount = openCount,
+    next = nextTaskTitle,
+    sharing = ListSharing.of(isShared, isOwner)
+)

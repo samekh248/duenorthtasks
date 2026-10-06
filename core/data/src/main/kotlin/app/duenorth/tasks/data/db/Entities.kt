@@ -1,5 +1,6 @@
 package app.duenorth.tasks.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -58,7 +59,11 @@ data class TaskListEntity(
     val etag: String? = null,
     val remoteUpdatedAt: Instant? = null,
     val localUpdatedAt: Instant,
-    val deletedLocally: Boolean = false
+    val deletedLocally: Boolean = false,
+    /** Shared with other people (Microsoft To Do only). Copied from the service on every sync. */
+    @ColumnInfo(defaultValue = "0") val isShared: Boolean = false,
+    /** The signed-in user owns this list; only the owner can rename or delete it. */
+    @ColumnInfo(defaultValue = "1") val isOwner: Boolean = true
 )
 
 @Entity(
@@ -92,8 +97,15 @@ data class TaskEntity(
     val etag: String? = null,
     val remoteUpdatedAt: Instant? = null,
     val localUpdatedAt: Instant,
-    val deletedLocally: Boolean = false
+    val deletedLocally: Boolean = false,
+    /** Where the task was assigned to the user from (Google Docs or Chat); read-only. */
+    @ColumnInfo(defaultValue = "NONE") val assignmentSource: AssignmentSource = AssignmentSource.NONE,
+    /** Opens the task where it was assigned; null when not assigned. */
+    val assignmentLink: String? = null
 )
+
+/** Mirrors the provider's assignment source, plus NONE for tasks nobody assigned (spec 002). */
+enum class AssignmentSource { NONE, DOCUMENT, SPACE, OTHER }
 
 @Entity(
     tableName = "step",

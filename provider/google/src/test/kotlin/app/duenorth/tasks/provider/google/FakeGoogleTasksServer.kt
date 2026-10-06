@@ -14,6 +14,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -62,8 +63,17 @@ class FakeGoogleTasksServer(
         var updated: Instant,
         var parent: String?,
         var order: Long,
-        var deleted: Boolean = false
+        var deleted: Boolean = false,
+        /** Set when assigned from a Doc or Chat space; such tasks only list with showAssigned=true. */
+        var assignment: Pair<String, String?>? = null
     )
+
+    /** Assigns a task to the user from a Doc or Chat space, as Google Workspace does (spec 002). */
+    fun assignOnWeb(taskId: String, surfaceType: String, link: String?) = synchronized(this) {
+        val row = checkNotNull(tasks[taskId])
+        row.assignment = surfaceType to link
+        row.updated = now
+    }
 
     init {
         server.dispatcher = object : Dispatcher() {
@@ -187,12 +197,14 @@ class FakeGoogleTasksServer(
         val updatedMin = url.queryParameter("updatedMin")?.let { OffsetDateTime.parse(it).toInstant() }
         val showDeleted = url.queryParameter("showDeleted") == "true"
         val showCompleted = url.queryParameter("showCompleted") != "false"
+        val showAssigned = url.queryParameter("showAssigned") == "true"
         val offset = url.queryParameter("pageToken")?.toInt() ?: 0
         val max = minOf(url.queryParameter("maxResults")?.toInt() ?: 20, pageSize)
         val matching = tasks.values
             .filter { it.listId == listId }
             .filter { showDeleted || !it.deleted }
             .filter { showCompleted || it.status != GoogleStatus.COMPLETED }
+            .filter { showAssigned || it.assignment == null }
             .filter { updatedMin == null || !it.updated.isBefore(updatedMin) }
             .sortedWith(compareBy({ it.parent ?: it.id }, { it.parent != null }, { it.order }))
         val page = matching.drop(offset).take(max)
@@ -308,6 +320,12 @@ class FakeGoogleTasksServer(
         if (deleted) put("deleted", true)
         put("links", JsonArray(emptyList()))
         put("webViewLink", "https://tasks.google.com/task/$id")
+        assignment?.let { (surface, link) ->
+            putJsonObject("assignmentInfo") {
+                put("surfaceType", surface)
+                link?.let { put("linkToTask", it) }
+            }
+        }
     }
 
     private fun ok(body: JsonElement) = MockResponse(

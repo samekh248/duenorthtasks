@@ -18,4 +18,9 @@ class ServiceFeatures @Inject constructor(accounts: AccountRepository, private v
     val importance: Flow<Boolean> = accounts.account
         .map { account -> account != null && registry.current()?.capabilities?.importance == true }
         .distinctUntilChanged()
+
+    /** Lists can be shared (spec 002): To Do can, Google Tasks can't. */
+    val sharedLists: Flow<Boolean> = accounts.account
+        .map { account -> account != null && registry.current()?.capabilities?.sharedLists == true }
+        .distinctUntilChanged()
 }

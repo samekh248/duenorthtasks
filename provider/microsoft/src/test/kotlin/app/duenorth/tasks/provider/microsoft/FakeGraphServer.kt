@@ -65,7 +65,20 @@ class FakeGraphServer(
     /** Requests inside `$batch` calls still to be turned away with 429, as a busy mailbox does. */
     var throttleBatchItems = 0
 
-    private class ListRec(val id: String, var name: String, val wellknown: String)
+    private class ListRec(
+        val id: String,
+        var name: String,
+        val wellknown: String,
+        var isShared: Boolean = false,
+        var isOwner: Boolean = true
+    )
+
+    /** Shares a list as To Do itself would; Graph only ever reports these two flags (spec 002). */
+    fun shareList(id: String, isShared: Boolean, isOwner: Boolean) = synchronized(lock) {
+        val list = checkNotNull(lists[id])
+        list.isShared = isShared
+        list.isOwner = isOwner
+    }
 
     private class TaskRec(
         val id: String,
@@ -368,8 +381,8 @@ class FakeGraphServer(
     private fun ListRec.json() = buildJsonObject {
         put("@odata.etag", "W/\"$id-$name\"")
         put("displayName", name)
-        put("isOwner", true)
-        put("isShared", false)
+        put("isOwner", isOwner)
+        put("isShared", isShared)
         put("wellknownListName", wellknown)
         put("id", id)
     }

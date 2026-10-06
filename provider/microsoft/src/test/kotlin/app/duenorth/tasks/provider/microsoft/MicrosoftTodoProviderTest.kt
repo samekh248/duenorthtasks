@@ -75,6 +75,21 @@ class MicrosoftTodoProviderTest {
     }
 
     @Test
+    fun readsWhetherAListIsSharedAndWhoOwnsIt() = runTest {
+        respond(200, fixture("lists_shared.json"))
+
+        val lists = provider.getLists().associateBy { it.title }
+
+        // Spec 002: Graph says only "shared" and "you own it", never who else is in the list.
+        assertEquals(false to true, lists.getValue("Tasks").let { it.isShared to it.isOwner })
+        assertEquals(true to true, lists.getValue("Family groceries").let { it.isShared to it.isOwner })
+        assertEquals(true to false, lists.getValue("Book club").let { it.isShared to it.isOwner })
+        // Flags missing from the answer read as a private list the user owns, as before.
+        assertEquals(false to true, lists.getValue("No flags").let { it.isShared to it.isOwner })
+        assertTrue(provider.capabilities.sharedLists)
+    }
+
+    @Test
     fun mapsARecordedTask() = runTest {
         respond(200, fixture("task.json"))
 

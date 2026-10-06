@@ -4,12 +4,14 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.duenorth.tasks.data.db.AssignmentSource
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.provider.api.Patch
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.todayFlow
 import app.duenorth.tasks.ui.home.ListRowUi
+import app.duenorth.tasks.ui.home.toUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -46,7 +48,11 @@ data class TaskDetailUiState(
     val today: LocalDate = LocalDate.MIN,
     val important: Boolean = false,
     /** The connected service has an importance star (To Do only, FR-014). */
-    val importance: Boolean = false
+    val importance: Boolean = false,
+    /** "from a google doc" when someone assigned this task in Docs or Chat (spec 002 US4). */
+    val assignedFrom: AssignmentSource = AssignmentSource.NONE,
+    /** Opens the task where it was assigned. */
+    val assignmentLink: String? = null
 )
 
 /** One task's page (T030), straight from Room; every change is a repository write. */
@@ -87,10 +93,12 @@ class TaskDetailViewModel @Inject constructor(
             listId = task.listId,
             listTitle = listTitle,
             steps = steps.map { StepUi(it.localId, it.title, it.done) },
-            lists = lists.map { ListRowUi(it.localId, it.title, it.openCount, it.nextTaskTitle) },
+            lists = lists.map { it.toUi() },
             today = today,
             important = importance && task.important,
-            importance = importance
+            importance = importance,
+            assignedFrom = task.assignmentSource,
+            assignmentLink = task.assignmentLink
         )
     }
         .flowOn(Dispatchers.Default)

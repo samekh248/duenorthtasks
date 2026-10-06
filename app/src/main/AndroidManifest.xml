@@ -3,6 +3,11 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- "see people in microsoft to do" opens the To Do app when it is installed (spec 002). -->
+    <queries>
+        <package android:name="com.microsoft.todos" />
+    </queries>
+
     <application
         android:name=".DueNorthApp"
         android:allowBackup="false"
