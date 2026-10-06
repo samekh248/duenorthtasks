@@ -57,6 +57,18 @@ class FakeProvider(
 
     private data class Tombstone(val listId: String, val id: String, val version: Long)
 
+    private val lagging = mutableSetOf<String>()
+
+    /**
+     * Leaves task [id] out of full fetches (no cursor) until [catchUp], like a service whose
+     * listings lag a moment behind its writes.
+     */
+    fun lagFullListing(id: String) {
+        lagging += id
+    }
+
+    fun catchUp() = lagging.clear()
+
     /** The next call fails with [error] instead of running. */
     fun failNext(error: ProviderError) {
         failures.addLast(error)
@@ -105,6 +117,7 @@ class FakeProvider(
         val since = cursor?.let { parseCursor(listId, it) } ?: -1L
         val changed = tasks.values
             .filter { it.task.listId == listId && it.version > since }
+            .filter { cursor != null || it.task.id !in lagging }
             .sortedBy { it.version }
         val page = changed.take(pageSize)
         val hasMore = changed.size > page.size

@@ -10,7 +10,9 @@ import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.settings.ListOrder
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
+import app.duenorth.tasks.ui.common.DueText
 import app.duenorth.tasks.ui.common.HeldLists
+import app.duenorth.tasks.ui.common.PendingAdds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.TickLinger
@@ -20,6 +22,7 @@ import app.duenorth.tasks.ui.common.todayFlow
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,7 +49,9 @@ data class HomeUiState(
     val done: List<TaskRowUi> = emptyList(),
     val serviceName: String = "",
     /** The connected service has an importance star (To Do); false hides it everywhere. */
-    val importance: Boolean = false
+    val importance: Boolean = false,
+    /** Tasks added on this screen, which a touch hold lets in at once. */
+    val added: Set<String> = emptySet()
 )
 
 /**
@@ -65,6 +70,10 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     private val overrides = CompletionOverrides()
     private val linger = TickLinger(viewModelScope)
+    private val adds = PendingAdds()
+
+    /** The lists as last read, for the list name on a task shown before its write lands. */
+    @Volatile private var knownLists: List<ListSummary> = emptyList()
 
     /** The sections as last shown, which [TickLinger] keeps a just-ticked row in. */
     private var shown = HomeUiState()
@@ -79,25 +88,32 @@ class HomeViewModel @Inject constructor(
         tasks.recentlyCompleted(),
         combine(tasks.listSummaries(), listOrder.rank) { lists, rank -> ListOrder.sort(lists, rank) { it.localId } },
         combine(accounts.account, features.importance, ::Pair),
-        combine(overrides.overrides, linger.ticked, ::Pair)
-    ) { (day, dueRows), doneRows, lists, (account, importance), (pending, ticked) ->
+        combine(overrides.overrides, linger.ticked, adds.pending, ::Triple)
+    ) { (day, dueRows), doneRows, lists, (account, importance), (pending, ticked, added) ->
+        knownLists = lists
         overrides.settle((dueRows + doneRows).associate { it.task.localId to it.task.completed })
+        adds.settle(dueRows.mapTo(HashSet()) { it.task.localId })
         val (soon, later) = dueRows.partition { it.task.dueDate?.isAfter(day) == false }
+        val (addedSoon, addedLater) = added.rows.partition { it.due?.isAfter(day) == false }
         HomeUiState(
             loading = false,
             today = day,
             dueToday = TickLinger.keep(
                 shown.dueToday,
-                soon.map {
-                    it.toRow(day, pending[it.task.localId], importance)
-                },
+                PendingAdds.merge(
+                    soon.map { it.toRow(day, pending[it.task.localId], importance) },
+                    addedSoon,
+                    ::dueFirst
+                ),
                 ticked
             ),
             tomorrow = TickLinger.keep(
                 shown.tomorrow,
-                later.map {
-                    it.toRow(day, pending[it.task.localId], importance)
-                },
+                PendingAdds.merge(
+                    later.map { it.toRow(day, pending[it.task.localId], importance) },
+                    addedLater,
+                    ::dueFirst
+                ),
                 ticked
             ),
             lists = lists.map(ListSummary::toUi),
@@ -109,7 +125,8 @@ class HomeViewModel @Inject constructor(
                 ticked
             ),
             serviceName = serviceName(account?.provider),
-            importance = importance
+            importance = importance,
+            added = added.added
         ).also { shown = it }
     }
         .flowOn(Dispatchers.Default)
@@ -123,12 +140,37 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Adds from the "add a task" box: due today in the default list unless details say otherwise. */
+    /**
+     * Adds from the "add a task" box: due today in the default list unless details say otherwise.
+     * The row shows at once, before the write, and the stored row replaces it under the same id.
+     */
     fun addTask(title: String, details: String? = null, due: LocalDate? = state.value.today, listId: String? = null) {
         if (title.isBlank()) return
+        val id = UUID.randomUUID().toString()
+        val today = state.value.today
+        val list = knownLists.firstOrNull { if (listId != null) it.localId == listId else it.isDefault }
+        // Only today and tomorrow are on this page; a later task just goes to its list.
+        val shownHere = due != null && today != LocalDate.MIN && !due.isAfter(today.plusDays(1))
+        val row = if (list != null && due != null && shownHere) {
+            TaskRowUi(
+                id = id,
+                listId = list.localId,
+                title = title.trim(),
+                details = details?.trimEnd()?.takeIf { it.isNotBlank() },
+                caption = DueText.caption(list.title, due, today, completed = false),
+                overdue = due.isBefore(today),
+                completed = false,
+                due = due
+            )
+        } else {
+            null
+        }
+        adds.add(id, row)
         viewModelScope.launch {
-            val list = listId ?: tasks.defaultListIdOrCreate()
-            tasks.createTask(list, title, notes = details, dueDate = due)
+            runCatching {
+                val list = listId ?: tasks.defaultListIdOrCreate()
+                tasks.createTask(list, title, notes = details, dueDate = due, id = id)
+            }.onFailure { adds.clear(id) }
         }
     }
 
@@ -145,6 +187,7 @@ class HomeViewModel @Inject constructor(
     override fun onCleared() = heldLists.releaseAll()
 
     fun deleteTask(id: String) {
+        adds.clear(id)
         viewModelScope.launch { tasks.deleteTask(id) }
     }
 
@@ -164,5 +207,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { tasks.deleteList(id) }
     }
 }
+
+/** Today's order: by due date, a new task above the others due the same day (its order key is the top). */
+private fun dueFirst(added: TaskRowUi, row: TaskRowUi): Boolean =
+    row.due == null || added.due == null || !row.due.isBefore(added.due)
 
 internal fun ListSummary.toUi() = ListRowUi(id = localId, title = title, openCount = openCount, next = nextTaskTitle)

@@ -205,6 +205,7 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
             }
             settle(op, sent = task, now = now, sentFields = SyncStore.ALL_TASK_FIELDS + Fields.LIST)
         }
+        store.confirmedCreate(remote.id)
         store.journal.clear(task.localId)
     }
 

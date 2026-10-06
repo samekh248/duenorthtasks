@@ -250,8 +250,8 @@ private fun TodaySection(
 ) {
     val list = rememberLazyListState()
     val hold = rememberTouchHold(list, viewModel::holdSync)
-    val dueToday = hold.frozen(state.dueToday)
-    val tomorrow = hold.frozen(state.tomorrow)
+    val dueToday = hold.frozen(state.dueToday, state.added)
+    val tomorrow = hold.frozen(state.tomorrow, state.added)
     LazyColumn(
         Modifier.fillMaxSize().touchHold(hold).testTag("today"),
         state = list,

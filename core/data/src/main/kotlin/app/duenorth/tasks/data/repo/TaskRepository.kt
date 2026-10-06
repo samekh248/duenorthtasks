@@ -131,10 +131,16 @@ class TaskRepository(
 
     // Tasks
 
-    suspend fun createTask(listId: String, title: String, notes: String? = null, dueDate: LocalDate? = null): String {
+    /** [id] lets the screen show the task under its final id before this write commits. */
+    suspend fun createTask(
+        listId: String,
+        title: String,
+        notes: String? = null,
+        dueDate: LocalDate? = null,
+        id: String = newId()
+    ): String {
         val cleanTitle = Validation.taskTitle(title)
         val cleanNotes = Validation.notes(notes)
-        val id = newId()
         write {
             requireList(listId)
             tasks.insert(

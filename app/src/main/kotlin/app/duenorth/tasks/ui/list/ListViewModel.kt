@@ -13,6 +13,7 @@ import app.duenorth.tasks.settings.ListOrder
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
 import app.duenorth.tasks.ui.common.HeldLists
+import app.duenorth.tasks.ui.common.PendingAdds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.serviceName
@@ -22,6 +23,7 @@ import app.duenorth.tasks.ui.home.ListRowUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,7 +61,9 @@ data class ListUiState(
     /** The row to bring into view when reorder mode opens from its long-press menu. */
     val reorderFrom: String? = null,
     /** The one-time "order stays on this phone" note (FR-231), for services that don't store order. */
-    val orderNote: Boolean = false
+    val orderNote: Boolean = false,
+    /** Tasks added on this page, which a touch hold lets in at once. */
+    val added: Set<String> = emptySet()
 )
 
 private data class ListPrefs(
@@ -85,6 +89,7 @@ class ListViewModel @Inject constructor(
     val listId: String = checkNotNull(savedState["id"]) { "list route needs an id" }
 
     private val overrides = CompletionOverrides()
+    private val adds = PendingAdds()
     private val heldLists = HeldLists(holds)
     private val prefs = MutableStateFlow(ListPrefs())
     private var pinned = false
@@ -105,17 +110,29 @@ class ListViewModel @Inject constructor(
             combine(features.storesOrder, listOrder.noteShown, ::OrderFeatures)
         ) { account, importance, order -> Triple(account, importance, order) },
         prefs,
-        overrides.overrides
-    ) { content, lists, (account, importance, order), prefs, pending ->
+        combine(overrides.overrides, adds.pending, ::Pair)
+    ) { content, lists, (account, importance, order), prefs, (pending, added) ->
         overrides.settle((content.open + content.done).associate { it.task.localId to it.task.completed })
         val all = content.open + content.done
+        adds.settle(all.mapTo(HashSet()) { it.task.localId })
         val rows = all.map { it.toRow(content.today, pending[it.task.localId], importance) }
         val (done, open) = rows.partition { it.completed }
+        val title = content.title.orEmpty()
         ListUiState(
             loading = false,
             exists = content.title != null,
-            title = content.title.orEmpty(),
-            open = sorted(open, all, prefs.sort),
+            title = title,
+            open = PendingAdds.merge(
+                sorted(open, all, prefs.sort),
+                // The list's name may have changed since the add; the caption follows it.
+                added.rows.map { it.copy(caption = title) }
+            ) { new, row ->
+                when (prefs.sort) {
+                    ListSort.MY_ORDER -> true // a new task's order key is the list's top
+                    ListSort.DUE -> row.due == null
+                    ListSort.TITLE -> row.title.lowercase() > new.title.lowercase()
+                }
+            },
             completed = done,
             completedExpanded = prefs.completedExpanded,
             sort = prefs.sort,
@@ -125,7 +142,8 @@ class ListViewModel @Inject constructor(
             importance = importance,
             reordering = prefs.reordering,
             reorderFrom = prefs.reorderFrom,
-            orderNote = prefs.reordering && !order.storesOrder && !order.noteShown
+            orderNote = prefs.reordering && !order.storesOrder && !order.noteShown,
+            added = added.added
         )
     }
         .flowOn(Dispatchers.Default)
@@ -168,9 +186,23 @@ class ListViewModel @Inject constructor(
         }
     }
 
+    /** Shows the task at once, before the write; the stored row replaces it under the same id. */
     fun addTask(title: String) {
         if (title.isBlank()) return
-        viewModelScope.launch { runCatching { tasks.createTask(listId, title) } }
+        val id = UUID.randomUUID().toString()
+        val row = TaskRowUi(
+            id = id,
+            listId = listId,
+            title = title.trim(),
+            details = null,
+            caption = state.value.title,
+            overdue = false,
+            completed = false
+        )
+        adds.add(id, row)
+        viewModelScope.launch {
+            runCatching { tasks.createTask(listId, title, id = id) }.onFailure { adds.clear(id) }
+        }
     }
 
     fun setImportant(id: String, important: Boolean) {
@@ -186,6 +218,7 @@ class ListViewModel @Inject constructor(
     }
 
     fun deleteTask(id: String) {
+        adds.clear(id)
         viewModelScope.launch { runCatching { tasks.deleteTask(id) } }
     }
 

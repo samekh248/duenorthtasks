@@ -13,7 +13,9 @@ import app.duenorth.tasks.data.db.TaskEntity
 import app.duenorth.tasks.data.db.TaskListEntity
 import app.duenorth.tasks.provider.api.RemoteTask
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -35,6 +37,22 @@ internal class SyncStore(
     private val log = db.syncLogDao()
 
     fun now(): Instant = clock.instant()
+
+    /** Remote ids of tasks this phone created, by when the service confirmed them; memory only. */
+    private val created = ConcurrentHashMap<String, Instant>()
+
+    fun confirmedCreate(remoteId: String) {
+        val now = now()
+        created.entries.removeIf { it.value.isBefore(now.minus(LISTING_LAG)) }
+        created[remoteId] = now
+    }
+
+    /**
+     * True when this phone created [remoteId] so recently that a listing made at [at] may not
+     * show it yet. Services' listings lag their writes, so a full fetch missing it proves nothing.
+     */
+    fun createdJustBefore(remoteId: String, at: Instant): Boolean =
+        created[remoteId]?.let { !it.isBefore(at.minus(LISTING_LAG)) } == true
 
     suspend fun <T> transaction(block: suspend () -> T): T = db.withTransaction { block() }
 
@@ -163,6 +181,9 @@ internal class SyncStore(
 
     companion object {
         const val RECOVERED_LIST = "Recovered"
+
+        /** How far behind a write a service's listing may still be; generous, since a miss is costly. */
+        val LISTING_LAG: Duration = Duration.ofMinutes(2)
         private const val MAX_SQL_ARGS = 900
 
         /** The fields a full "send everything" update covers. */

@@ -91,6 +91,28 @@ class SyncEngineTest : SyncTestBase() {
         assertEquals(listOf("Keep"), tasks("Errands").map { it.title })
     }
 
+    @Test
+    fun aTaskJustAddedHereSurvivesAFullFetchThatCannotSeeItYet() {
+        io { remote.seed("Errands", listOf(TaskDraft("Keep"))) }
+        sync()
+        io { repo.createTask(list("Errands").localId, "Just added") }
+        sync()
+        val created = checkNotNull(task("Just added").remoteId)
+
+        // The service's listing lags the create, and this sync has to fetch the list in full.
+        remote.lagFullListing(created)
+        io { db.taskListDao().update(list("Errands").copy(tasksCursor = "garbled")) }
+        assertEquals(SyncResult.Success, sync())
+
+        assertEquals(listOf("Just added", "Keep"), tasks("Errands").map { it.title }.sorted())
+        assertEquals(created, task("Just added").remoteId)
+
+        // Once the listing catches up nothing doubles.
+        remote.catchUp()
+        sync()
+        assertEquals(listOf("Just added", "Keep"), tasks("Errands").map { it.title }.sorted())
+    }
+
     // Pushing
 
     @Test
