@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,6 +49,8 @@ import app.duenorth.tasks.design.components.MetroProgressDots
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.PanoramaSection
+import app.duenorth.tasks.design.components.PanoramaState
+import app.duenorth.tasks.design.components.rememberPanoramaState
 import app.duenorth.tasks.design.motion.ContinuumState
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.motion.rememberContinuumState
@@ -98,7 +98,7 @@ fun HomeScreen(actions: HomeActions, syncing: Boolean, viewModel: HomeViewModel 
 /** The Light Panorama home (FR-002): "tasks" (with "due north" under it) over today, lists and done. */
 @Composable
 fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActions, syncing: Boolean = false) {
-    val pager = rememberPagerState { 3 }
+    val pager = rememberPanoramaState(3)
     val scope = rememberCoroutineScope()
     val addFocus = remember { FocusRequester() }
     val continuum = rememberContinuumState()
@@ -227,16 +227,16 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
  * button, recomposes only the app bar and never the panorama under the finger.
  */
 @Composable
-private fun HomeAppBar(pager: PagerState, actions: HomeActions, onNewTask: () -> Unit, onNewList: () -> Unit) {
+private fun HomeAppBar(pager: PanoramaState, actions: HomeActions, onNewTask: () -> Unit, onNewList: () -> Unit) {
     val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
     val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", onClick = it) }
     val menu = listOfNotNull(
-        AppBarMenuItem("reorder lists") { actions.reorderLists(null) }.takeIf { pager.currentPage == LISTS },
+        AppBarMenuItem("reorder lists") { actions.reorderLists(null) }.takeIf { pager.currentSection == LISTS },
         AppBarMenuItem("settings", actions.openSettings),
         AppBarMenuItem("sync account", actions.openSyncAccount),
         AppBarMenuItem("sync log", actions.openSyncLog)
     ) + actions.menuItems
-    val first = when (pager.currentPage) {
+    val first = when (pager.currentSection) {
         TODAY -> AppBarButton(MetroIcon.Add, "new task", onClick = onNewTask)
         LISTS -> AppBarButton(MetroIcon.Add, "new list", onClick = onNewList)
         else -> null
@@ -255,8 +255,8 @@ private fun TodaySection(
 ) {
     val list = rememberLazyListState()
     val hold = rememberTouchHold(list, viewModel::holdSync)
-    val dueToday = hold.frozen(state.dueToday)
-    val tomorrow = hold.frozen(state.tomorrow)
+    val dueToday = hold.frozen(state.dueToday, state.added)
+    val tomorrow = hold.frozen(state.tomorrow, state.added)
     LazyColumn(
         Modifier.fillMaxSize().touchHold(hold).testTag("today"),
         state = list,

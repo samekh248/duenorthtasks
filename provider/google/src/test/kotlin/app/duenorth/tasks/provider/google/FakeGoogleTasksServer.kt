@@ -43,6 +43,7 @@ class FakeGoogleTasksServer(
     private val lists = linkedMapOf<String, ListRow>()
     private val tasks = linkedMapOf<String, TaskRow>()
     private val failures = ArrayDeque<MockResponse>()
+    private val lagging = mutableSetOf<String>()
 
     /** Every request received, in order. */
     val requests = CopyOnWriteArrayList<RecordedRequest>()
@@ -123,6 +124,14 @@ class FakeGoogleTasksServer(
         task.deleted = true
         task.updated = now
     }
+
+    /**
+     * Leaves [taskId] out of full listings (no `updatedMin`) until [catchUp], the way Google's
+     * listings lag a moment behind a write while "changed since" reads already have it.
+     */
+    fun lagFullListing(taskId: String) = synchronized(this) { lagging += taskId }
+
+    fun catchUp() = synchronized(this) { lagging.clear() }
 
     fun liveTasks(listId: String): List<String> = synchronized(this) {
         tasks.values.filter { it.listId == listId && !it.deleted }.map { it.title }
@@ -206,6 +215,7 @@ class FakeGoogleTasksServer(
             .filter { showCompleted || it.status != GoogleStatus.COMPLETED }
             .filter { showAssigned || it.assignment == null }
             .filter { updatedMin == null || !it.updated.isBefore(updatedMin) }
+            .filter { updatedMin != null || it.id !in lagging }
             .sortedWith(compareBy({ it.parent ?: it.id }, { it.parent != null }, { it.order }))
         val page = matching.drop(offset).take(max)
         return ok(

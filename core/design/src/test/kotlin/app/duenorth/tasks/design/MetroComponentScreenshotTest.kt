@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.components.AppBarButton
@@ -34,6 +35,7 @@ import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.components.MetroToggle
 import app.duenorth.tasks.design.components.PanoramaSection
+import app.duenorth.tasks.design.components.PanoramaState
 import app.duenorth.tasks.design.theme.Accent
 import app.duenorth.tasks.design.theme.MetroTheme
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -230,6 +232,34 @@ class MetroComponentScreenshotTest {
                             caption = "Errands · today",
                             leading = { MetroCheckBox(checked = false, onCheckedChange = {}) }
                         )
+                    }
+                }
+            },
+            modifier = Modifier.height(480.dp)
+        )
+    }
+
+    /** Resting on the last section, the first one peeks in after it. */
+    @Test
+    fun panoramaLast() = snap("panorama_last", padded = false) { PanoramaAt(2f) }
+
+    /** Halfway across the seam from the last section to the first, the title's copy sliding in. */
+    @Test
+    fun panoramaSeam() = snap("panorama_seam", padded = false) { PanoramaAt(2.5f) }
+
+    @Composable
+    private fun PanoramaAt(position: Float) {
+        val state = remember { PanoramaState(3).also { it.position = position } }
+        MetroPanorama(
+            title = "tasks",
+            subtitle = "due north",
+            state = state,
+            sections = listOf("today", "lists", "done").map { header ->
+                PanoramaSection(header) {
+                    Column {
+                        MetroListItem(title = "$header task", caption = "Errands", leading = {
+                            MetroCheckBox(checked = false, onCheckedChange = {})
+                        })
                     }
                 }
             },

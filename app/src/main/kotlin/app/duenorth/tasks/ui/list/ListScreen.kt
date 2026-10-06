@@ -162,7 +162,7 @@ private fun ListPage(
     var moving by remember { mutableStateOf<TaskRowUi?>(null) }
     val listState = rememberLazyListState()
     val hold = rememberTouchHold(listState, viewModel::holdSync)
-    val open = hold.frozen(state.open)
+    val open = hold.frozen(state.open, state.added)
     val completed = hold.frozen(state.completed)
 
     val openTask: (String) -> Unit = { id ->

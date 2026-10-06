@@ -262,6 +262,7 @@ internal class Puller(
         val listRemoteId = checkNotNull(list.remoteId)
         var cursor = list.tasksCursor
         var full = cursor == null
+        val startedAt = store.now()
         val seen = mutableSetOf<String>()
         val mayAdopt = mayAdopt(list)
         while (true) {
@@ -288,8 +289,11 @@ internal class Puller(
         }
         store.transaction {
             if (full) {
-                // A full fetch has no deletion list: whatever it did not return is gone.
-                val missing = store.sync.tasksInList(list.localId).mapNotNull { it.remoteId }.filter { it !in seen }
+                // A full fetch has no deletion list: whatever it did not return is gone, except a
+                // task this phone created moments ago, which the listing may not show yet. A real
+                // delete of it still arrives with the next sync's changes.
+                val missing = store.sync.tasksInList(list.localId).mapNotNull { it.remoteId }
+                    .filter { it !in seen && !store.createdJustBefore(it, startedAt) }
                 missing.forEach { applyRemoteDelete(list, it) }
             }
             store.lists.get(list.localId)?.let { store.lists.update(it.copy(tasksCursor = cursor)) }
