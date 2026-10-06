@@ -14,18 +14,17 @@ Use the Metro UI guidelines"
 Today the app shows tasks in the service's order (Google) or newest-edited first (Microsoft),
 lists by name, and steps in the order they were added. Nothing can be moved by hand. This feature
 adds a Metro **reorder mode** to the three places order matters (a list's tasks, a task's steps,
-and the lists themselves), plus "move up / move down / move to top" in the long-press menu for
-quick single moves and for TalkBack users.
+and the lists themselves). The mode is entered from the app bar or from a single "reorder" entry
+in the long-press menu; there are no separate move up / move down entries (Dustin, 2026-10-06).
 
 ![Mockups: long-press menu, dragging tasks, dragging steps, the reorder lists page and the
 Microsoft one-time note, in light and dark](mockups/reordering-mockups.png)
 
 ```mermaid
 flowchart LR
-    LP["long-press a row"] --> CM["context menu<br/>reorder · move up · move down · move to top"]
+    LP["long-press a row"] --> CM["context menu<br/>reorder · move to list... · delete"]
     AB["app bar: reorder button<br/>(list page) or ••• menu<br/>(task page, lists section)"] --> RM
     CM -->|reorder| RM["reorder mode<br/>grippers ≡ · others dim · app bar: ✓ done"]
-    CM -->|move up / down / top| SAVE
     RM -->|drag and drop| SAVE["saved to the phone at once<br/>(Room, no waiting)"]
     SAVE --> PUSH{"service can store order?"}
     PUSH -->|Google: tasks and steps| G["queued MOVE, sent by sync<br/>shows in Google Tasks too"]
@@ -56,7 +55,7 @@ views with reorder mode turned on. This spec copies it rather than inventing an 
 | In the mode, the item you hold **pops forward** (a little larger) and everything else **recedes** (dimmed). Neighbors **slide** to open a gap where it will land. | Held row scales to 105% at full opacity with a 4dp flat accent bar on its left edge; other rows drop to 45% opacity; neighbors slide (150 ms, Metro ease-out) to open a dashed accent slot. No shadow and no elevation: Principle I. |
 | The app bar collapses to a single **accept (✓) "done"** button; the hardware/gesture **back** also leaves the mode. | Same. Leaving by "done" or back keeps the new order. There is no cancel: every drop is already saved, like the Start screen. |
 | Content stays text-first; controls that don't apply in the mode go away. | Checkboxes are shown but not tappable, the "add a task" box and two-line details previews hide so more rows fit, and each row gets a three-bar gripper (≡) on its right edge. |
-| Lowercase labels, 48dp targets, 12dp gutter. | "reorder", "move up", "move down", "move to top", "move to bottom". The gripper's touch target is the full row height and at least 48dp wide. |
+| Lowercase labels, 48dp targets, 12dp gutter. | "reorder", "reorder steps", "reorder lists". The gripper's touch target is the full row height and at least 48dp wide. |
 
 The gripper is the one addition WP8.1 didn't have: Android users look for it, and it gives the
 drag a visible handle for people who don't know the mode exists. A drag can start anywhere on a
@@ -100,28 +99,29 @@ queued, and after a sync the fake's `tasks.move` was called with `previous` = th
 
 ---
 
-### User Story 2 - Quick moves from the long-press menu (Priority: P1)
+### User Story 2 - Start reordering from the long-press menu (Priority: P1)
 
-Dustin long-presses "Get stamps". The Metro context menu now starts with **reorder** (enters the
-mode with that row already picked up), then **move up**, **move down**, **move to top**, and the
-existing **move to list...** and **delete**. He taps move to top and the row slides to the top.
+Dustin long-presses "Get stamps". The Metro context menu now starts with **reorder**, above the
+existing **move to list...** and **delete**. Tapping it enters reorder mode with "Get stamps"
+already picked up under his finger, so he can drag it straight away. There are no separate
+"move up", "move down" or "move to top" entries: reorder mode is the one way to change order.
 
-**Why this priority**: Moving one task to the top is the most common reorder and should take two
-taps. These entries are also how TalkBack and switch-access users reorder, since dragging isn't
-practical for them.
+**Why this priority**: Long-press is where Metro users look for actions on one item, and starting
+the drag from the row he's already touching saves finding the app bar button.
 
-**Independent Test**: Long-press the third of 5 tasks, tap "move to top"; it becomes first, one
-`MOVE` is queued. With TalkBack on, the same row exposes "move up", "move down", "move to top"
-and "move to bottom" as custom accessibility actions.
+**Independent Test**: Long-press the third of 5 tasks, tap "reorder": the page is in reorder mode
+with that task lifted; drag it to first and release; one `MOVE` is queued.
 
 **Acceptance Scenarios**:
 
-1. **Given** the first task, **When** its menu opens, **Then** "move up" and "move to top" are
-   hidden (not greyed). Same for "move down" on the last.
-2. **Given** a list not in "my order", **When** a move entry is tapped, **Then** the sort switches
-   to "my order" first, so the move is visible.
-3. **Given** TalkBack, **When** a move action runs, **Then** TalkBack announces the new place
-   ("Get stamps, moved to position 1 of 5").
+1. **Given** any task, step or list row, **When** its context menu opens, **Then** the first entry
+   is "reorder" and no other ordering entries are shown.
+2. **Given** a list not in "my order", **When** "reorder" is tapped, **Then** the sort switches to
+   "my order" first (FR-207).
+3. **Given** TalkBack is on, **When** a row in reorder mode has focus, **Then** TalkBack offers
+   "move up" and "move down" as accessibility actions (FR-211) and announces the new place after
+   each ("Get stamps, position 2 of 5"). These are not visible on screen; they exist because
+   TalkBack users can't drag.
 
 ---
 
@@ -262,10 +262,12 @@ step pages.
 
 **Context menu and accessibility**
 
-- **FR-210**: The task, step and list context menus MUST add "reorder", "move up", "move down"
-  and "move to top" (lists also "move to bottom"), hiding entries that don't apply at an end.
-- **FR-211**: Every reorderable row MUST expose "move up", "move down", "move to top" and "move to
-  bottom" as accessibility custom actions, and announce the new position after a move.
+- **FR-210**: The task, step and list context menus MUST add one entry, "reorder", as their first
+  item. It enters reorder mode with that row picked up. The menus MUST NOT add other ordering
+  entries (no move up, move down or move to top).
+- **FR-211**: In reorder mode only, every row MUST expose "move up" and "move down" as
+  accessibility custom actions (read by TalkBack and switch access, never drawn on screen), and
+  announce the new position after a move.
 
 **Saving and syncing**
 
@@ -329,7 +331,8 @@ See [data-model.md](data-model.md).
 
 ### Measurable Outcomes
 
-- **SC-201**: Moving a task to the top takes 2 taps (long-press, move to top) from the list page.
+- **SC-201**: From the list page, a task is picked up and ready to drag in 2 steps (long-press,
+  "reorder").
 - **SC-202**: In Google mode, a task or step moved on the phone appears in the same place in
   Google Tasks within one sync, in 100% of scripted runs against the fake Google server, including
   runs that go offline and back.

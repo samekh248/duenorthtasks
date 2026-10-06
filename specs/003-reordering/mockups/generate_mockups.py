@@ -214,7 +214,7 @@ def steps_reorder(i, c, label):
 
 
 def context_menu(i, c, label):
-    """Long-press a task: the Metro context menu gains reorder entries (also the TalkBack path)."""
+    """Long-press a task: the Metro context menu gains one entry, "reorder"."""
     ox = phone(i, c)
     text(20, 48, "DUE NORTH", 13, 600, c["fg"], 'letter-spacing="0.8"')
     text(16, 110, "errands", 56, 300, c["fg"])
@@ -233,8 +233,8 @@ def context_menu(i, c, label):
         y += 66
     # WP8.1 context menu: full-width flat panel below the pressed row, lowercase items.
     my = 196 + 3 * 66 - 8
-    rect(0, my, W, 6 * 50 + 16, c["menu"], c["menu_edge"], 2)
-    for k, item in enumerate(["reorder", "move up", "move down", "move to top", "move to list...", "delete"]):
+    rect(0, my, W, 3 * 50 + 16, c["menu"], c["menu_edge"], 2)
+    for k, item in enumerate(["reorder", "move to list...", "delete"]):
         text(24, my + 42 + k * 50, item, 22, 300, c["fg"])
     appbar(c, ["add", "sort", "reorder"])
     end_phone(ox, label)
@@ -268,7 +268,7 @@ def microsoft_note(i, c, label):
 
 for row, (c, mode) in enumerate([(LIGHT, "light"), (DARK, "dark")]):
     ROW = row * (H + 80)
-    context_menu(0, c, f"long-press: reorder entries ({mode})")
+    context_menu(0, c, f"long-press: reorder entry ({mode})")
     tasks_reorder(1, c, f"tasks: dragging in reorder mode ({mode})")
     steps_reorder(2, c, f"steps: dragging in reorder mode ({mode})")
     lists_reorder(3, c, f"reorder lists page ({mode})")

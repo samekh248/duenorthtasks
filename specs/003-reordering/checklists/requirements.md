@@ -23,7 +23,7 @@
 
 ## Constitution
 
-- [x] I. Metro: reorder mode follows WP8.1 reorder/rearrange; mocked up in light and dark; no shadows or elevation
+- [x] I. Metro: reorder mode follows WP8.1 reorder/rearrange, entered from the app bar or one "reorder" menu entry; mocked up in light and dark; no shadows or elevation
 - [x] II. Fast and Fluid: moves save locally at once; sync held during reorder mode; drag benchmark added
 - [x] III. One provider: behavior defined per provider behind `TaskProvider` and `manualOrder`
 - [x] IV. Offline first: order lives in Room/DataStore; pending local move wins and is logged
