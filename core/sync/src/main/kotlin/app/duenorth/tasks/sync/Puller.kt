@@ -31,25 +31,25 @@ import kotlinx.coroutines.sync.withPermit
  * user is touching that list ([ListHolds]), so the screen never jumps under a finger (FR-008).
  *
  * Lists never fetched before get their open tasks first, all lists at once, when the provider can
- * filter them ([TaskProvider.getOpenTasks]). Lists that have a cursor are brought up to date next,
- * and then [beforeBackfill] runs (the engine stops the dots and sends local changes). Only then
- * does the full fetch that brings in completed tasks and the change cursor carry on, so an account
- * with years of finished tasks is usable in seconds, and a slow or failing backfill never holds
- * back what was changed on the phone.
+ * filter them ([TaskProvider.getOpenTasks]). Lists that have a cursor are brought up to date next.
+ * The full fetch that brings in completed tasks and the change cursor is not done here: [pullAll]
+ * hands those lists back and the engine runs [backfill] as its own job, so an account with years
+ * of finished tasks is usable in seconds, and a slow or failing backfill never holds back a sync
+ * of what was changed on the phone.
  */
 internal class Puller(
     private val store: SyncStore,
     private val provider: TaskProvider,
     private val holds: ListHolds,
-    private val stillConnected: suspend () -> Boolean,
-    private val beforeBackfill: suspend () -> Unit = {}
+    private val stillConnected: suspend () -> Boolean
 ) {
     private val canStoreImportance = provider.capabilities.importance
 
     /** Google keeps order and sends it; To Do doesn't, so the phone's order keys are the only ones. */
     private val storesOrder = provider.capabilities.manualOrder
 
-    suspend fun pullAll() {
+    /** Pulls everything except the history of lists whose open tasks just came in; returns those lists. */
+    suspend fun pullAll(): List<TaskListEntity> {
         reconcileLists(provider.getLists())
         val lists = store.sync.allLists()
             .filter { !it.deletedLocally && it.remoteId != null }
@@ -64,10 +64,11 @@ internal class Puller(
         // With open tasks in hand, a fresh list's full history can wait; without them it cannot.
         val backfill = if (loadedOpen.any { it }) fresh else emptyList()
         pullLists(known + (fresh - backfill.toSet()), gate)
-        if (backfill.isEmpty()) return
-        if (stillConnected()) beforeBackfill()
-        pullLists(backfill, gate)
+        return backfill
     }
+
+    /** The full fetch of [lists], which brings in their completed tasks and their change cursor. */
+    suspend fun backfill(lists: List<TaskListEntity>) = pullLists(lists, Semaphore(PARALLEL_LISTS))
 
     private suspend fun pullLists(lists: List<TaskListEntity>, gate: Semaphore) = coroutineScope {
         lists.map { list -> async { gate.withPermit { if (stillConnected()) pullList(list) } } }.awaitAll()

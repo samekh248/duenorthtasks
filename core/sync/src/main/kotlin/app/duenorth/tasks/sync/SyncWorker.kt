@@ -2,6 +2,7 @@ package app.duenorth.tasks.sync
 
 import android.content.Context
 import androidx.work.CoroutineWorker
+import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -14,15 +15,30 @@ import dagger.hilt.components.SingletonComponent
  */
 class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        val engine = EntryPointAccessors.fromApplication(applicationContext, SyncEntryPoint::class.java).syncEngine()
-        return when (val result = engine.sync()) {
-            SyncResult.Success, SyncResult.NoAccount, SyncResult.NeedsSignIn -> Result.success()
-            is SyncResult.Retry -> if (runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure()
-        }
+        val entry = EntryPointAccessors.fromApplication(applicationContext, SyncEntryPoint::class.java)
+        val engine = entry.syncEngine()
+        val result = engine.sync()
+        if (engine.backfillPending) entry.syncScheduler().backfillSoon()
+        return result.toWorkResult(runAttemptCount)
     }
+}
 
-    private companion object {
-        const val MAX_RETRIES = 8
+/** Runs [SyncEngine.backfill], the history load a first sync leaves behind, as its own job. */
+class BackfillWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val engine = EntryPointAccessors.fromApplication(applicationContext, SyncEntryPoint::class.java).syncEngine()
+        return engine.backfill().toWorkResult(runAttemptCount)
+    }
+}
+
+private const val MAX_RETRIES = 8
+
+private fun SyncResult.toWorkResult(runAttemptCount: Int): ListenableWorker.Result = when (this) {
+    SyncResult.Success, SyncResult.NoAccount, SyncResult.NeedsSignIn -> ListenableWorker.Result.success()
+    is SyncResult.Retry -> if (runAttemptCount < MAX_RETRIES) {
+        ListenableWorker.Result.retry()
+    } else {
+        ListenableWorker.Result.failure()
     }
 }
 
@@ -30,4 +46,6 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 @InstallIn(SingletonComponent::class)
 interface SyncEntryPoint {
     fun syncEngine(): SyncEngine
+
+    fun syncScheduler(): SyncScheduler
 }
