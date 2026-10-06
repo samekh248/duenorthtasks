@@ -84,6 +84,8 @@ class HomeActions(
     /** The list's sharing page (spec 002): who owns it and what can be done where. */
     val openListInfo: (String) -> Unit = {},
     val openSyncLog: () -> Unit = {},
+    /** The reorder lists page, with the long-pressed list (or none) in view. */
+    val reorderLists: (String?) -> Unit = {},
     val menuItems: List<AppBarMenuItem> = emptyList()
 )
 
@@ -154,7 +156,8 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
                             onRename = { renaming = it },
                             onShade = { actions.openListShade(it.id) },
                             onInfo = { actions.openListInfo(it.id) },
-                            onDelete = { deleting = it }
+                            onDelete = { deleting = it },
+                            onReorder = { actions.reorderLists(it.id) }
                         )
                     },
                     PanoramaSection("done") {
@@ -227,7 +230,8 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
 private fun HomeAppBar(pager: PagerState, actions: HomeActions, onNewTask: () -> Unit, onNewList: () -> Unit) {
     val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
     val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", onClick = it) }
-    val menu = listOf(
+    val menu = listOfNotNull(
+        AppBarMenuItem("reorder lists") { actions.reorderLists(null) }.takeIf { pager.currentPage == LISTS },
         AppBarMenuItem("settings", actions.openSettings),
         AppBarMenuItem("sync account", actions.openSyncAccount),
         AppBarMenuItem("sync log", actions.openSyncLog)
@@ -318,7 +322,8 @@ private fun ListsSection(
     onRename: (ListRowUi) -> Unit,
     onShade: (ListRowUi) -> Unit,
     onInfo: (ListRowUi) -> Unit,
-    onDelete: (ListRowUi) -> Unit
+    onDelete: (ListRowUi) -> Unit,
+    onReorder: (ListRowUi) -> Unit
 ) {
     LazyColumn(
         Modifier.fillMaxSize().testTag("lists"),
@@ -336,7 +341,8 @@ private fun ListsSection(
                 onRename = { onRename(list) },
                 onShade = { onShade(list) },
                 onInfo = { onInfo(list) },
-                onDelete = { onDelete(list) }
+                onDelete = { onDelete(list) },
+                onReorder = { onReorder(list) }.takeIf { state.lists.size > 1 }
             )
         }
         item(key = "new", contentType = "new") {
@@ -363,7 +369,8 @@ private fun ListRow(
     onRename: () -> Unit,
     onShade: () -> Unit,
     onInfo: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onReorder: (() -> Unit)?
 ) {
     var menu by remember { mutableStateOf(false) }
     Box {
@@ -412,6 +419,7 @@ private fun ListRow(
             onDismiss = { menu = false },
             // Only the owner can rename or delete a shared list; "list info" says so (spec 002 FR-120).
             items = listOfNotNull(
+                onReorder?.let { ContextMenuItem("reorder", it) },
                 ContextMenuItem("rename", onRename).takeIf { list.sharing.canManage },
                 ContextMenuItem("list shade", onShade),
                 ContextMenuItem("list info", onInfo),

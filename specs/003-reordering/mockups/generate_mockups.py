@@ -204,11 +204,6 @@ def steps_reorder(i, c, label):
     text(62, yy + 38, "Ask about the booster", 18, 400, c["fg"])
     gripper(W - 46, yy + 24, c["fg"])
     out.append("</g>")
-    out.append(f'<g opacity="{DIM}">')
-    text(20, y + 30, "due date", 14, 400, c["sub"])
-    rect(21, y + 44, 120, 40, "none", c["sub"])
-    text(34, y + 70, "tomorrow", 16, 400, c["fg"])
-    out.append("</g>")
     appbar(c, ["check"], ["done"])
     end_phone(ox, label)
 

@@ -41,6 +41,7 @@ internal data class TodoTaskDto(
     /** notStarted, inProgress, completed, waitingOnOthers or deferred. */
     val status: String? = null,
     val lastModifiedDateTime: String? = null,
+    val createdDateTime: String? = null,
     val completedDateTime: DateTimeTimeZoneDto? = null,
     val dueDateTime: DateTimeTimeZoneDto? = null,
     /** Null when the response did not expand them (as opposed to an empty list). */

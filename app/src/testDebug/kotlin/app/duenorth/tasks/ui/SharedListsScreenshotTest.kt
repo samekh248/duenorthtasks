@@ -26,6 +26,7 @@ import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderCapabilities
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
+import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.detail.TaskDetailContent
@@ -154,7 +155,7 @@ class SharedListsScreenshotTest {
     }
 
     private fun homeLists(dark: Boolean, name: String? = "home_lists_shared") {
-        val viewModel = HomeViewModel(tasks, accounts, features, ListHolds(), clock)
+        val viewModel = HomeViewModel(tasks, accounts, features, ListHolds(), testListOrder(tasks, accounts), clock)
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
         show(dark) {
             val state by viewModel.state.collectAsState()
@@ -168,8 +169,15 @@ class SharedListsScreenshotTest {
     }
 
     private fun list(title: String, dark: Boolean) {
-        val viewModel =
-            ListViewModel(SavedStateHandle(mapOf("id" to listId(title))), tasks, accounts, features, ListHolds(), clock)
+        val viewModel = ListViewModel(
+            SavedStateHandle(mapOf("id" to listId(title))),
+            tasks,
+            accounts,
+            features,
+            ListHolds(),
+            testListOrder(tasks, accounts),
+            clock
+        )
         show(dark) {
             val state by viewModel.state.collectAsState()
             ListContent(state, viewModel, onOpenTask = {})
@@ -201,7 +209,15 @@ class SharedListsScreenshotTest {
                 )
             )
         }
-        val viewModel = TaskDetailViewModel(SavedStateHandle(mapOf("id" to task.localId)), tasks, features, clock)
+        val viewModel = TaskDetailViewModel(
+            SavedStateHandle(mapOf("id" to task.localId)),
+            tasks,
+            features,
+            ListHolds(),
+            testListOrder(tasks, accounts),
+            accounts,
+            clock
+        )
         show(dark) {
             val state by viewModel.state.collectAsState()
             TaskDetailContent(state, viewModel, animatedScope = null)

@@ -193,6 +193,9 @@ class GoogleTasksProvider internal constructor(
                     }
                     if (body.isNotEmpty()) call(patch.id) { api.patchTask(listId, patch.id, body) }
                 }
+                is StepPatch.Move -> {
+                    call(patch.id) { api.moveTask(listId, patch.id, parent = parentId, previous = patch.afterId) }
+                }
                 is StepPatch.Remove -> {
                     // Already gone is as good as removed.
                     try {

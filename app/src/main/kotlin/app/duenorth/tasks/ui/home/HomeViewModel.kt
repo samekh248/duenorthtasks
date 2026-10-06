@@ -7,6 +7,7 @@ import app.duenorth.tasks.data.db.ListSummary
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.settings.ListOrder
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
 import app.duenorth.tasks.ui.common.HeldLists
@@ -66,6 +67,7 @@ class HomeViewModel @Inject constructor(
     accounts: AccountRepository,
     features: ServiceFeatures,
     holds: ListHolds,
+    listOrder: ListOrder,
     clock: Clock
 ) : ViewModel() {
     private val overrides = CompletionOverrides()
@@ -82,7 +84,7 @@ class HomeViewModel @Inject constructor(
     val state: StateFlow<HomeUiState> = combine(
         due,
         tasks.recentlyCompleted(),
-        tasks.listSummaries(),
+        combine(tasks.listSummaries(), listOrder.rank) { lists, rank -> ListOrder.sort(lists, rank) { it.localId } },
         combine(accounts.account, features.importance, ::Pair),
         combine(overrides.overrides, linger.ticked, ::Pair)
     ) { (day, dueRows), doneRows, lists, (account, importance), (pending, ticked) ->

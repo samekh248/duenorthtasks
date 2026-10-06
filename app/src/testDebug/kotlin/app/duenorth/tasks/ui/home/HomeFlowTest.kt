@@ -34,6 +34,7 @@ import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
+import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import java.time.Clock
@@ -76,7 +77,14 @@ class HomeFlowTest {
         tasks = TaskRepository(db, clock)
         val accounts = AccountRepository(db)
         runBlocking { accounts.connect(ProviderKind.FAKE, "demo", null) }
-        viewModel = HomeViewModel(tasks, accounts, ServiceFeatures(accounts) { FakeProvider() }, holds, clock)
+        viewModel = HomeViewModel(
+            tasks,
+            accounts,
+            ServiceFeatures(accounts) { FakeProvider() },
+            holds,
+            testListOrder(tasks, accounts),
+            clock
+        )
         val actions = HomeActions(openTask = { opened += it }, openList = {}, search = {}, openSyncAccount = {})
         compose.setContent {
             val state by viewModel.state.collectAsState()

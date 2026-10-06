@@ -33,7 +33,9 @@ data class RemoteTask(
     val etag: String?,
     val updatedAt: Instant,
     /** Where someone assigned this task to the user (Google Docs or Chat), if they did. Read-only. */
-    val assignment: Assignment? = null
+    val assignment: Assignment? = null,
+    /** When the task was created, where the service says (To Do); seeds the phone's order there. */
+    val createdAt: Instant? = null
 )
 
 /** A task assigned to the user from elsewhere. The services don't say who assigned it (spec 002). */
@@ -88,6 +90,12 @@ sealed interface StepPatch {
     data class Update(val id: String, val title: String? = null, val done: Boolean? = null) : StepPatch
 
     data class Remove(val id: String) : StepPatch
+
+    /**
+     * Puts step [id] right after step [afterId], or first when null. Only sent to services that
+     * store order ([ProviderCapabilities.manualOrder]); others ignore it.
+     */
+    data class Move(val id: String, val afterId: String?) : StepPatch
 }
 
 data class TaskChangePage(

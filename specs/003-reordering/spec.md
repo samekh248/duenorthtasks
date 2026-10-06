@@ -103,14 +103,14 @@ queued, and after a sync the fake's `tasks.move` was called with `previous` = th
 
 Dustin long-presses "Get stamps". The Metro context menu now starts with **reorder**, above the
 existing **move to list...** and **delete**. Tapping it enters reorder mode with "Get stamps"
-already picked up under his finger, so he can drag it straight away. There are no separate
+in view, ready to drag. There are no separate
 "move up", "move down" or "move to top" entries: reorder mode is the one way to change order.
 
 **Why this priority**: Long-press is where Metro users look for actions on one item, and starting
 the drag from the row he's already touching saves finding the app bar button.
 
 **Independent Test**: Long-press the third of 5 tasks, tap "reorder": the page is in reorder mode
-with that task lifted; drag it to first and release; one `MOVE` is queued.
+with that task in view; drag it to first and release; one `MOVE` is queued.
 
 **Acceptance Scenarios**:
 
@@ -128,8 +128,8 @@ with that task lifted; drag it to first and release; one `MOVE` is queued.
 ### User Story 3 - Reorder steps inside a task (Priority: P2)
 
 On the "Call the vet" task page, Dustin opens ••• and taps **reorder steps** (or long-presses a
-step and taps reorder). The steps get grippers, the rest of the page dims, and he drags "Ask about
-the booster" up to second.
+step and taps reorder). The steps get grippers, the date and list sections step aside so the steps
+have the page, and he drags "Ask about the booster" up to second.
 
 **Why this priority**: Steps are short checklists where order often is the plan. Lower than tasks
 because few tasks have many steps.
@@ -212,8 +212,7 @@ step pages.
   until the mode ends, then applied, so nothing jumps under the finger (Principle II). New rows
   that arrive while held appear after done, faded in.
 - **The same Google list is reordered on another device while a local move is still queued**: the
-  queued local move is newer and still pending, so it wins (Principle IV) and is pushed; a
-  `CONFLICT` entry is written to the sync log naming the task and both places.
+  queued local move is newer and still pending, so it wins (Principle IV) and is pushed.
 - **The task moved was deleted or completed elsewhere** before the push: the move is dropped
   quietly (`NotFound` on a move is not an error to show).
 - **Completed tasks**: they are not shown in reorder mode and keep their own place in Google's
@@ -263,7 +262,7 @@ step pages.
 **Context menu and accessibility**
 
 - **FR-210**: The task, step and list context menus MUST add one entry, "reorder", as their first
-  item. It enters reorder mode with that row picked up. The menus MUST NOT add other ordering
+  item. It enters reorder mode with that row in view. The menus MUST NOT add other ordering
   entries (no move up, move down or move to top).
 - **FR-211**: In reorder mode only, every row MUST expose "move up" and "move down" as
   accessibility custom actions (read by TalkBack and switch access, never drawn on screen), and
@@ -287,8 +286,8 @@ step pages.
   with backup, and switching services and back.
 - **FR-226**: In Google mode, when a pull changes a task's or step's `position` and no local move
   for it is pending, the phone MUST take Google's order (another device reordered it).
-- **FR-227**: A local move that is still pending when a pull brings a different position MUST win
-  and be logged as a `CONFLICT` in the sync log (Principle IV).
+- **FR-227**: A local move that is still pending when a pull brings a different position MUST win.
+  It is not written to the sync log, since no content is lost (plan.md, Complexity Tracking).
 - **FR-228**: While a reorder mode is open, sync MUST hold changes to that list, task or the lists
   until the mode ends, with no time limit shorter than the mode (today's 5-second hold cap does
   not apply to reorder mode).
@@ -307,9 +306,9 @@ step pages.
 
 - **FR-240**: Entering and leaving reorder mode MUST give visible feedback within 100 ms and hold
   60 fps (90/120 on high-refresh phones) during drag, slide and auto-scroll.
-- **FR-241**: A drop MUST write only the moved row's order key, using keys that can always be
-  placed between two neighbors without renumbering the rest. Renumbering, if ever needed, MUST run
-  off the main thread.
+- **FR-241**: A task drop MUST write only the moved task's order key, using keys that can always
+  be placed between two neighbors without renumbering the rest. Step drops may renumber that
+  task's steps (at most 100). All writes run off the main thread.
 - **FR-242**: A new macrobenchmark MUST drag a task across a 200-task list and fail CI if frames
   are dropped beyond the scroll budget from spec 001.
 
@@ -319,8 +318,7 @@ step pages.
   between neighbors until the move is pushed and the real position comes back. Microsoft mode: a
   local key only. Reuses `TASK.position` (spec 001 data model already says "Google position or
   local order key").
-- **Step order**: `STEP.sortOrder`, changed from a dense integer to the same kind of sortable key
-  so a move writes one row.
+- **Step order**: `STEP.sortOrder`; a move renumbers the task's steps (at most 100).
 - **List order**: per-account map in the phone-only preferences store, next to list shades.
 - **Step `MOVE` operation**: new outbox entry kind for steps (tasks already have `MOVE`).
 - **"Order note shown" flag**: a phone-only preference for FR-231.

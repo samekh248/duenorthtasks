@@ -188,8 +188,21 @@ class FakeProvider(
     override suspend fun moveTask(listId: String, id: String, afterId: String?) = call("moveTask") {
         val current = tasks[id]?.task?.takeIf { it.listId == listId } ?: throw ProviderError.NotFound(id)
         if (!capabilities.manualOrder) return@call
-        val after = afterId?.let { tasks[it]?.task?.position } ?: ""
-        store(current.copy(position = after + "5", etag = etag(), updatedAt = now()))
+        // Like Google: siblings in position order, this one placed after [afterId] (first when null).
+        val siblings = tasks.values.map { it.task }
+            .filter { it.listId == listId && it.id != id }
+            .sortedBy { it.position.orEmpty() }
+            .toMutableList()
+        val at = afterId?.let { after -> siblings.indexOfFirst { it.id == after } + 1 } ?: 0
+        siblings.add(at, current)
+        siblings.forEachIndexed { index, task ->
+            val position = "%010d".format((index + 1) * 10L)
+            if (task.id == id) {
+                store(task.copy(position = position, etag = etag(), updatedAt = now()))
+            } else if (task.position != position) {
+                store(task.copy(position = position))
+            }
+        }
         Unit
     }
 
@@ -220,6 +233,14 @@ class FakeProvider(
             when (patch) {
                 is StepPatch.Add -> result += RemoteStep(newId("step"), patch.title, patch.done)
                 is StepPatch.Remove -> result.removeAll { it.id == patch.id }
+                is StepPatch.Move -> {
+                    if (!capabilities.manualOrder) continue
+                    val index = result.indexOfFirst { it.id == patch.id }
+                    if (index < 0) throw ProviderError.NotFound(patch.id)
+                    val step = result.removeAt(index)
+                    val at = patch.afterId?.let { after -> result.indexOfFirst { it.id == after } + 1 } ?: 0
+                    result.add(at, step)
+                }
                 is StepPatch.Update -> {
                     val index = result.indexOfFirst { it.id == patch.id }
                     if (index < 0) throw ProviderError.NotFound(patch.id)

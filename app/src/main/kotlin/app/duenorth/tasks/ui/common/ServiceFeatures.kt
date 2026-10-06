@@ -23,4 +23,9 @@ class ServiceFeatures @Inject constructor(accounts: AccountRepository, private v
     val sharedLists: Flow<Boolean> = accounts.account
         .map { account -> account != null && registry.current()?.capabilities?.sharedLists == true }
         .distinctUntilChanged()
+
+    /** Task and step order (specs/003-reordering): Google Tasks stores it, To Do doesn't. */
+    val storesOrder: Flow<Boolean> = accounts.account
+        .map { account -> account != null && registry.current()?.capabilities?.manualOrder == true }
+        .distinctUntilChanged()
 }

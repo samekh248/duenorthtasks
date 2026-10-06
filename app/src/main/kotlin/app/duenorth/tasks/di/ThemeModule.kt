@@ -3,6 +3,8 @@ package app.duenorth.tasks.di
 import android.content.Context
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.settings.ListOrder
+import app.duenorth.tasks.settings.ListOrderStore
 import app.duenorth.tasks.settings.ListShadeStore
 import app.duenorth.tasks.settings.ListShades
 import app.duenorth.tasks.settings.ThemeSettingsStore
@@ -13,7 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/** Theme, accent and list shades (US5): phone-only settings in DataStore. */
+/** Theme, accent, list shades (US5) and list order (spec 003): phone-only settings in DataStore. */
 @Module
 @InstallIn(SingletonComponent::class)
 object ThemeModule {
@@ -29,4 +31,13 @@ object ThemeModule {
     @Singleton
     fun listShades(store: ListShadeStore, tasks: TaskRepository, accounts: AccountRepository): ListShades =
         ListShades(store, tasks, accounts)
+
+    @Provides
+    @Singleton
+    fun listOrderStore(@ApplicationContext context: Context): ListOrderStore = ListOrderStore.create(context)
+
+    @Provides
+    @Singleton
+    fun listOrder(store: ListOrderStore, tasks: TaskRepository, accounts: AccountRepository): ListOrder =
+        ListOrder(store, tasks, accounts)
 }

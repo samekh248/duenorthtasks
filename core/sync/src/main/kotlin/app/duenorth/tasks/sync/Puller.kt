@@ -8,6 +8,7 @@ import app.duenorth.tasks.data.db.StepEntity
 import app.duenorth.tasks.data.db.SyncLogType
 import app.duenorth.tasks.data.db.TaskEntity
 import app.duenorth.tasks.data.db.TaskListEntity
+import app.duenorth.tasks.data.order.OrderKeys
 import app.duenorth.tasks.provider.api.Assignment
 import app.duenorth.tasks.provider.api.AssignmentSource as RemoteAssignmentSource
 import app.duenorth.tasks.provider.api.ProviderError
@@ -44,6 +45,9 @@ internal class Puller(
     private val beforeBackfill: suspend () -> Unit = {}
 ) {
     private val canStoreImportance = provider.capabilities.importance
+
+    /** Google keeps order and sends it; To Do doesn't, so the phone's order keys are the only ones. */
+    private val storesOrder = provider.capabilities.manualOrder
 
     suspend fun pullAll() {
         reconcileLists(provider.getLists())
@@ -219,7 +223,7 @@ internal class Puller(
         } catch (_: ProviderError.NotAllowed) {
             null
         } ?: return false
-        applyChanged(list, open, mayAdopt(list))
+        applyChanged(list, open, mayAdopt(list), firstFetch = true)
         return true
     }
 
@@ -227,8 +231,17 @@ internal class Puller(
     private suspend fun mayAdopt(list: TaskListEntity): Boolean =
         store.sync.unsyncedTasksInList(list.localId).any { store.journal.sentTitle(it.localId) != null }
 
-    /** Writes [changed] into [list]: today's tasks first, one lookup and one insert per batch. */
-    private suspend fun applyChanged(list: TaskListEntity, changed: List<RemoteTask>, mayAdopt: Boolean) {
+    /**
+     * Writes [changed] into [list]: today's tasks first, one lookup and one insert per batch.
+     * [firstFetch] is true while the list has never been fetched, which decides where tasks new to
+     * the phone go when the service keeps no order (newest created first, else at the top).
+     */
+    private suspend fun applyChanged(
+        list: TaskListEntity,
+        changed: List<RemoteTask>,
+        mayAdopt: Boolean,
+        firstFetch: Boolean
+    ) {
         // Today's tasks first, so the "today" section fills in before the rest (FR-009a).
         // A task listed twice counts once, in its last state, since a batch inserts new rows together.
         val ordered = changed.asReversed().distinctBy { it.id }
@@ -238,7 +251,7 @@ internal class Puller(
             store.transaction {
                 // Looking rows up and inserting them one at a time was most of a first sync.
                 val known = store.sync.tasksByRemoteIds(batch.map { it.id }).associateBy { it.remoteId }
-                val fresh = NewRows()
+                val fresh = NewRows(list, firstFetch)
                 batch.forEach { applyTask(list, it, known[it.id], mayAdopt, fresh) }
                 fresh.write()
             }
@@ -265,7 +278,7 @@ internal class Puller(
                 return // a list we may not read; the others still sync
             }
             seen += page.changed.map { it.id }
-            applyChanged(list, page.changed, mayAdopt)
+            applyChanged(list, page.changed, mayAdopt, firstFetch = list.tasksCursor == null)
             for (batch in page.deletedIds.chunked(BATCH)) {
                 holds.awaitReleased(list.localId)
                 store.transaction { batch.forEach { applyRemoteDelete(list, it) } }
@@ -280,6 +293,7 @@ internal class Puller(
                 missing.forEach { applyRemoteDelete(list, it) }
             }
             store.lists.get(list.localId)?.let { store.lists.update(it.copy(tasksCursor = cursor)) }
+            if (!storesOrder) giveKeysToUnkeyed(list.localId)
         }
     }
 
@@ -291,7 +305,7 @@ internal class Puller(
         fresh: NewRows
     ) {
         if (local == null) {
-            if (!mayAdopt || !adoptLostCreate(list, remote)) fresh.add(list, remote)
+            if (!mayAdopt || !adoptLostCreate(list, remote)) fresh.add(remote)
             return
         }
         val (taskOps, stepOps) = store.pendingFor(local)
@@ -306,13 +320,19 @@ internal class Puller(
                     "“${remote.title}” was changed elsewhere after you deleted it, so it was kept"
                 )
                 applyFields(local.copy(deletedLocally = false), remote, list, keep = emptySet())
-                store.mergeSteps(local.localId, remote, keepPending = emptySet())
+                store.mergeSteps(local.localId, remote, keepPending = emptySet(), keepOrder = !storesOrder)
             }
             return
         }
         val pendingFields = taskOps.flatMap { op ->
-            if (op.kind == OperationKind.CREATE) SyncStore.ALL_TASK_FIELDS else op.changedFields
+            when (op.kind) {
+                OperationKind.CREATE -> SyncStore.ALL_TASK_FIELDS
+                // A queued move keeps the phone's place for the task until it is sent (FR-227).
+                OperationKind.MOVE -> setOf(Fields.POSITION)
+                else -> op.changedFields
+            }
         }.toSet()
+        val stepMovePending = stepOps.any { it.kind == OperationKind.MOVE }
         val pendingSteps = stepOps.map { it.entityLocalId }.toSet()
         val decision = ConflictResolver.decide(
             hasPendingLocalChange = taskOps.isNotEmpty() || stepOps.isNotEmpty(),
@@ -323,7 +343,7 @@ internal class Puller(
         when (decision) {
             Decision.APPLY_REMOTE -> {
                 applyFields(local, remote, list, keep = emptySet())
-                store.mergeSteps(local.localId, remote, keepPending = emptySet())
+                store.mergeSteps(local.localId, remote, keepPending = emptySet(), keepOrder = !storesOrder)
             }
             Decision.KEEP_LOCAL -> Unit
             Decision.LOCAL_WINS -> {
@@ -337,7 +357,12 @@ internal class Puller(
                     )
                 }
                 applyFields(local, remote, list, keep = pendingFields)
-                store.mergeSteps(local.localId, remote, keepPending = pendingSteps)
+                store.mergeSteps(
+                    local.localId,
+                    remote,
+                    keepPending = pendingSteps,
+                    keepOrder = !storesOrder || stepMovePending
+                )
             }
             Decision.REMOTE_WINS -> {
                 val lost = differingFields(local, remote, pendingFields)
@@ -355,7 +380,7 @@ internal class Puller(
                 stepOps.filter { it.kind != OperationKind.CREATE }.forEach { store.ops.delete(it.seq) }
                 val keptNewSteps = stepOps.filter { it.kind == OperationKind.CREATE }.map { it.entityLocalId }.toSet()
                 applyFields(local, remote, list, keep = emptySet())
-                store.mergeSteps(local.localId, remote, keepPending = keptNewSteps)
+                store.mergeSteps(local.localId, remote, keepPending = keptNewSteps, keepOrder = !storesOrder)
             }
         }
     }
@@ -373,7 +398,7 @@ internal class Puller(
                 remoteId = remote.id,
                 etag = remote.etag,
                 remoteUpdatedAt = remote.updatedAt,
-                position = remote.position
+                position = if (storesOrder) remote.position else candidate.position
             )
         )
         // Pair steps by title in order; any left over are added as new steps.
@@ -396,11 +421,34 @@ internal class Puller(
     }
 
     /** Tasks new to this phone, with their steps, written together at the end of a batch. */
-    private inner class NewRows {
+    private inner class NewRows(private val list: TaskListEntity, private val firstFetch: Boolean) {
         private val tasks = mutableListOf<TaskEntity>()
         private val steps = mutableListOf<StepEntity>()
+        private var top: String? = null
+        private var topRead = false
 
-        fun add(list: TaskListEntity, remote: RemoteTask) {
+        /** Keys given on a first fetch: tasks created in the same millisecond still get their own. */
+        private val used = mutableSetOf<String>()
+
+        /**
+         * The task's place. A service with order sends it. Without one, a list's first fetch puts
+         * the newest created first; after that, a task new to the phone goes to the top.
+         */
+        private suspend fun positionFor(remote: RemoteTask): String? {
+            if (storesOrder) return remote.position
+            if (firstFetch) {
+                var key = OrderKeys.timeKey(remote.createdAt ?: remote.updatedAt)
+                while (!used.add(key)) key += "5"
+                return key
+            }
+            if (!topRead) {
+                top = store.tasks.firstPosition(list.localId)
+                topRead = true
+            }
+            return OrderKeys.between(null, top).also { top = it }
+        }
+
+        suspend fun add(remote: RemoteTask) {
             val id = store.newLocalId()
             tasks += TaskEntity(
                 localId = id,
@@ -412,7 +460,7 @@ internal class Puller(
                 completed = remote.completed,
                 completedAt = remote.completedAt,
                 important = remote.important && canStoreImportance,
-                position = remote.position,
+                position = positionFor(remote),
                 remoteStatusRaw = remote.rawStatus,
                 etag = remote.etag,
                 remoteUpdatedAt = remote.updatedAt,
@@ -471,7 +519,7 @@ internal class Puller(
                 completed = if (completedChanges) remote.completed else local.completed,
                 completedAt = if (completedChanges) remote.completedAt else local.completedAt,
                 important = if (Fields.IMPORTANT in keep || !canStoreImportance) local.important else remote.important,
-                position = remote.position,
+                position = if (Fields.POSITION in keep || !storesOrder) local.position else remote.position,
                 remoteStatusRaw = remote.rawStatus,
                 etag = remote.etag,
                 remoteUpdatedAt = remote.updatedAt,
@@ -487,6 +535,18 @@ internal class Puller(
         RemoteAssignmentSource.DOCUMENT -> AssignmentSource.DOCUMENT
         RemoteAssignmentSource.SPACE -> AssignmentSource.SPACE
         RemoteAssignmentSource.OTHER -> AssignmentSource.OTHER
+    }
+
+    /**
+     * Tasks synced before order keys existed have none, and "my order" would follow their last
+     * edit. Gives them keys in the order they show now, above the keyed ones (To Do only).
+     */
+    private suspend fun giveKeysToUnkeyed(listId: String) {
+        val open = store.tasks.openInList(listId).sortedWith(OrderKeys.taskComparator)
+        val unkeyed = open.takeWhile { it.position == null }
+        if (unkeyed.isEmpty()) return
+        val keys = OrderKeys.keysBefore(open.getOrNull(unkeyed.size)?.position, unkeyed.size)
+        unkeyed.zip(keys).forEach { (task, key) -> store.tasks.update(task.copy(position = key)) }
     }
 
     private fun differingFields(local: TaskEntity, remote: RemoteTask, fields: Set<String>): Set<String> =
