@@ -167,7 +167,7 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
             )
             if (syncing) MetroProgressDots()
         }
-        HomeAppBar(pager, actions, onNewTask = { addFocus.requestFocus() }, onNewList = { newList = true })
+        HomeAppBar(pager, actions, syncing, onNewTask = { addFocus.requestFocus() }, onNewList = { newList = true })
     }
 
     if (newList) {
@@ -227,9 +227,15 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
  * button, recomposes only the app bar and never the panorama under the finger.
  */
 @Composable
-private fun HomeAppBar(pager: PanoramaState, actions: HomeActions, onNewTask: () -> Unit, onNewList: () -> Unit) {
+private fun HomeAppBar(
+    pager: PanoramaState,
+    actions: HomeActions,
+    syncing: Boolean,
+    onNewTask: () -> Unit,
+    onNewList: () -> Unit
+) {
     val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
-    val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", onClick = it) }
+    val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", spinning = syncing, onClick = it) }
     val menu = listOfNotNull(
         AppBarMenuItem("reorder lists") { actions.reorderLists(null) }.takeIf { pager.currentSection == LISTS },
         AppBarMenuItem("settings", actions.openSettings),

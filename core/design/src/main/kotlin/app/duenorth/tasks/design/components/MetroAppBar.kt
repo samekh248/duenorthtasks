@@ -1,6 +1,12 @@
 package app.duenorth.tasks.design.components
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,16 +25,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import app.duenorth.tasks.design.motion.LocalAnimationsEnabled
 import app.duenorth.tasks.design.motion.MetroEasing
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.MetroDimens
@@ -40,6 +51,8 @@ data class AppBarButton(
     /** Shown under the button when the bar is expanded, and read by TalkBack. */
     val label: String,
     val enabled: Boolean = true,
+    /** Turns the glyph while true (the sync button during a sync); it finishes its turn when set false. */
+    val spinning: Boolean = false,
     val onClick: () -> Unit
 )
 
@@ -48,6 +61,7 @@ data class AppBarMenuItem(val label: String, val onClick: () -> Unit)
 
 private const val MAX_BUTTONS = 4
 private const val EXPAND_MS = 200
+private const val SPIN_MS = 1200
 
 /**
  * The WP8.1 Application Bar: up to four round outlined buttons along the bottom and an ellipsis
@@ -136,14 +150,17 @@ private fun AppBarIconButton(button: AppBarButton, showLabel: Boolean, onClick: 
                 role = Role.Button,
                 onClick = onClick
             )
-            .semantics { contentDescription = button.label },
+            .semantics {
+                contentDescription = button.label
+                if (button.spinning) stateDescription = "syncing"
+            },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             Modifier.size(MetroDimens.TouchTarget).border(2.dp, color, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            MetroIconGlyph(button.icon, color = color)
+            MetroIconGlyph(button.icon, Modifier.spin(button.spinning), color = color)
         }
         if (showLabel) {
             MetroText(
@@ -158,3 +175,43 @@ private fun AppBarIconButton(button: AppBarButton, showLabel: Boolean, onClick: 
         }
     }
 }
+
+/**
+ * A steady turn while [spinning], drawn in the layer only so nothing recomposes per frame. When it
+ * stops, the glyph eases on to upright rather than snapping back. Still with animations off.
+ */
+@Composable
+private fun Modifier.spin(spinning: Boolean): Modifier {
+    if (!LocalAnimationsEnabled.current) return this
+    // The angle the spin had reached, read when it stops; written from the draw phase.
+    val reached = remember { floatArrayOf(0f) }
+    val settle = remember { Animatable(0f) }
+    var settling by remember { mutableStateOf(false) }
+    LaunchedEffect(spinning) {
+        if (spinning || reached[0] == 0f) return@LaunchedEffect
+        settling = true
+        settle.snapTo(reached[0])
+        val left = (FULL_TURN - reached[0]) / FULL_TURN
+        settle.animateTo(FULL_TURN, tween((SPIN_MS * left).toInt(), easing = MetroEasing))
+        reached[0] = 0f
+        settling = false
+    }
+    return when {
+        spinning -> {
+            val angle = rememberInfiniteTransition(label = "sync spin").animateFloat(
+                initialValue = 0f,
+                targetValue = FULL_TURN,
+                animationSpec = infiniteRepeatable(tween(SPIN_MS, easing = LinearEasing), RepeatMode.Restart),
+                label = "angle"
+            )
+            graphicsLayer {
+                rotationZ = angle.value
+                reached[0] = angle.value
+            }
+        }
+        settling -> graphicsLayer { rotationZ = settle.value }
+        else -> this
+    }
+}
+
+private const val FULL_TURN = 360f

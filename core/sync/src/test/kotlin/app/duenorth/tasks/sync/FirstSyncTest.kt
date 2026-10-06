@@ -141,6 +141,48 @@ class FirstSyncTest : SyncTestBase() {
     }
 
     @Test
+    fun aListDeletedWhileTheHistoryLoadsIsDeletedThereAndTheLoadingListIsLeftToTheLoad() = runBlocking {
+        val errands = remote.seed("Errands")
+        val old = remote.seed("Old")
+        seedTasks(errands.id, open = 1, done = 3)
+        seedTasks(old.id, open = 1, done = 1)
+        val letGo = CompletableDeferred<Unit>()
+        val stalled = CompletableDeferred<Unit>()
+        val openReads = mutableListOf<String>()
+        val slow = object : TaskProvider by remote {
+            override suspend fun getOpenTasks(listId: String) = remote.getOpenTasks(listId).also {
+                synchronized(openReads) { openReads += listId }
+            }
+
+            override suspend fun getTaskChanges(listId: String, cursor: String?): TaskChangePage {
+                if (listId == errands.id) {
+                    stalled.complete(Unit)
+                    letGo.await()
+                }
+                return remote.getTaskChanges(listId, cursor)
+            }
+        }
+        engine =
+            SyncEngine(db, { slow }, holds, clock, { java.util.UUID.randomUUID().toString() }, Dispatchers.Unconfined)
+        clock.tick()
+        engine.sync()
+        val history = launch(Dispatchers.Default) { engine.backfill() }
+        withTimeout(5_000) { stalled.await() }
+
+        io { repo.deleteList(list("Old").localId) }
+        synchronized(openReads) { openReads.clear() }
+        clock.tick()
+        val result = withTimeout(5_000) { engine.sync() }
+
+        assertEquals(SyncResult.Success, result)
+        assertEquals(listOf("Errands"), remote.getLists().map { it.title })
+        assertEquals(emptyList<String>(), synchronized(openReads) { openReads.toList() })
+        letGo.complete(Unit)
+        history.join()
+        assertEquals(4, tasks("Errands").size)
+    }
+
+    @Test
     fun aLargeHistoryLoadsWithoutSlowingDownAsItGrows() = runBlocking {
         val big = remote.seed("Big")
         seedTasks(big.id, open = 50, done = 1500)
