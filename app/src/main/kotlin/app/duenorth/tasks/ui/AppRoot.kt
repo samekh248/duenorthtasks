@@ -27,6 +27,7 @@ fun AppRoot(viewModel: AppViewModel = hiltViewModel()) {
     val connecting by viewModel.connecting.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val syncing by viewModel.syncing.collectAsStateWithLifecycle()
+    val turning by viewModel.syncButtonTurning.collectAsStateWithLifecycle()
     val activity = LocalActivity.current as ComponentActivity
     // Built per sign-in from the current Activity; holds nothing afterwards.
     val host = { ActivitySignInHost(activity) }
@@ -51,7 +52,7 @@ fun AppRoot(viewModel: AppViewModel = hiltViewModel()) {
                         isConfigured = viewModel::isConfigured,
                         onPick = { kind -> viewModel.connect(kind, host()) }
                     )
-                    AppState.Connected -> DueNorthNavHost(actions, syncing)
+                    AppState.Connected -> DueNorthNavHost(actions, syncing, turning)
                 }
             }
         }

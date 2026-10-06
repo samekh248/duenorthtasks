@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -53,6 +54,11 @@ class AppViewModel @Inject constructor(
     val error: StateFlow<String?> = failure.asStateFlow()
 
     val syncing: StateFlow<Boolean> = engine.isSyncing
+
+    /** The sync button turns for a sync and for a first sync's history load (the dots only for a sync). */
+    val syncButtonTurning: StateFlow<Boolean> = combine(engine.isSyncing, engine.isLoadingHistory) { sync, history ->
+        sync || history
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     val state: StateFlow<AppState> = accounts.account
         .map { if (it == null) AppState.NoAccount else AppState.Connected }

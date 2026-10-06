@@ -93,14 +93,25 @@ class HomeActions(
 )
 
 @Composable
-fun HomeScreen(actions: HomeActions, syncing: Boolean, viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(
+    actions: HomeActions,
+    syncing: Boolean,
+    syncButtonTurning: Boolean = syncing,
+    viewModel: HomeViewModel = hiltViewModel()
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    HomeContent(state, viewModel, actions, syncing)
+    HomeContent(state, viewModel, actions, syncing, syncButtonTurning)
 }
 
 /** The Light Panorama home (FR-002): "tasks" (with "due north" under it) over today, lists and done. */
 @Composable
-fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActions, syncing: Boolean = false) {
+fun HomeContent(
+    state: HomeUiState,
+    viewModel: HomeViewModel,
+    actions: HomeActions,
+    syncing: Boolean = false,
+    syncButtonTurning: Boolean = syncing
+) {
     val pager = rememberPanoramaState(3)
     val scope = rememberCoroutineScope()
     val addFocus = remember { FocusRequester() }
@@ -171,7 +182,10 @@ fun HomeContent(state: HomeUiState, viewModel: HomeViewModel, actions: HomeActio
             )
             if (syncing) MetroProgressDots()
         }
-        HomeAppBar(pager, actions, syncing, onNewTask = { addFocus.requestFocus() }, onNewList = { newList = true })
+        HomeAppBar(pager, actions, syncButtonTurning, onNewTask = { addFocus.requestFocus() }, onNewList = {
+            newList =
+                true
+        })
     }
 
     if (newList) {
