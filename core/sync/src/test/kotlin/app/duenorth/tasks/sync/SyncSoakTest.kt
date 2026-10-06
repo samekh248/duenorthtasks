@@ -38,8 +38,14 @@ class SyncSoakTest : SyncTestBase() {
         val flaky = FlakyProvider(remote, random)
         val engine = SyncEngine(db, { flaky }, holds, clock, { "s$seed-${random.nextLong()}" }, Dispatchers.Unconfined)
 
+        // As the scheduler does: a sync, then the history load it left behind as its own job.
+        suspend fun syncAndBackfill() {
+            engine.sync()
+            if (engine.backfillPending) engine.backfill()
+        }
+
         val listIds = listOf(remote.seed("Errands").id, remote.seed("Home").id)
-        engine.sync()
+        syncAndBackfill()
 
         var serial = 0
         val created = mutableSetOf<String>()
@@ -90,7 +96,7 @@ class SyncSoakTest : SyncTestBase() {
                 }
                 else -> {
                     flaky.failureRate = if (random.nextInt(3) == 0) 0.0 else 0.3
-                    engine.sync()
+                    syncAndBackfill()
                 }
             }
         }
@@ -99,7 +105,7 @@ class SyncSoakTest : SyncTestBase() {
         flaky.failureRate = 0.0
         repeat(4) {
             clock.tick()
-            engine.sync()
+            syncAndBackfill()
         }
 
         val local = db.syncDao().allLists().filterNot { it.deletedLocally }.associate { list ->

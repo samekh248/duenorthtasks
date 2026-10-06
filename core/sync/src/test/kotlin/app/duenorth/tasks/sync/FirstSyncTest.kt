@@ -4,10 +4,13 @@ import app.duenorth.tasks.provider.api.TaskChangePage
 import app.duenorth.tasks.provider.api.TaskDraft
 import app.duenorth.tasks.provider.api.TaskPatch
 import app.duenorth.tasks.provider.api.TaskProvider
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -100,6 +103,41 @@ class FirstSyncTest : SyncTestBase() {
 
         val remoteMine = remote.getLists().single { it.title == "Mine" }
         assertEquals(listOf("Made on the phone"), remoteTasks(remoteMine.id).map { it.title })
+    }
+
+    @Test
+    fun aSyncWhileTheHistoryLoadsSendsNewTasksStraightAway() = runBlocking {
+        val errands = remote.seed("Errands")
+        seedTasks(errands.id, open = 1, done = 3)
+        // The history load stalls on its first page until the test lets it go.
+        val letGo = CompletableDeferred<Unit>()
+        val stalled = CompletableDeferred<Unit>()
+        val slow = object : TaskProvider by remote {
+            override suspend fun getTaskChanges(listId: String, cursor: String?): TaskChangePage {
+                stalled.complete(Unit)
+                letGo.await()
+                return remote.getTaskChanges(listId, cursor)
+            }
+        }
+        engine =
+            SyncEngine(db, { slow }, holds, clock, { java.util.UUID.randomUUID().toString() }, Dispatchers.Unconfined)
+        clock.tick()
+        assertEquals(SyncResult.Success, engine.sync())
+        assertTrue(engine.backfillPending)
+        val history = launch(Dispatchers.Default) { engine.backfill() }
+        withTimeout(5_000) { stalled.await() }
+
+        io { repo.createTask(list("Errands").localId, "Added during the first sync") }
+        clock.tick()
+        val result = withTimeout(5_000) { engine.sync() }
+
+        assertEquals(SyncResult.Success, result)
+        assertTrue(remoteTasks(errands.id).any { it.title == "Added during the first sync" })
+        letGo.complete(Unit)
+        history.join()
+        assertFalse(engine.backfillPending)
+        assertEquals(5, tasks("Errands").size)
+        assertTrue(lists().all { it.tasksCursor != null })
     }
 
     @Test

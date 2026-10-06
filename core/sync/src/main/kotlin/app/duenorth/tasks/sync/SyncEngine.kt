@@ -5,6 +5,7 @@ import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.db.SyncLogType
 import app.duenorth.tasks.data.provider.ProviderRegistry
 import app.duenorth.tasks.provider.api.ProviderError
+import app.duenorth.tasks.provider.api.TaskProvider
 import java.time.Clock
 import java.util.UUID
 import kotlin.time.Duration
@@ -13,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -42,28 +44,82 @@ class SyncEngine(
     journal: CreateJournal = InMemoryCreateJournal()
 ) {
     private val mutex = Mutex()
+    private val backfillMutex = Mutex()
     private val store = SyncStore(db, clock, newId, journal)
     private val running = MutableStateFlow(false)
 
+    /** Lists whose open tasks are in but whose history (completed tasks, change cursor) is not yet. */
+    private val deferred = MutableStateFlow<Set<String>>(emptySet())
+
     /**
-     * True while a sync runs: the only thing the UI shows for it (Metro progress dots). A first
-     * sync turns it off once open tasks are in, while completed ones keep arriving behind it.
+     * True while a sync runs: the only thing the UI shows for it (Metro progress dots). A
+     * [backfill] does not count, so the dots stop once open tasks are in.
      */
     val isSyncing: StateFlow<Boolean> = running.asStateFlow()
+
+    /** True when a sync left lists for [backfill]; the scheduler then runs it as its own job. */
+    val backfillPending: Boolean get() = deferred.value.isNotEmpty()
 
     /** Runs one sync. Concurrent calls wait for the one in progress and then run their own. */
     suspend fun sync(): SyncResult = mutex.withLock {
         withContext(dispatcher) {
             running.value = true
             try {
-                runOnce()
+                guarded { provider, stillConnected ->
+                    // Pull first: a pending edit only goes out if it is newer than what changed
+                    // elsewhere (FR-023), and creates whose answer was lost are recognised before
+                    // being retried. Lists seen for the first time bring only their open tasks here;
+                    // their history is left to [backfill], which never holds a sync up.
+                    val later = Puller(store, provider, holds, stillConnected).pullAll()
+                    deferred.update { it + later.map { list -> list.localId } }
+                    if (!stillConnected()) return@guarded SyncResult.NoAccount
+                    val waited = Pusher(store, provider).pushAll()
+                    if (stillConnected()) {
+                        store.accounts.get()?.let { store.accounts.upsert(it.copy(lastSyncAt = store.now())) }
+                    }
+                    if (waited ||
+                        db.pendingOperationDao().all().isNotEmpty()
+                    ) {
+                        SyncResult.Retry()
+                    } else {
+                        SyncResult.Success
+                    }
+                }
             } finally {
                 running.value = false
             }
         }
     }
 
-    private suspend fun runOnce(): SyncResult {
+    /**
+     * Fetches the full history of the lists a first sync left behind, which can take minutes for
+     * an account with years of completed tasks. It runs beside [sync] rather than under its lock,
+     * so tapping sync, or adding a task, while it runs still sends changes straight away.
+     */
+    suspend fun backfill(): SyncResult = backfillMutex.withLock {
+        withContext(dispatcher) {
+            guarded { provider, stillConnected ->
+                val lists = store.sync.allLists().filter {
+                    it.localId in deferred.value && it.remoteId != null && !it.deletedLocally && it.tasksCursor == null
+                }
+                try {
+                    Puller(store, provider, holds, stillConnected).backfill(lists)
+                } finally {
+                    // A list is done once it has a cursor; the rest wait for the next attempt.
+                    val done = store.sync.allLists().filter { it.tasksCursor != null || it.deletedLocally }
+                        .map { it.localId }.toSet()
+                    val gone = deferred.value - store.sync.allLists().map { it.localId }.toSet()
+                    deferred.update { it - done - gone }
+                }
+                if (!stillConnected()) SyncResult.NoAccount else SyncResult.Success
+            }
+        }
+    }
+
+    /** Checks the account, then runs [block], handling each [ProviderError] as the class comment says. */
+    private suspend fun guarded(
+        block: suspend (provider: TaskProvider, stillConnected: suspend () -> Boolean) -> SyncResult
+    ): SyncResult {
         val account = store.accounts.get() ?: return SyncResult.NoAccount
         if (account.authState == AuthState.NEEDS_SIGN_IN) return SyncResult.NeedsSignIn
         val provider = registry.current() ?: return SyncResult.NoAccount
@@ -71,21 +127,7 @@ class SyncEngine(
         val stillConnected: suspend () -> Boolean = { store.accounts.get()?.provider == account.provider }
 
         return try {
-            // Pull first: a pending edit only goes out if it is newer than what changed elsewhere
-            // (FR-023), and creates whose answer was lost are recognised before being retried.
-            // Once open tasks are in, the app is usable: local changes go out, and the rest of a
-            // first sync carries on quietly behind them.
-            var waitedEarly = false
-            Puller(store, provider, holds, stillConnected) {
-                running.value = false
-                waitedEarly = Pusher(store, provider).pushAll()
-            }.pullAll()
-            if (!stillConnected()) return SyncResult.NoAccount
-            val waited = Pusher(store, provider).pushAll() || waitedEarly
-            store.accounts.get()?.takeIf { it.provider == account.provider }?.let {
-                store.accounts.upsert(it.copy(lastSyncAt = store.now()))
-            }
-            if (waited || db.pendingOperationDao().all().isNotEmpty()) SyncResult.Retry() else SyncResult.Success
+            block(provider, stillConnected)
         } catch (_: ProviderError.AuthRequired) {
             store.accounts.get()?.takeIf { it.provider == account.provider }?.let {
                 store.accounts.upsert(it.copy(authState = AuthState.NEEDS_SIGN_IN))

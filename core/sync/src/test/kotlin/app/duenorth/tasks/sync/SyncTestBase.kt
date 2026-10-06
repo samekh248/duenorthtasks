@@ -66,10 +66,13 @@ abstract class SyncTestBase {
         db.close()
     }
 
-    /** Runs a sync with the clock moved on, so remote and local stamps never tie by accident. */
+    /**
+     * Runs a sync with the clock moved on, so remote and local stamps never tie by accident, then
+     * the history load it left behind, as the scheduler would.
+     */
     protected fun sync(): SyncResult = runBlocking {
         clock.tick()
-        engine.sync()
+        engine.sync().also { if (engine.backfillPending) engine.backfill() }
     }
 
     protected fun <T> io(block: suspend () -> T): T = runBlocking {
