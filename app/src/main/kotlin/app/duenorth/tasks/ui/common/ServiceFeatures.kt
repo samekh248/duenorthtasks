@@ -19,6 +19,11 @@ class ServiceFeatures @Inject constructor(accounts: AccountRepository, private v
         .map { account -> account != null && registry.current()?.capabilities?.importance == true }
         .distinctUntilChanged()
 
+    /** Lists can be shared (spec 002): To Do can, Google Tasks can't. */
+    val sharedLists: Flow<Boolean> = accounts.account
+        .map { account -> account != null && registry.current()?.capabilities?.sharedLists == true }
+        .distinctUntilChanged()
+
     /** Task and step order (specs/003-reordering): Google Tasks stores it, To Do doesn't. */
     val storesOrder: Flow<Boolean> = accounts.account
         .map { account -> account != null && registry.current()?.capabilities?.manualOrder == true }

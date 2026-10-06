@@ -1,6 +1,7 @@
 package app.duenorth.tasks.provider.fake
 
 import app.duenorth.tasks.provider.api.AccountInfo
+import app.duenorth.tasks.provider.api.Assignment
 import app.duenorth.tasks.provider.api.ListPatch
 import app.duenorth.tasks.provider.api.Patch
 import app.duenorth.tasks.provider.api.ProviderCapabilities
@@ -79,6 +80,20 @@ class FakeProvider(
         val list = createList(title)
         tasks.forEach { createTask(list.id, it) }
         return list
+    }
+
+    /** Shares or unshares a list as if done in the service's own app (spec 002). */
+    suspend fun setSharing(listId: String, isShared: Boolean, isOwner: Boolean = true): RemoteList = mutex.withLock {
+        val list = lists[listId] ?: throw ProviderError.NotFound(listId)
+        list.copy(isShared = isShared, isOwner = isOwner, etag = etag(), updatedAt = now()).also { lists[listId] = it }
+    }
+
+    /** Marks a task as assigned to the user from elsewhere, as Google Docs or Chat would. */
+    suspend fun assign(listId: String, id: String, assignment: Assignment?): RemoteTask = mutex.withLock {
+        val stored = tasks[id]?.takeIf { it.task.listId == listId } ?: throw ProviderError.NotFound(id)
+        val task = stored.task.copy(assignment = assignment, etag = etag(), updatedAt = now())
+        tasks[id] = StoredTask(task, ++version)
+        task
     }
 
     /** Changes a task as if edited on the web, without going through the app. */

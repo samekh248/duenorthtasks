@@ -48,7 +48,9 @@ internal fun TodoTaskListDto.toRemote(now: Instant) = RemoteList(
     isDefault = wellknownListName == "defaultList",
     etag = etag,
     // Graph does not expose a modified time for lists.
-    updatedAt = now
+    updatedAt = now,
+    isShared = isShared,
+    isOwner = isOwner
 )
 
 internal fun TodoTaskDto.toRemote(listId: String, zone: ZoneId, now: Instant, steps: List<ChecklistItemDto>?) =

@@ -27,6 +27,7 @@ import app.duenorth.tasks.ui.order.ReorderListsScreen
 import app.duenorth.tasks.ui.search.SearchScreen
 import app.duenorth.tasks.ui.settings.SettingsScreen
 import app.duenorth.tasks.ui.shade.ListShadeScreen
+import app.duenorth.tasks.ui.sharing.SharingScreen
 import app.duenorth.tasks.ui.synclog.SyncLogScreen
 
 object Routes {
@@ -38,12 +39,15 @@ object Routes {
     const val GALLERY = "gallery"
     const val SETTINGS = "settings"
     const val LIST_SHADE = "list/{id}/shade"
+    const val LIST_SHARING = "list/{id}/sharing"
     const val SYNC_LOG = "sync-log"
     const val REORDER_LISTS = "lists/reorder?from={from}"
 
     fun list(id: String) = "list/$id"
 
     fun listShade(id: String) = "list/$id/shade"
+
+    fun listSharing(id: String) = "list/$id/sharing"
 
     fun task(id: String) = "task/$id"
 
@@ -78,6 +82,7 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
                 sync = app.syncNow,
                 openSettings = { nav.navigate(Routes.SETTINGS) },
                 openListShade = { nav.navigate(Routes.listShade(it)) },
+                openListInfo = { nav.navigate(Routes.listSharing(it)) },
                 openSyncLog = { nav.navigate(Routes.SYNC_LOG) },
                 reorderLists = { nav.navigate(Routes.reorderLists(it)) },
                 menuItems = if (DebugRoutes.GALLERY_ENABLED) {
@@ -93,12 +98,21 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
                 ListScreen(
                     onOpenTask = { nav.navigate(Routes.task(it)) },
                     onClosed = { nav.closeIfOn(entry) },
-                    onShade = { id -> nav.navigate(Routes.listShade(id)) }
+                    onShade = { id -> nav.navigate(Routes.listShade(id)) },
+                    onInfo = { id -> nav.navigate(Routes.listSharing(id)) }
                 )
             }
         }
         composable(Routes.LIST_SHADE) {
             Page(this) { ListShadeScreen() }
+        }
+        composable(Routes.LIST_SHARING) { entry ->
+            Page(this) {
+                SharingScreen(
+                    onClosed = { nav.closeIfOn(entry) },
+                    onShade = { id -> nav.navigate(Routes.listShade(id)) }
+                )
+            }
         }
         composable(Routes.SETTINGS) {
             Page(this) {

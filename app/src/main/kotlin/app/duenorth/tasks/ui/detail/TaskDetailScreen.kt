@@ -4,6 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,7 +33,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -40,6 +44,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.duenorth.tasks.data.db.AssignmentSource
 import app.duenorth.tasks.design.components.AppBarButton
 import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.components.ContextMenuItem
@@ -50,6 +55,7 @@ import app.duenorth.tasks.design.components.MetroContextMenu
 import app.duenorth.tasks.design.components.MetroDatePicker
 import app.duenorth.tasks.design.components.MetroDialog
 import app.duenorth.tasks.design.components.MetroIcon
+import app.duenorth.tasks.design.components.MetroIconGlyph
 import app.duenorth.tasks.design.components.MetroLink
 import app.duenorth.tasks.design.components.MetroLinkifiedText
 import app.duenorth.tasks.design.components.MetroPickerDialog
@@ -59,6 +65,7 @@ import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.components.MetroToggle
 import app.duenorth.tasks.design.motion.continuumTarget
+import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.listAccent
@@ -177,6 +184,7 @@ fun TaskDetailContent(
                         color = listAccent(state.listId).text
                     )
                 }
+                if (state.assignedFrom != AssignmentSource.NONE) AssignedBox(state)
                 if (!state.details.isNullOrBlank()) {
                     Label("details")
                     MetroLinkifiedText(state.details, type.body)
@@ -357,5 +365,56 @@ private fun AddStepField(onAdd: (String) -> Unit) {
             onAdd(draft.trim())
             draft = ""
         })
+    )
+}
+
+/**
+ * spec 002 US4: where a task assigned to the user came from, with a way back there. Google says
+ * the doc or space, not the person, so the note says that plainly (FR-132).
+ */
+@Composable
+private fun AssignedBox(state: TaskDetailUiState) {
+    val uriHandler = LocalUriHandler.current
+    val document = state.assignedFrom == AssignmentSource.DOCUMENT
+    Label("assigned to you")
+    Column(
+        Modifier.fillMaxWidth().border(2.dp, MetroTheme.colors.secondary).padding(MetroDimens.Gutter),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MetroIconGlyph(MetroIcon.People, size = 24.dp)
+            MetroText(
+                when (state.assignedFrom) {
+                    AssignmentSource.DOCUMENT -> "from a google doc"
+                    AssignmentSource.SPACE -> "from a chat space"
+                    else -> "by someone else"
+                },
+                MetroTheme.typography.subheader
+            )
+        }
+        state.assignmentLink?.let { link ->
+            Row(
+                Modifier
+                    .heightIn(min = MetroDimens.TouchTarget)
+                    .metroTilt()
+                    .clickable(interactionSource = null, indication = null, role = Role.Button) {
+                        runCatching { uriHandler.openUri(link) }
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                MetroIconGlyph(MetroIcon.OpenOutside, color = MetroTheme.accent.text, size = 20.dp)
+                MetroText(
+                    if (document) "open in google docs" else "open in google chat",
+                    MetroTheme.typography.body,
+                    color = MetroTheme.accent.text
+                )
+            }
+        }
+    }
+    MetroText(
+        "Google doesn't say who assigned it. Edits here sync back to the task.",
+        MetroTheme.typography.caption,
+        color = MetroTheme.colors.secondary
     )
 }

@@ -65,7 +65,8 @@ class MicrosoftTodoProvider internal constructor(
     private val clock: Clock = Clock.systemUTC()
 ) : TaskProvider {
     override val kind = ProviderKind.MICROSOFT
-    override val capabilities = ProviderCapabilities(importance = true, manualOrder = false, dueTime = false)
+    override val capabilities =
+        ProviderCapabilities(importance = true, manualOrder = false, dueTime = false, sharedLists = true)
 
     override suspend fun signIn(host: SignInHost): AccountInfo = auth.signIn(host)
 

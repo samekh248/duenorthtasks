@@ -142,6 +142,7 @@ class MetroComponentScreenshotTest {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             MetroListTile(count = 4)
             MetroListTile(count = 12)
+            MetroListTile(count = 7, shared = true)
             MetroListTile(count = null)
         }
     }

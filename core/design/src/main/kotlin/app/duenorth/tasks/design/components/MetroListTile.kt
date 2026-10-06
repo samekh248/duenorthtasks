@@ -17,7 +17,8 @@ import app.duenorth.tasks.design.theme.MetroWeights
 
 /**
  * A list's tile: a flat square in the list's shade of the accent with its open-task count in the
- * bottom-right corner (research R3). Pass [count] = null for the outlined "new list" tile.
+ * bottom-right corner (research R3). Pass [count] = null for the outlined "new list" tile, and
+ * [shared] = true to put the two-people glyph in the top-left corner (spec 002).
  */
 @Composable
 fun MetroListTile(
@@ -25,7 +26,8 @@ fun MetroListTile(
     modifier: Modifier = Modifier,
     fill: Color = MetroTheme.accent.fill,
     onFill: Color = MetroTheme.accent.onFill,
-    size: Dp = 64.dp
+    size: Dp = 64.dp,
+    shared: Boolean = false
 ) {
     if (count == null) {
         Box(
@@ -37,6 +39,14 @@ fun MetroListTile(
         return
     }
     Box(modifier.size(size).background(fill), contentAlignment = Alignment.BottomEnd) {
+        if (shared) {
+            MetroIconGlyph(
+                MetroIcon.People,
+                Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 4.dp),
+                color = onFill,
+                size = 20.dp
+            )
+        }
         MetroText(
             count.toString(),
             MetroTheme.typography.listName.copy(fontSize = 22.sp, fontWeight = MetroWeights.Light),

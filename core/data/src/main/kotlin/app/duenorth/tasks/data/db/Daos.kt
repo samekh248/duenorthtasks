@@ -32,7 +32,9 @@ data class ListSummary(
     val title: String,
     val isDefault: Boolean,
     val openCount: Int,
-    val nextTaskTitle: String?
+    val nextTaskTitle: String?,
+    val isShared: Boolean = false,
+    val isOwner: Boolean = true
 )
 
 /** A list's ids only, for phone-side display preferences keyed by remote id (list shades). */
@@ -45,7 +47,7 @@ interface TaskListDao {
 
     @Query(
         """
-        SELECT l.localId, l.remoteId, l.title, l.isDefault,
+        SELECT l.localId, l.remoteId, l.title, l.isDefault, l.isShared, l.isOwner,
             (SELECT COUNT(*) FROM task t
                 WHERE t.listId = l.localId AND t.completed = 0 AND t.deletedLocally = 0) AS openCount,
             (SELECT t.title FROM task t

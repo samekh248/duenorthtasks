@@ -172,7 +172,8 @@ document and a space; check the caption, the link intent and that ordinary tasks
 
 - **Sharing changes while a list is open**: the header line and app bar button appear or vanish
   in place; the user is not navigated away. If the user is removed from a list they're looking at,
-  they stay on the page until they leave it, with a banner "no longer shared with you".
+  the page closes as for any list deleted elsewhere (spec 001), and the sync log says "no longer
+  shared with you". (Built 2026-10-06; a banner that keeps the page open is deferred, task S053.)
 - **Ownership flag missing**: if Graph omits `isOwner` or `isShared`, treat the list as private
   and owned (today's behavior) rather than guessing.
 - **The default "Tasks" list and "Flagged email"** can't be shared in To Do; they are never marked.
@@ -208,7 +209,7 @@ document and a space; check the caption, the link intent and that ordinary tasks
 
 - **FR-110**: The app MUST provide a **sharing** page for every list (reached from the list page,
   and from a new "list info" long-press item) with: status (shared by you, shared with you, or only
-  you), "who's in it", "what you can do here", and the list-shade swatches.
+  you), "who's in it", "what you can do here", and a link to the list-shade page.
 - **FR-111**: For Microsoft To Do, "who's in it" MUST say that To Do doesn't share member names
   with other apps and MUST offer a link to view people in Microsoft To Do. The app MUST NOT show,
   store or invent member names, counts or avatars.
