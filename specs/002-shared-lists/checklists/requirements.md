@@ -32,4 +32,4 @@
 
 ## Notes
 
-- Plan and tasks come next (`/speckit-plan`, `/speckit-tasks`) once the spec is approved.
+- Spec approved by Dustin 2026-10-06; plan.md and tasks.md added.

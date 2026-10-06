@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-05
 
-**Status**: Draft
+**Status**: Approved (Dustin, 2026-10-06)
 
 **Input**: User description: "Create a new spec to fully support shared lists. The lists already
 show up in my list, but it doesn't say it is shared, who it is shared with, etc."
