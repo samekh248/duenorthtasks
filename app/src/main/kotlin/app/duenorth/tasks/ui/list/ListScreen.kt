@@ -64,6 +64,7 @@ import app.duenorth.tasks.ui.common.ReorderHint
 import app.duenorth.tasks.ui.common.ReorderRow
 import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
+import app.duenorth.tasks.ui.common.clearCompletedMessage
 import app.duenorth.tasks.ui.common.deleteListMessage
 import app.duenorth.tasks.ui.common.deleteListTitle
 import app.duenorth.tasks.ui.common.frozen
@@ -166,6 +167,7 @@ private fun ListPage(
     var sorting by rememberSaveable { mutableStateOf(false) }
     var renaming by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf(false) }
+    var clearing by rememberSaveable { mutableStateOf(false) }
     var moving by remember { mutableStateOf<TaskRowUi?>(null) }
     val listState = rememberLazyListState()
     val hold = rememberTouchHold(listState, viewModel::holdSync)
@@ -275,6 +277,7 @@ private fun ListPage(
             // Only the owner can rename or delete a shared list (spec 002 FR-120).
             menuItems = listOfNotNull(
                 AppBarMenuItem("rename list") { renaming = true }.takeIf { state.sharing.canManage },
+                AppBarMenuItem("clear completed") { clearing = true }.takeIf { state.completed.isNotEmpty() },
                 AppBarMenuItem("list shade") { onShade(viewModel.listId) },
                 AppBarMenuItem("list info") { onInfo(viewModel.listId) },
                 AppBarMenuItem("save as template") { viewModel.saveAsTemplate(onTemplates.openListTemplate) },
@@ -318,6 +321,18 @@ private fun ListPage(
                 viewModel.delete()
             },
             onDismiss = { deleting = false }
+        )
+    }
+    if (clearing) {
+        MetroDialog(
+            title = "clear completed?",
+            message = clearCompletedMessage(state.completed.size, state.sharing, state.serviceName),
+            confirmLabel = "clear",
+            onConfirm = {
+                clearing = false
+                viewModel.clearCompleted()
+            },
+            onDismiss = { clearing = false }
         )
     }
     moving?.let { task ->

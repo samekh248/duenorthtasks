@@ -1,6 +1,7 @@
 package app.duenorth.tasks.provider.microsoft
 
 import app.duenorth.tasks.provider.api.AccountInfo
+import app.duenorth.tasks.provider.api.BulkDelete
 import app.duenorth.tasks.provider.api.ListPatch
 import app.duenorth.tasks.provider.api.ProviderCapabilities
 import app.duenorth.tasks.provider.api.ProviderError
@@ -237,6 +238,55 @@ class MicrosoftTodoProvider internal constructor(
     override suspend fun moveTask(listId: String, id: String, afterId: String?) = Unit
 
     override suspend fun deleteTask(listId: String, id: String) = graphCall(id) { api.deleteTask(listId, id) }
+
+    /**
+     * Graph has no "delete completed", so each task is its own DELETE, sent [MAX_BATCH] to a
+     * `$batch` call, one call at a time. Parts To Do turns away for being busy are asked again
+     * after the pause it names; past a few rounds this stops and the sync backs off as a whole.
+     */
+    override suspend fun deleteTasks(listId: String, ids: List<String>): BulkDelete {
+        val deleted = mutableSetOf<String>()
+        val refused = mutableSetOf<String>()
+        for (chunk in ids.chunked(MAX_BATCH)) {
+            var pending = chunk
+            var attempt = 0
+            while (pending.isNotEmpty()) {
+                val requests = pending.mapIndexed { i, id ->
+                    BatchRequestItem(
+                        id = "${i + 1}",
+                        method = "DELETE",
+                        url = "/me/todo/lists/${listId.urlSegment()}/tasks/${id.urlSegment()}"
+                    )
+                }
+                val response = try {
+                    graphCall(listId) { api.batch(BatchRequestDto(requests)) }
+                } catch (e: ProviderError) {
+                    return BulkDelete(deleted, refused, e)
+                }
+                val byId = response.responses.associateBy { it.id }
+                val throttled = mutableListOf<Pair<String, BatchResponseItem>>()
+                pending.forEachIndexed { i, id ->
+                    val item = byId["${i + 1}"]
+                    when {
+                        // Missing from the answer: ask again with the throttled ones.
+                        item == null -> throttled += id to BatchResponseItem("${i + 1}", 503)
+                        item.status in 200..299 || item.status == 404 -> deleted += id
+                        item.status == 403 -> refused += id
+                        item.status == 429 || item.status == 503 -> throttled += id to item
+                        else -> return BulkDelete(deleted, refused, item.toError(id))
+                    }
+                }
+                if (throttled.isEmpty()) break
+                if (++attempt > BATCH_RETRIES) {
+                    return BulkDelete(deleted, refused, throttled.first().let { (id, item) -> item.toError(id) })
+                }
+                val wait = throttled.maxOf { (_, item) -> parseRetryAfter(item.retryAfter()) }
+                delay(wait.coerceIn(MIN_BATCH_PAUSE, MAX_BATCH_PAUSE))
+                pending = throttled.map { it.first }
+            }
+        }
+        return BulkDelete(deleted, refused)
+    }
 
     private suspend fun fetchTask(listId: String, id: String): RemoteTask {
         val task = graphCall(id) { api.task(listId, id) }

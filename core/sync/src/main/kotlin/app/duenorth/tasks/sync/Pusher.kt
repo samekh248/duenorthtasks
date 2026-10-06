@@ -134,17 +134,40 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
             OperationKind.CREATE -> createTask(op, task)
             OperationKind.UPDATE -> updateTask(op, task)
             OperationKind.MOVE -> moveTask(op, task)
-            OperationKind.DELETE -> {
-                val remoteId = task.remoteId
-                val listRemoteId = store.lists.get(task.listId)?.remoteId
-                if (remoteId != null && listRemoteId != null) provider.deleteTask(listRemoteId, remoteId)
-                store.transaction {
-                    store.dropStepOps(task.localId)
-                    store.dropOps(EntityType.TASK, task.localId)
-                    store.tasks.delete(task.localId)
-                }
+            OperationKind.DELETE -> deleteTasks(op, task)
+        }
+    }
+
+    /**
+     * Deletes [task] together with the other deletes queued in its list, up to [DELETES_AT_ONCE],
+     * so clearing a list's completed tasks costs a few requests instead of one per task. Each one
+     * done is settled as soon as the service answers; a refused one is put back on its own.
+     */
+    private suspend fun deleteTasks(op: PendingOperationEntity, task: TaskEntity) {
+        val remoteId = task.remoteId
+        val listRemoteId = store.lists.get(task.listId)?.remoteId
+        if (remoteId == null || listRemoteId == null) return finishTaskDelete(task.localId)
+        val batch = mutableListOf(op to task)
+        for (other in store.ops.all()) {
+            if (batch.size == DELETES_AT_ONCE) break
+            if (other.entity != EntityType.TASK || other.kind != OperationKind.DELETE || other.seq == op.seq) continue
+            val otherTask = store.tasks.get(other.entityLocalId) ?: continue
+            if (otherTask.listId == task.listId && otherTask.remoteId != null) batch += other to otherTask
+        }
+        val result = provider.deleteTasks(listRemoteId, batch.map { (_, it) -> checkNotNull(it.remoteId) })
+        for ((each, eachTask) in batch) {
+            when (eachTask.remoteId) {
+                in result.deleted -> finishTaskDelete(eachTask.localId)
+                in result.refused -> notAllowed(each)
             }
         }
+        result.stoppedBy?.let { throw it }
+    }
+
+    private suspend fun finishTaskDelete(localId: String) = store.transaction {
+        store.dropStepOps(localId)
+        store.dropOps(EntityType.TASK, localId)
+        store.tasks.delete(localId)
     }
 
     private suspend fun createTask(op: PendingOperationEntity, task: TaskEntity) {
@@ -551,5 +574,8 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
 
     companion object {
         const val MAX_ATTEMPTS = 10
+
+        /** Task deletes sent in one go; each is settled as it is confirmed, so a stop loses none. */
+        const val DELETES_AT_ONCE = 100
     }
 }
