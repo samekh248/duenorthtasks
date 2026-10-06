@@ -16,6 +16,7 @@ import app.duenorth.tasks.provider.api.StepPatch
 import app.duenorth.tasks.provider.api.TaskDraft
 import app.duenorth.tasks.provider.api.TaskPatch
 import app.duenorth.tasks.provider.api.TaskProvider
+import app.duenorth.tasks.sync.SyncStore.Companion.toJson
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 
@@ -46,6 +47,8 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
                 waited = true
             } catch (e: ProviderError.NotFound) {
                 notFound(op, e)
+            } catch (_: ProviderError.NotAllowed) {
+                notAllowed(op)
             } catch (e: ProviderError.Conflict) {
                 // The pull that follows applies the conflict rule; give up on it if it keeps coming back.
                 countFailure(op, e)
@@ -349,6 +352,55 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
     }
 
     // Failures
+
+    /**
+     * The service refused [op] (FR-122): drop it, put the remote copy back here, say so in the
+     * sync log, and carry on with the rest. Only a create, which has no remote copy, is removed.
+     */
+    private suspend fun notAllowed(op: PendingOperationEntity) = store.transaction {
+        store.ops.delete(op.seq)
+        val task = when (op.entity) {
+            EntityType.LIST -> null
+            EntityType.TASK -> store.tasks.get(op.entityLocalId)
+            EntityType.STEP -> store.steps.get(op.entityLocalId)?.let { store.tasks.get(it.taskId) }
+        }
+        val list = store.lists.get(task?.listId ?: op.entityLocalId) ?: return@transaction
+        when {
+            task == null && list.remoteId == null -> {
+                store.log(SyncLogType.ERROR, "“${list.title}” couldn't be created in your account")
+                return@transaction
+            }
+            task == null -> {
+                // A rename comes back with the next pull; a delete is undone here.
+                if (list.deletedLocally) {
+                    store.lists.update(list.copy(deletedLocally = false, tasksCursor = null))
+                    store.tasks.restoreInList(list.localId)
+                }
+                store.log(SyncLogType.CONFLICT, "You can't change the list “${list.title}”, so it was put back")
+            }
+            task.remoteId == null -> {
+                store.log(
+                    SyncLogType.CONFLICT,
+                    "“${task.title}” couldn't be added to “${list.title}”, so it was removed here",
+                    task.toJson(store.steps.forTask(task.localId))
+                )
+                store.dropStepOps(task.localId)
+                store.dropOps(EntityType.TASK, task.localId)
+                store.tasks.delete(task.localId)
+            }
+            else -> {
+                store.dropStepOps(task.localId)
+                store.dropOps(EntityType.TASK, task.localId)
+                store.tasks.update(task.copy(deletedLocally = false))
+                // Reading the list again brings back the remote copy of what was refused.
+                store.lists.update(list.copy(tasksCursor = null))
+                store.log(
+                    SyncLogType.CONFLICT,
+                    "You can't change “${task.title}” in “${list.title}”, so it was put back"
+                )
+            }
+        }
+    }
 
     private suspend fun notFound(op: PendingOperationEntity, error: ProviderError.NotFound) {
         when (op.entity) {

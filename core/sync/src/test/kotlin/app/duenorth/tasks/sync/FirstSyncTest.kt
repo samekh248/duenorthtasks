@@ -81,6 +81,28 @@ class FirstSyncTest : SyncTestBase() {
     }
 
     @Test
+    fun aBackfillThatKeepsFailingDoesNotHoldBackChangesMadeHere() = runBlocking {
+        val errands = remote.seed("Errands")
+        seedTasks(errands.id, open = 1, done = 3)
+        // The completed-task history never finishes loading, as when the service keeps throttling.
+        val stuck = object : TaskProvider by remote {
+            override suspend fun getTaskChanges(listId: String, cursor: String?): TaskChangePage =
+                throw app.duenorth.tasks.provider.api.ProviderError.RateLimited(kotlin.time.Duration.ZERO)
+        }
+        engine =
+            SyncEngine(db, { stuck }, holds, clock, { java.util.UUID.randomUUID().toString() }, Dispatchers.Unconfined)
+        sync()
+        assertEquals(1, tasks("Errands").size)
+
+        val mine = io { repo.createList("Mine") }
+        io { repo.createTask(mine, "Made on the phone") }
+        sync()
+
+        val remoteMine = remote.getLists().single { it.title == "Mine" }
+        assertEquals(listOf("Made on the phone"), remoteTasks(remoteMine.id).map { it.title })
+    }
+
+    @Test
     fun aLargeHistoryLoadsWithoutSlowingDownAsItGrows() = runBlocking {
         val big = remote.seed("Big")
         seedTasks(big.id, open = 50, done = 1500)

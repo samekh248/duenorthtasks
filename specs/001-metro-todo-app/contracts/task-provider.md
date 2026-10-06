@@ -93,6 +93,7 @@ exceptions:
 | `ProviderError` | Google cause | Microsoft cause | Sync engine reaction |
 |---|---|---|---|
 | `AuthRequired` | 401, `UserRecoverableAuthException` | 401, `MsalUiRequiredException` | stop, set `NEEDS_SIGN_IN` |
+| `NotAllowed` | 403 (not a rate limit) | 403 | drop that op, restore the remote copy, log it, carry on (spec 002 FR-122) |
 | `NotFound` | 404 | 404 | drop op, or recover tasks (edge case) |
 | `Conflict` | 412 (etag) | 409 / 412 | re-pull entity, apply conflict rule |
 | `RateLimited(retryAfter)` | 429, 403 `rateLimitExceeded` | 429 + `Retry-After` | back off |

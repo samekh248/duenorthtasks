@@ -73,10 +73,15 @@ class SyncEngine(
         return try {
             // Pull first: a pending edit only goes out if it is newer than what changed elsewhere
             // (FR-023), and creates whose answer was lost are recognised before being retried.
-            // Once open tasks are in, the app is usable: the rest of a first sync carries on quietly.
-            Puller(store, provider, holds, stillConnected) { running.value = false }.pullAll()
+            // Once open tasks are in, the app is usable: local changes go out, and the rest of a
+            // first sync carries on quietly behind them.
+            var waitedEarly = false
+            Puller(store, provider, holds, stillConnected) {
+                running.value = false
+                waitedEarly = Pusher(store, provider).pushAll()
+            }.pullAll()
             if (!stillConnected()) return SyncResult.NoAccount
-            val waited = Pusher(store, provider).pushAll()
+            val waited = Pusher(store, provider).pushAll() || waitedEarly
             store.accounts.get()?.takeIf { it.provider == account.provider }?.let {
                 store.accounts.upsert(it.copy(lastSyncAt = store.now()))
             }

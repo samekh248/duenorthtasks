@@ -10,6 +10,12 @@ sealed class ProviderError(message: String, cause: Throwable? = null) : Exceptio
     /** The user must sign in again. Sync stops and the account is marked NEEDS_SIGN_IN. */
     class AuthRequired(cause: Throwable? = null) : ProviderError("Sign-in required", cause)
 
+    /**
+     * The service refused this one change, for example on a shared list the user doesn't own
+     * (a 403 that isn't a rate limit). Unlike [AuthRequired], the rest of the sync carries on.
+     */
+    class NotAllowed(val id: String, cause: Throwable? = null) : ProviderError("Not allowed: $id", cause)
+
     /** The list or task no longer exists remotely. */
     class NotFound(val id: String, cause: Throwable? = null) : ProviderError("Not found: $id", cause)
 
