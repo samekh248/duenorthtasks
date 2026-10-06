@@ -69,7 +69,8 @@ internal fun TodoTaskDto.toRemote(listId: String, zone: ZoneId, now: Instant, st
         rawStatus = status,
         steps = (steps ?: checklistItems).orEmpty().map { RemoteStep(it.id, it.displayName, it.isChecked) },
         etag = etag,
-        updatedAt = lastModifiedDateTime?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: now
+        updatedAt = lastModifiedDateTime?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: now,
+        createdAt = createdDateTime?.let { runCatching { Instant.parse(it) }.getOrNull() }
     )
 
 /**

@@ -30,6 +30,7 @@ import kotlinx.coroutines.CancellationException
  */
 internal class Pusher(private val store: SyncStore, private val provider: TaskProvider) {
     private val canStoreImportance = provider.capabilities.importance
+    private val storesOrder = provider.capabilities.manualOrder
 
     /**
      * Pushes everything it can and returns true when some operation had to wait for another.
@@ -174,12 +175,16 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
 
         store.transaction {
             val now = store.tasks.get(task.localId) ?: return@transaction
+            // A move queued after the create still needs the phone's place to send (spec 003).
+            val keepPlace = !storesOrder || store.opsFor(EntityType.TASK, task.localId).any {
+                it.kind == OperationKind.MOVE
+            }
             store.tasks.update(
                 now.copy(
                     remoteId = remote.id,
                     etag = remote.etag,
                     remoteUpdatedAt = remote.updatedAt,
-                    position = remote.position
+                    position = if (keepPlace) now.position else remote.position
                 )
             )
             // Steps sent with the task now exist remotely; pair them with the ids that came back.
@@ -260,7 +265,7 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
     }
 
     private suspend fun moveTask(op: PendingOperationEntity, task: TaskEntity) {
-        val remoteId = task.remoteId ?: return store.ops.delete(op.seq)
+        val remoteId = task.remoteId ?: return waitForCreate(op, EntityType.TASK, task.localId)
         val listRemoteId = store.lists.get(task.listId)?.remoteId ?: throw Deferred
         if (provider.capabilities.manualOrder) {
             val siblings = store.sync.tasksInList(task.listId)
@@ -342,8 +347,42 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
                     store.steps.delete(step.localId)
                 }
             }
-            OperationKind.MOVE -> store.ops.delete(op.seq)
+            OperationKind.MOVE -> moveStep(op, step, task, listRemoteId, taskRemoteId)
         }
+    }
+
+    /**
+     * Sends a step's new place: right after the nearest step above it that exists remotely, or
+     * first. Services that keep no order never get one (FR-222, FR-223).
+     */
+    private suspend fun moveStep(
+        op: PendingOperationEntity,
+        step: StepEntity,
+        task: TaskEntity,
+        listRemoteId: String,
+        taskRemoteId: String
+    ) {
+        if (!storesOrder) return store.ops.delete(op.seq)
+        val stepRemoteId = step.remoteId ?: return waitForCreate(op, EntityType.STEP, step.localId)
+        val above = store.steps.forTask(task.localId)
+            .filter { !it.deletedLocally && it.sortOrder < step.sortOrder }
+            .lastOrNull { it.remoteId != null }
+            ?.remoteId
+        val remote = provider.updateTask(
+            listRemoteId,
+            taskRemoteId,
+            TaskPatch(steps = listOf(StepPatch.Move(stepRemoteId, above)))
+        )
+        store.transaction {
+            recordTask(task, remote)
+            store.ops.delete(op.seq)
+        }
+    }
+
+    /** A move of something not created remotely yet waits for its create; with none queued, it is moot. */
+    private suspend fun waitForCreate(op: PendingOperationEntity, entity: EntityType, localId: String) {
+        if (store.opsFor(entity, localId).any { it.kind == OperationKind.CREATE }) throw Deferred
+        store.ops.delete(op.seq)
     }
 
     private suspend fun recordTask(task: TaskEntity, remote: RemoteTask) {

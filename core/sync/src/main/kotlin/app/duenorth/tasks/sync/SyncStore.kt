@@ -88,7 +88,8 @@ internal class SyncStore(
      */
     suspend fun recreate(task: TaskEntity, listId: String = task.listId) {
         journal.clear(task.localId)
-        tasks.update(task.copy(listId = listId, remoteId = null, etag = null, remoteUpdatedAt = null, position = null))
+        // The order key stays: the phone's place for it holds until the service gives its own.
+        tasks.update(task.copy(listId = listId, remoteId = null, etag = null, remoteUpdatedAt = null))
         steps.forTask(task.localId).forEach { step ->
             if (step.deletedLocally) steps.delete(step.localId) else steps.update(step.copy(remoteId = null))
         }
@@ -112,13 +113,23 @@ internal class SyncStore(
 
     fun newLocalId(): String = newId()
 
-    /** Remote steps merged into [taskId]: remote ones update or appear, ones gone remotely leave. */
-    suspend fun mergeSteps(taskId: String, remote: RemoteTask, keepPending: Set<String>) {
+    /**
+     * Remote steps merged into [taskId]: remote ones update or appear, ones gone remotely leave.
+     * The remote order is taken unless [keepOrder] (the service keeps none, or a move made here is
+     * still queued); then steps keep the phone's order and new ones go to the end.
+     */
+    suspend fun mergeSteps(taskId: String, remote: RemoteTask, keepPending: Set<String>, keepOrder: Boolean = false) {
         val local = steps.forTask(taskId)
         val byRemote = local.filter { it.remoteId != null }.associateBy { it.remoteId }
         val remoteIds = remote.steps.map { it.id }.toSet()
+        var next = (local.maxOfOrNull { it.sortOrder } ?: -1) + 1
         remote.steps.forEachIndexed { index, step ->
             val existing = byRemote[step.id]
+            val order = when {
+                !keepOrder -> index
+                existing != null -> existing.sortOrder
+                else -> next++
+            }
             when {
                 existing == null -> steps.insert(
                     StepEntity(
@@ -127,17 +138,18 @@ internal class SyncStore(
                         remoteId = step.id,
                         title = step.title,
                         done = step.done,
-                        sortOrder = index
+                        sortOrder = order
                     )
                 )
-                existing.localId in keepPending -> steps.update(existing.copy(sortOrder = index))
+                existing.localId in keepPending -> steps.update(existing.copy(sortOrder = order))
                 else -> steps.update(
-                    existing.copy(title = step.title, done = step.done, sortOrder = index, deletedLocally = false)
+                    existing.copy(title = step.title, done = step.done, sortOrder = order, deletedLocally = false)
                 )
             }
         }
         local.filter { it.remoteId != null && it.remoteId !in remoteIds && it.localId !in keepPending }
             .forEach { steps.delete(it.localId) }
+        if (keepOrder) return
         // Steps added here and not pushed yet go after the remote ones.
         local.filter { it.remoteId == null }.forEachIndexed { i, step ->
             steps.update(

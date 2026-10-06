@@ -23,7 +23,7 @@ import kotlin.math.sin
  * The app's glyphs, drawn as thin flat strokes like the WP8.1 app bar icons. Drawn in code so the
  * design module needs no Material icon library.
  */
-enum class MetroIcon { Add, Sync, Search, Settings, Check, Delete, Edit, Sort, Close, More, Back, Star }
+enum class MetroIcon { Add, Sync, Search, Settings, Check, Delete, Edit, Sort, Close, More, Back, Star, Reorder, Gripper }
 
 @Composable
 fun MetroIconGlyph(
@@ -142,6 +142,25 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
             line(4f, 7f, 20f, 7f)
             line(4f, 12f, 15f, 12f)
             line(4f, 17f, 10f, 17f)
+        }
+
+        // Two bars with arrows leaving up and down: "reorder" in the app bar (spec 003).
+        MetroIcon.Reorder -> {
+            line(4f, 10f, 20f, 10f)
+            line(4f, 14f, 20f, 14f)
+            line(12f, 2.5f, 12f, 7f)
+            line(9f, 5f, 12f, 2f)
+            line(15f, 5f, 12f, 2f)
+            line(12f, 17f, 12f, 21.5f)
+            line(9f, 19f, 12f, 22f)
+            line(15f, 19f, 12f, 22f)
+        }
+
+        // Three short bars: the drag handle on rows in reorder mode.
+        MetroIcon.Gripper -> {
+            line(5f, 8f, 19f, 8f)
+            line(5f, 12f, 19f, 12f)
+            line(5f, 16f, 19f, 16f)
         }
 
         MetroIcon.More -> {

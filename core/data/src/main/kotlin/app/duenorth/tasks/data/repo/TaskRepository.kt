@@ -12,6 +12,7 @@ import app.duenorth.tasks.data.db.StepEntity
 import app.duenorth.tasks.data.db.TaskEntity
 import app.duenorth.tasks.data.db.TaskListEntity
 import app.duenorth.tasks.data.db.TaskWithList
+import app.duenorth.tasks.data.order.OrderKeys
 import app.duenorth.tasks.provider.api.Patch
 import java.time.Clock
 import java.time.Instant
@@ -34,6 +35,11 @@ import kotlinx.coroutines.flow.flowOf
 class TaskRepository(
     private val db: DueNorthDatabase,
     private val clock: Clock = Clock.systemUTC(),
+    /**
+     * True when the connected service stores order (Google Tasks): moves are then queued for
+     * sync. When it doesn't (Microsoft To Do), order lives only in the phone's keys.
+     */
+    private val serviceStoresOrder: suspend () -> Boolean = { true },
     private val newId: () -> String = { UUID.randomUUID().toString() }
 ) {
     private val accounts = db.accountDao()
@@ -138,6 +144,7 @@ class TaskRepository(
                     title = cleanTitle,
                     notes = cleanNotes,
                     dueDate = dueDate,
+                    position = topKey(listId),
                     localUpdatedAt = now()
                 )
             )
@@ -181,7 +188,7 @@ class TaskRepository(
         }
         edit.listId?.takeIf { it != task.listId }?.let {
             requireList(it)
-            updated = updated.copy(listId = it, position = null)
+            updated = updated.copy(listId = it, position = topKey(it))
             fields += Fields.LIST
         }
         if (fields.isEmpty()) return@write
@@ -211,7 +218,56 @@ class TaskRepository(
         }
     }
 
+    /**
+     * Puts task [localId] after [afterId] and before [beforeId], its new neighbors in "my order"
+     * (null for the top or the bottom). Writes only this task's key; queues a `MOVE` when the
+     * service stores order (spec 003, FR-220, FR-221).
+     */
+    suspend fun moveTask(localId: String, afterId: String?, beforeId: String?) = write {
+        val task = requireTask(localId)
+        val stored = serviceStoresOrder()
+        if (!stored) giveKeysToUnkeyed(task.listId)
+        val after = afterId?.let { tasks.get(it) }
+        val before = beforeId?.let { tasks.get(it) }
+        var updatedAt = if (stored) now() else task.localUpdatedAt
+        val position: String? = when {
+            // Google's first position can be all zeros; no key, newest edit, is the top there.
+            after == null && stored -> null
+            after == null -> OrderKeys.between(null, before?.position) ?: OrderKeys.between(null, null)
+            after.position == null && before != null && before.position == null -> {
+                // Both neighbors are unsynced tasks with no key yet: sit between their edit times.
+                updatedAt = Instant.ofEpochMilli(
+                    (after.localUpdatedAt.toEpochMilli() + before.localUpdatedAt.toEpochMilli()) / 2
+                )
+                null
+            }
+            after.position == null -> OrderKeys.between(null, before?.position)
+            else -> OrderKeys.between(after.position, before?.position) ?: (after.position + "5")
+        }
+        if (position == task.position && updatedAt == task.localUpdatedAt) return@write
+        tasks.update(task.copy(position = position, localUpdatedAt = updatedAt))
+        if (stored) outbox.enqueue(EntityType.TASK, localId, OperationKind.MOVE, now())
+    }
+
     // Steps
+
+    /**
+     * Puts task [taskId]'s steps in [order] (step ids; ones not named keep their place after
+     * them). Renumbers at most 100 rows; queues a `MOVE` for [movedId] when the service stores
+     * order (FR-222).
+     */
+    suspend fun moveStep(taskId: String, movedId: String, order: List<String>) = write {
+        requireTask(taskId)
+        val current = steps.forTask(taskId)
+        val byId = current.associateBy { it.localId }
+        val named = order.mapNotNull { byId[it] }
+        val rest = current.filter { it.localId !in order.toSet() }
+        (named + rest).forEachIndexed { index, step ->
+            if (step.sortOrder != index) steps.update(step.copy(sortOrder = index))
+        }
+        if (serviceStoresOrder()) outbox.enqueue(EntityType.STEP, movedId, OperationKind.MOVE, now())
+        touchTask(taskId)
+    }
 
     suspend fun addStep(taskId: String, title: String): String {
         val clean = Validation.stepTitle(title)
@@ -257,6 +313,25 @@ class TaskRepository(
     // Helpers
 
     private fun now(): Instant = clock.instant()
+
+    /**
+     * Tasks saved before order keys existed (Microsoft To Do) have none and sort first by their
+     * last edit. Gives them keys in that same order, above the keyed ones, so nothing moves.
+     */
+    private suspend fun giveKeysToUnkeyed(listId: String) {
+        val open = tasks.openInList(listId).sortedWith(OrderKeys.taskComparator)
+        val unkeyed = open.takeWhile { it.position == null }
+        if (unkeyed.isEmpty()) return
+        val keys = OrderKeys.keysBefore(open.getOrNull(unkeyed.size)?.position, unkeyed.size)
+        unkeyed.zip(keys).forEach { (task, key) -> tasks.update(task.copy(position = key)) }
+    }
+
+    /**
+     * The order key for a task going to the top of [listId]: none where the service keeps order
+     * (no key sorts first until the service answers with its position), else one above the first.
+     */
+    private suspend fun topKey(listId: String): String? =
+        if (serviceStoresOrder()) null else OrderKeys.between(null, tasks.firstPosition(listId))
 
     private suspend fun write(block: suspend () -> Unit) {
         db.withTransaction { block() }

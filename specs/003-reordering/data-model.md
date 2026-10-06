@@ -11,7 +11,7 @@ erDiagram
         string position "CHANGED meaning: Google position, or a local fractional key; never null after this feature"
     }
     STEP {
-        string orderKey "NEW, replaces int sortOrder: Google subtask position, or a local fractional key"
+        int sortOrder "unchanged type; a move renumbers the task's steps (max 100)"
     }
     PENDING_OPERATION {
         enum entity "LIST, TASK, STEP"
@@ -24,7 +24,7 @@ erDiagram
 | Table | Change | Why |
 |---|---|---|
 | `task` | `position` is always set. Google mode: Google's value, or a local key placed between the neighbors until the move is pushed and pulled back. Microsoft mode: local key only, never overwritten by a pull. | Stable "my order" in both modes (FR-220, FR-223). |
-| `step` | `sortOrder INT` becomes `orderKey TEXT` (migration: keys generated from the current ints, in order). | A move writes one row (FR-241); Google subtask positions fit in it directly. |
+| `step` | No schema change. A move renumbers `sortOrder` for that task's steps in one transaction (at most 100 rows, Validation.MAX_STEPS). Pulls keep the phone's order for Microsoft and while a step `MOVE` is pending. | Avoids a Room migration; 100 small rows is far under a frame. |
 | `pending_operation` | `MOVE` allowed for `STEP`. Coalescing as for tasks: one waiting `MOVE` per entity, sent with the entity's place at push time. | FR-222. |
 
 Pull rules:

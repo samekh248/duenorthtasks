@@ -179,4 +179,7 @@ object Fields {
     const val IMPORTANT = "important"
     const val LIST = "list"
     const val DONE = "done"
+
+    /** Never sent as a field; marks a task whose queued `MOVE` keeps its place over a pull's. */
+    const val POSITION = "position"
 }

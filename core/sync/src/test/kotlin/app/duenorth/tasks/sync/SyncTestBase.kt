@@ -51,7 +51,7 @@ abstract class SyncTestBase {
     fun setUpSync() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = Room.inMemoryDatabaseBuilder(context, DueNorthDatabase::class.java).allowMainThreadQueries().build()
-        repo = TaskRepository(db, clock) { "local${++nextId}" }
+        repo = TaskRepository(db, clock, { remote.capabilities.manualOrder }) { "local${++nextId}" }
         remote = FakeProvider(
             capabilities = ProviderCapabilities(importance = false, manualOrder = true, dueTime = false),
             clock = clock,

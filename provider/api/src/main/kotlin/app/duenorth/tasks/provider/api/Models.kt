@@ -27,7 +27,9 @@ data class RemoteTask(
     val rawStatus: String?,
     val steps: List<RemoteStep>,
     val etag: String?,
-    val updatedAt: Instant
+    val updatedAt: Instant,
+    /** When the task was created, where the service says (To Do); seeds the phone's order there. */
+    val createdAt: Instant? = null
 )
 
 data class RemoteStep(val id: String, val title: String, val done: Boolean)
@@ -77,6 +79,12 @@ sealed interface StepPatch {
     data class Update(val id: String, val title: String? = null, val done: Boolean? = null) : StepPatch
 
     data class Remove(val id: String) : StepPatch
+
+    /**
+     * Puts step [id] right after step [afterId], or first when null. Only sent to services that
+     * store order ([ProviderCapabilities.manualOrder]); others ignore it.
+     */
+    data class Move(val id: String, val afterId: String?) : StepPatch
 }
 
 data class TaskChangePage(
