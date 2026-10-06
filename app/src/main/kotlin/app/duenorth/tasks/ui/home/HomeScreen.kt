@@ -97,10 +97,12 @@ fun HomeScreen(
     actions: HomeActions,
     syncing: Boolean,
     syncButtonTurning: Boolean = syncing,
+    showLists: Boolean = false,
+    onListsShown: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    HomeContent(state, viewModel, actions, syncing, syncButtonTurning)
+    HomeContent(state, viewModel, actions, syncing, syncButtonTurning, showLists, onListsShown)
 }
 
 /** The Light Panorama home (FR-002): "tasks" (with "due north" under it) over today, lists and done. */
@@ -110,7 +112,10 @@ fun HomeContent(
     viewModel: HomeViewModel,
     actions: HomeActions,
     syncing: Boolean = false,
-    syncButtonTurning: Boolean = syncing
+    syncButtonTurning: Boolean = syncing,
+    /** Jump to the lists section, as after making a list from a template; [onListsShown] then clears it. */
+    showLists: Boolean = false,
+    onListsShown: () -> Unit = {}
 ) {
     val pager = rememberPanoramaState(3)
     val scope = rememberCoroutineScope()
@@ -135,6 +140,13 @@ fun HomeContent(
             importanceItem(state.importance, row) { viewModel.setImportant(row.id, it) },
             ContextMenuItem("save as template") { viewModel.saveAsTemplate(row.id, actions.openTemplateTask) }
         )
+    }
+
+    LaunchedEffect(showLists) {
+        if (showLists) {
+            pager.scrollToSection(LISTS)
+            onListsShown()
+        }
     }
 
     LaunchedEffect(pager, viewModel) {

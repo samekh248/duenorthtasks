@@ -19,13 +19,15 @@ import androidx.room.TypeConverters
         TemplateTaskEntity::class,
         TemplateStepEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
     autoMigrations = [
         // Spec 002: list sharing flags and task assignment, all with defaults.
         AutoMigration(from = 1, to = 2),
         // Spec 004: three new template tables.
-        AutoMigration(from = 2, to = 3)
+        AutoMigration(from = 2, to = 3),
+        // "clear completed": when it last ran in each list.
+        AutoMigration(from = 3, to = 4)
     ]
 )
 @TypeConverters(Converters::class)

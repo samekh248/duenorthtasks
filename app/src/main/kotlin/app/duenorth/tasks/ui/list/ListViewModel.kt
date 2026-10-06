@@ -82,7 +82,9 @@ private data class ListPrefs(
     val sort: ListSort = ListSort.MY_ORDER,
     val completedExpanded: Boolean = false,
     val reordering: Boolean = false,
-    val reorderFrom: String? = null
+    val reorderFrom: String? = null,
+    /** Completed tasks "clear completed" took away, hidden until the write that deletes them lands. */
+    val cleared: Set<String> = emptySet()
 )
 
 private data class OrderFeatures(val storesOrder: Boolean, val noteShown: Boolean)
@@ -131,7 +133,10 @@ class ListViewModel @Inject constructor(
     ) { content, lists, (account, importance, order), prefs, (pending, added, picks) ->
         overrides.settle((content.open + content.done).associate { it.task.localId to it.task.completed })
         val all = content.open + content.done
-        adds.settle(all.mapTo(HashSet()) { it.task.localId })
+        val ids = all.mapTo(HashSet()) { it.task.localId }
+        adds.settle(ids)
+        // Once the clear is written the rows are gone; one put back by the service shows again.
+        if (prefs.cleared.any { it !in ids }) settleCleared(ids)
         val rows = all.map { it.toRow(content.today, pending[it.task.localId], importance) }
         val (done, open) = rows.partition { it.completed }
         val title = content.title.orEmpty()
@@ -151,7 +156,7 @@ class ListViewModel @Inject constructor(
                     ListSort.TITLE -> row.title.lowercase() > new.title.lowercase()
                 }
             },
-            completed = done,
+            completed = if (prefs.cleared.isEmpty()) done else done.filterNot { it.id in prefs.cleared },
             completedExpanded = prefs.completedExpanded,
             sort = prefs.sort,
             lists = lists.map { it.toUi() },
@@ -197,6 +202,23 @@ class ListViewModel @Inject constructor(
     }
 
     fun toggleCompletedGroup() = prefs.update { it.copy(completedExpanded = !it.completedExpanded) }
+
+    /**
+     * Deletes every completed task in this list. The rows leave the page at once; the write and,
+     * later, the sync follow.
+     */
+    fun clearCompleted() {
+        val ids = state.value.completed.mapTo(HashSet()) { it.id }
+        if (ids.isEmpty()) return
+        prefs.update { it.copy(cleared = it.cleared + ids, completedExpanded = false) }
+        viewModelScope.launch {
+            runCatching { tasks.clearCompleted(listId) }.onFailure {
+                prefs.update { it.copy(cleared = it.cleared - ids) }
+            }
+        }
+    }
+
+    private fun settleCleared(present: Set<String>) = prefs.update { it.copy(cleared = it.cleared intersect present) }
 
     fun setCompleted(id: String, completed: Boolean) {
         overrides.set(id, completed)

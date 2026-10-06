@@ -42,6 +42,14 @@ fun deleteListMessage(title: String, openCount: Int, sharing: ListSharing, servi
         "This deletes the list and its $openCount open tasks here and in $serviceName."
     }
 
+/** The message under "clear completed?": how many go, where, and that it can't be undone. */
+fun clearCompletedMessage(count: Int, sharing: ListSharing, serviceName: String): String {
+    val tasks = if (count == 1) "the 1 completed task" else "the $count completed tasks"
+    val where = if (serviceName.isEmpty()) "here" else "here and in $serviceName"
+    val who = if (sharing.isShared) " for everyone in this list," else ""
+    return "This deletes $tasks$who $where. You can't undo it."
+}
+
 /** Dialog title for deleting a list: "delete for everyone?" when it's shared. */
 fun deleteListTitle(title: String, sharing: ListSharing): String =
     if (sharing == ListSharing.OWNED) "delete for everyone?" else "delete $title?"

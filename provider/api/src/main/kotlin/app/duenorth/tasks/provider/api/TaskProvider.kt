@@ -43,7 +43,40 @@ interface TaskProvider {
     suspend fun moveTask(listId: String, id: String, afterId: String?)
 
     suspend fun deleteTask(listId: String, id: String)
+
+    /**
+     * Deletes tasks [ids] of list [listId], as "clear completed" does. Stops at the first failure
+     * that is not about one task and hands it back with what was done so far, so nothing done is
+     * sent twice. Providers that can send several deletes in one request override this.
+     */
+    suspend fun deleteTasks(listId: String, ids: List<String>): BulkDelete {
+        val deleted = mutableSetOf<String>()
+        val refused = mutableSetOf<String>()
+        for (id in ids) {
+            try {
+                deleteTask(listId, id)
+                deleted += id
+            } catch (_: ProviderError.NotFound) {
+                deleted += id // already gone, which is what was asked
+            } catch (_: ProviderError.NotAllowed) {
+                refused += id
+            } catch (e: ProviderError) {
+                return BulkDelete(deleted, refused, e)
+            }
+        }
+        return BulkDelete(deleted, refused)
+    }
 }
+
+/**
+ * What [TaskProvider.deleteTasks] did: tasks now gone (or already gone), tasks the service refused
+ * to delete, and the error that stopped it early, if any; tasks in none of these were not tried.
+ */
+data class BulkDelete(
+    val deleted: Set<String>,
+    val refused: Set<String> = emptySet(),
+    val stoppedBy: ProviderError? = null
+)
 
 enum class ProviderKind { GOOGLE, MICROSOFT, FAKE }
 

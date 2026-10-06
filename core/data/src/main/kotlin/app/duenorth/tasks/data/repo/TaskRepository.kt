@@ -261,6 +261,33 @@ class TaskRepository(
     }
 
     /**
+     * Deletes every completed task in [listId] in one write and returns how many went. Each is
+     * queued as its own delete, so a refusal (a shared list) puts back only that task. The list
+     * remembers when, so completed tasks a sync brings in later, if they were done by then, go too.
+     */
+    suspend fun clearCompleted(listId: String): Int {
+        var cleared = 0
+        write {
+            val list = requireList(listId)
+            val at = now()
+            val done = tasks.completedInList(listId)
+            // The task deletes take their steps with them, so the steps' own queued changes are moot.
+            done.chunked(CHUNK).forEach { chunk ->
+                outbox.drop(EntityType.STEP, steps.idsForTasks(chunk.map { it.localId }))
+            }
+            done.forEach { task ->
+                when (outbox.enqueue(EntityType.TASK, task.localId, OperationKind.DELETE, at)) {
+                    Outbox.Result.CANCELLED -> tasks.delete(task.localId)
+                    else -> tasks.update(task.copy(deletedLocally = true, localUpdatedAt = at))
+                }
+            }
+            lists.update(list.copy(clearedCompletedAt = at))
+            cleared = done.size
+        }
+        return cleared
+    }
+
+    /**
      * Puts task [localId] after [afterId] and before [beforeId], its new neighbors in "my order"
      * (null for the top or the bottom). Writes only this task's key; queues a `MOVE` when the
      * service stores order (spec 003, FR-220, FR-221).

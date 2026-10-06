@@ -5,12 +5,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.duenorth.tasks.data.db.DueNorthDatabase
@@ -41,7 +46,9 @@ import app.duenorth.tasks.ui.templates.UseListTemplateViewModel
 import com.github.takahirom.roborazzi.captureRoboImage
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -67,6 +74,7 @@ class TemplatesScreenshotTest {
     private lateinit var templates: TemplateRepository
     private lateinit var accounts: AccountRepository
     private lateinit var features: ServiceFeatures
+    private val viewModels = ViewModelStore()
     private lateinit var trip: String
     private lateinit var rent: String
 
@@ -101,6 +109,9 @@ class TemplatesScreenshotTest {
 
     @After
     fun tearDown() {
+        // Stop the home page's database watchers before the database goes.
+        viewModels.clear()
+        compose.waitForIdle()
         db.close()
     }
 
@@ -142,6 +153,45 @@ class TemplatesScreenshotTest {
         // The picker closes and the new task is on today straight away, before it is saved.
         compose.waitUntilDoesNotExist(hasText("change furnace filter"), TIMEOUT)
         compose.waitUntilAtLeastOneExists(hasText("take out the bins"), TIMEOUT)
+        // Then it is saved; waiting for that also keeps the write from outliving the database.
+        val today = LocalDate.of(2026, 10, 6)
+        compose.waitUntil(TIMEOUT) {
+            runBlocking { tasks.tasksDueBy(today).first() }.any { it.task.title == "take out the bins" }
+        }
+    }
+
+    @Test
+    fun homeShowsListsAfterAListIsMadeFromATemplate() {
+        val viewModel =
+            ViewModelProvider(
+                viewModels,
+                viewModelFactory {
+                    initializer {
+                        HomeViewModel(
+                            tasks,
+                            templates,
+                            accounts,
+                            features,
+                            ListHolds(),
+                            testListOrder(tasks, accounts),
+                            clock
+                        )
+                    }
+                }
+            )[HomeViewModel::class.java]
+        var shown = false
+        show(dark = false) {
+            val state by viewModel.state.collectAsState()
+            HomeContent(
+                state,
+                viewModel,
+                HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {}),
+                showLists = !shown,
+                onListsShown = { shown = true }
+            )
+        }
+        compose.waitUntil(TIMEOUT) { shown }
+        compose.waitUntilAtLeastOneExists(hasContentDescription("new list"), TIMEOUT)
     }
 
     private suspend fun task(
@@ -209,7 +259,22 @@ class TemplatesScreenshotTest {
 
     private fun picker(dark: Boolean, name: String? = "use_a_template") {
         val viewModel =
-            HomeViewModel(tasks, templates, accounts, features, ListHolds(), testListOrder(tasks, accounts), clock)
+            ViewModelProvider(
+                viewModels,
+                viewModelFactory {
+                    initializer {
+                        HomeViewModel(
+                            tasks,
+                            templates,
+                            accounts,
+                            features,
+                            ListHolds(),
+                            testListOrder(tasks, accounts),
+                            clock
+                        )
+                    }
+                }
+            )[HomeViewModel::class.java]
         show(dark) {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {}))

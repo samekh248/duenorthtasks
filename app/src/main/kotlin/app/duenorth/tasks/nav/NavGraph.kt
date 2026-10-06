@@ -5,6 +5,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -95,7 +97,8 @@ fun DueNorthNavHost(
         popEnterTransition = { EnterTransition.None },
         popExitTransition = { keepOldPage }
     ) {
-        composable(Routes.HOME) {
+        composable(Routes.HOME) { entry ->
+            val showLists by entry.savedStateHandle.getStateFlow(SHOW_LISTS, false).collectAsState()
             val actions = HomeActions(
                 openTask = { nav.navigate(Routes.task(it)) },
                 openList = { nav.navigate(Routes.list(it)) },
@@ -115,7 +118,15 @@ fun DueNorthNavHost(
                     emptyList()
                 }
             )
-            Page(this) { HomeScreen(actions, syncing, syncButtonTurning) }
+            Page(this) {
+                HomeScreen(
+                    actions,
+                    syncing,
+                    syncButtonTurning = syncButtonTurning,
+                    showLists = showLists,
+                    onListsShown = { entry.savedStateHandle[SHOW_LISTS] = false }
+                )
+            }
         }
         composable(Routes.LIST) { entry ->
             Page(this) {
@@ -158,10 +169,10 @@ fun DueNorthNavHost(
             Page(this) {
                 UseListTemplateScreen(
                     onCreated = { listId ->
-                        // The new list replaces this form, so back goes to where the template was picked.
-                        if (nav.currentBackStackEntry?.id == entry.id) {
-                            nav.popBackStack()
-                            nav.navigate(Routes.list(listId))
+                        if (nav.currentBackStackEntry?.id ==
+                            entry.id
+                        ) {
+                            nav.openCreatedList(listId)
                         }
                     },
                     onCancel = { nav.closeIfOn(entry) }
@@ -218,6 +229,18 @@ fun DueNorthNavHost(
             composable(Routes.GALLERY) { Page(this) { DebugRoutes.Gallery() } }
         }
     }
+}
+
+/** Tells home to show its lists section the next time it is on screen. */
+internal const val SHOW_LISTS = "showLists"
+
+/**
+ * Opens list [listId], just made from a template, in place of the templates pages: back from it
+ * goes to home's lists section, not to the template (spec 004 FR-325).
+ */
+internal fun NavHostController.openCreatedList(listId: String) {
+    getBackStackEntry(Routes.HOME).savedStateHandle[SHOW_LISTS] = true
+    navigate(Routes.list(listId)) { popUpTo(Routes.HOME) }
 }
 
 /** Closes [entry]'s page once, even if its content asks twice. */
