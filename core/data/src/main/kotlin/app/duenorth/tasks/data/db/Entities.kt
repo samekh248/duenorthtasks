@@ -63,7 +63,12 @@ data class TaskListEntity(
     /** Shared with other people (Microsoft To Do only). Copied from the service on every sync. */
     @ColumnInfo(defaultValue = "0") val isShared: Boolean = false,
     /** The signed-in user owns this list; only the owner can rename or delete it. */
-    @ColumnInfo(defaultValue = "1") val isOwner: Boolean = true
+    @ColumnInfo(defaultValue = "1") val isOwner: Boolean = true,
+    /**
+     * When "clear completed" last ran here. Tasks completed by then that a sync brings in only
+     * afterwards (a history still loading) are deleted too, so the list stays clear.
+     */
+    val clearedCompletedAt: Instant? = null
 )
 
 @Entity(

@@ -286,6 +286,23 @@ class MicrosoftTodoProviderTest {
 
         assertNull(server.takeRequest(100, TimeUnit.MILLISECONDS))
     }
+
+    @Test
+    fun aRefusedDeleteInABatchIsReportedAndTheRestGo() = runTest {
+        respond(
+            200,
+            """{"responses":[{"id":"1","status":204},{"id":"2","status":403,"body":{"error":{"code":"Forbidden"}}}]}"""
+        )
+
+        val result = provider.deleteTasks("L1", listOf("a", "b"))
+
+        assertEquals(setOf("a"), result.deleted)
+        assertEquals(setOf("b"), result.refused)
+        assertNull(result.stoppedBy)
+        val requests = sentJson().getValue("requests").jsonArray.map { it.jsonObject }
+        assertEquals(listOf("DELETE", "DELETE"), requests.map { it.getValue("method").jsonPrimitive.content })
+        assertEquals("/me/todo/lists/L1/tasks/b", requests.last().getValue("url").jsonPrimitive.content)
+    }
 }
 
 /** Step handling and unknown-field safety, against the stateful fake Graph endpoint. */
@@ -483,6 +500,30 @@ class MicrosoftTodoStepsTest {
         val list = createList("Big")
         repeat(size) { createTask(list.id, TaskDraft("Task $it", steps = listOf(StepDraft("Step $it")))) }
         return list
+    }
+
+    @Test
+    fun clearingCompletedTasksSendsDeletesInBatchesAndRetriesThrottledOnes() = runTest {
+        val graph = FakeGraphServer(pageSize = 50)
+        try {
+            val provider = MicrosoftTodoProvider.create(TestAuth(), graph.baseUrl)
+            val list = provider.bigList(25)
+            val ids = provider.getTaskChanges(list.id, null).changed.map { it.id }
+            // A busy mailbox turns part of the first batch away; only those are asked again.
+            graph.throttleBatchItems = 5
+            graph.calls.clear()
+
+            val result = provider.deleteTasks(list.id, ids + "already-gone")
+
+            assertEquals((ids + "already-gone").toSet(), result.deleted)
+            assertTrue(result.refused.isEmpty())
+            assertNull(result.stoppedBy)
+            assertTrue(provider.getTaskChanges(list.id, null).changed.isEmpty())
+            // 20, then the 5 throttled ones, then the last 6: three requests instead of 26.
+            assertEquals(3, graph.calls.count { it == "POST /\$batch" })
+        } finally {
+            graph.shutdown()
+        }
     }
 
     private fun assertStepsMatch(count: Int, tasks: List<RemoteTask>) {

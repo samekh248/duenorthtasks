@@ -70,6 +70,13 @@ class FakeProvider(
 
     fun catchUp() = lagging.clear()
 
+    private val undeletable = mutableSetOf<String>()
+
+    /** Deleting task [id] is refused from now on, as on a list someone else owns. */
+    fun refuseDelete(id: String) {
+        undeletable += id
+    }
+
     /** The next call fails with [error] instead of running. */
     fun failNext(error: ProviderError) {
         failures.addLast(error)
@@ -221,6 +228,7 @@ class FakeProvider(
 
     override suspend fun deleteTask(listId: String, id: String) = call("deleteTask") {
         tasks[id]?.task?.takeIf { it.listId == listId } ?: throw ProviderError.NotFound(id)
+        if (id in undeletable) throw ProviderError.NotAllowed(id)
         tasks.remove(id)
         tombstones += Tombstone(listId, id, ++version)
         Unit
