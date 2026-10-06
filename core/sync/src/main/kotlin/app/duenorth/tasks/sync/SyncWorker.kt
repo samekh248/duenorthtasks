@@ -31,6 +31,24 @@ class BackfillWorker(context: Context, params: WorkerParameters) : CoroutineWork
     }
 }
 
+/**
+ * One sync for a 5 or 10 minute interval, shorter than WorkManager's periodic minimum. It always
+ * schedules the next one, even after a failure, so the chain never stops; [SyncWorker] retries.
+ */
+class SyncTickWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val entry = EntryPointAccessors.fromApplication(applicationContext, SyncEntryPoint::class.java)
+        val engine = entry.syncEngine()
+        try {
+            engine.sync()
+            if (engine.backfillPending) entry.syncScheduler().backfillSoon()
+        } finally {
+            entry.syncScheduler().nextTick()
+        }
+        return Result.success()
+    }
+}
+
 private const val MAX_RETRIES = 8
 
 private fun SyncResult.toWorkResult(runAttemptCount: Int): ListenableWorker.Result = when (this) {

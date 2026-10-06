@@ -47,7 +47,13 @@ class SyncScheduler(
         if (started) return
         started = true
         localEdits.debounce(debounce).onEach { syncNow() }.launchIn(scope)
-        settings.settings.onEach { schedulePeriodic(it) }.launchIn(scope)
+        var interval: Int? = null
+        settings.settings.onEach {
+            // A new interval restarts the short-interval chain; the first reading keeps what is queued.
+            val changed = interval != null && interval != it.intervalMinutes
+            interval = it.intervalMinutes
+            schedulePeriodic(it, if (changed) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP)
+        }.launchIn(scope)
         scope.launch(Dispatchers.Main.immediate) {
             ProcessLifecycleOwner.get().lifecycle.addObserver(
                 object : DefaultLifecycleObserver {
@@ -92,16 +98,43 @@ class SyncScheduler(
     fun cancelAll() {
         workManager.cancelUniqueWork(NOW)
         workManager.cancelUniqueWork(BACKFILL)
+        workManager.cancelUniqueWork(TICK)
         workManager.cancelUniqueWork(PERIODIC)
     }
 
-    private fun schedulePeriodic(settings: SyncSettings) {
-        val request = PeriodicWorkRequestBuilder<SyncWorker>(settings.intervalMinutes.toLong(), TimeUnit.MINUTES)
+    /**
+     * The next short-interval sync (5 or 10 minutes), from [SyncTickWorker] as it finishes: appended
+     * after the running one, so it waits for it rather than replacing it.
+     */
+    fun nextTick() {
+        scope.launch {
+            val settings = currentSettings()
+            if (SyncSettings.isShort(settings.intervalMinutes)) {
+                workManager.enqueueUniqueWork(TICK, ExistingWorkPolicy.APPEND_OR_REPLACE, tick(settings))
+            }
+        }
+    }
+
+    private fun schedulePeriodic(settings: SyncSettings, tickPolicy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP) {
+        // Below 15 minutes the periodic job stays at 15 as a backstop, and a chain of one-time
+        // jobs runs the shorter interval.
+        if (SyncSettings.isShort(settings.intervalMinutes)) {
+            workManager.enqueueUniqueWork(TICK, tickPolicy, tick(settings))
+        } else {
+            workManager.cancelUniqueWork(TICK)
+        }
+        val minutes = maxOf(settings.intervalMinutes, SyncSettings.SHORTEST_PERIODIC_MINUTES).toLong()
+        val request = PeriodicWorkRequestBuilder<SyncWorker>(minutes, TimeUnit.MINUTES)
             .setConstraints(constraints(settings.wifiOnly))
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
             .build()
         workManager.enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, request)
     }
+
+    private fun tick(settings: SyncSettings) = OneTimeWorkRequestBuilder<SyncTickWorker>()
+        .setInitialDelay(settings.intervalMinutes.toLong(), TimeUnit.MINUTES)
+        .setConstraints(constraints(settings.wifiOnly))
+        .build()
 
     private suspend fun currentSettings(): SyncSettings = settings.settings.first()
 
@@ -113,6 +146,7 @@ class SyncScheduler(
         const val NOW = "sync-now"
         const val PERIODIC = "sync-periodic"
         const val BACKFILL = "sync-backfill"
+        const val TICK = "sync-tick"
         private const val BACKOFF_SECONDS = 30L
     }
 }

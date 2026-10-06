@@ -187,10 +187,14 @@ fun SyncAccountContent(
                 onInterval(it)
                 pickingInterval = false
             },
-            onDismiss = { pickingInterval = false }
+            onDismiss = { pickingInterval = false },
+            caption = { if (SyncSettings.isShort(it)) SHORT_INTERVAL_NOTE else null }
         )
     }
 }
+
+/** Shown under 5 and 10 minutes in the "sync every" picker. */
+internal const val SHORT_INTERVAL_NOTE = "may drain the battery faster; Android may wait longer while the phone is idle"
 
 internal fun intervalLabel(minutes: Int): String = when {
     minutes < 60 -> "$minutes minutes"
