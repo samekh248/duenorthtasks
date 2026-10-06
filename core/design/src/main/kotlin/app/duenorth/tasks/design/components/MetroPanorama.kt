@@ -34,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
-
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.ScrollAxisRange
@@ -277,7 +276,9 @@ private fun PanoramaTitle(state: PanoramaState, count: Int, title: @Composable (
         val period = maxOf(main.width + gap.toPx(), constraints.maxWidth - startPx + travel)
         layout(constraints.maxWidth, main.height) {
             main.placeWithLayer(startPx, 0) { translationX = -titleShift(state.position, count, travel, period) }
-            copy.placeWithLayer(startPx, 0) { translationX = period - titleShift(state.position, count, travel, period) }
+            copy.placeWithLayer(startPx, 0) {
+                translationX = period - titleShift(state.position, count, travel, period)
+            }
         }
     }
 }
