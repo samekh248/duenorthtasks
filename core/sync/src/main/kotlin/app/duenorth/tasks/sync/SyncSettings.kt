@@ -16,8 +16,16 @@ data class SyncSettings(val intervalMinutes: Int = DEFAULT_INTERVAL_MINUTES, val
     companion object {
         const val DEFAULT_INTERVAL_MINUTES = 15
 
-        /** WorkManager cannot run periodic work more often than every 15 minutes. */
-        val INTERVAL_CHOICES = listOf(15, 30, 60, 120, 240)
+        val INTERVAL_CHOICES = listOf(5, 10, 15, 30, 60, 120, 240)
+
+        /**
+         * WorkManager cannot run periodic work more often than every 15 minutes, so shorter choices
+         * are a one-time job that schedules the next one ([SyncScheduler]). They cost battery, and
+         * Android still stretches them while the phone sits idle (Doze).
+         */
+        const val SHORTEST_PERIODIC_MINUTES = 15
+
+        fun isShort(minutes: Int) = minutes < SHORTEST_PERIODIC_MINUTES
     }
 }
 

@@ -98,13 +98,20 @@ fun <T> MetroPickerDialog(
     selected: T?,
     label: (T) -> String,
     onPick: (T) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** A gray line under an option, such as a warning that it costs battery. */
+    caption: (T) -> String? = { null }
 ) {
     MetroBandDialog(onDismiss) {
         MetroText(title, MetroTheme.typography.listName)
         Column(Modifier.verticalScroll(rememberScrollState())) {
             options.forEach { option ->
-                MetroRadio(selected = option == selected, onClick = { onPick(option) }, label = label(option))
+                MetroRadio(
+                    selected = option == selected,
+                    onClick = { onPick(option) },
+                    label = label(option),
+                    caption = caption(option)
+                )
             }
         }
     }
