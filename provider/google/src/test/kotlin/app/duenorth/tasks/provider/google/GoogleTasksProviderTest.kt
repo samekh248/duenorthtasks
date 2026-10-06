@@ -122,6 +122,22 @@ class GoogleTasksProviderTest {
     }
 
     @Test
+    fun aNewTaskTheFullListingHasNotCaughtUpWithIsChangedNotDeleted() = runTest {
+        provider.createTask("default", TaskDraft("Old"))
+        val cursor = provider.getTaskChanges("default", null).nextCursor
+
+        val created = provider.createTask("default", TaskDraft("Just added", steps = listOf(StepDraft("Step"))))
+        server.lagFullListing(created.id)
+        val page = provider.getTaskChanges("default", cursor)
+
+        assertFalse(created.id in page.deletedIds)
+        val changed = page.changed.single()
+        assertEquals(created.id, changed.id)
+        assertEquals("Just added", changed.title)
+        assertEquals(listOf("Step"), changed.steps.map { it.title })
+    }
+
+    @Test
     fun anUnchangedListCostsOneRequest() = runTest {
         provider.createTask("default", TaskDraft("Pack"))
         val cursor = provider.getTaskChanges("default", null).nextCursor

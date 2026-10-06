@@ -97,10 +97,18 @@ class GoogleTasksProvider internal constructor(
         val liveById = live.associateBy { it.id }
         val changedTopLevel = mutableSetOf<String>()
         val deleted = mutableSetOf<String>()
+        // Google's listings lag a moment behind its writes: a task created seconds ago can be in
+        // the "changed since" read and not yet in the live one. Only a tombstone means deleted;
+        // anything else missing is taken as it was just read, or a new task would vanish.
+        val lagging = mutableListOf<TaskDto>()
         for (dto in fetched) {
             val now = liveById[dto.id]
             when {
-                now == null && dto.parent == null -> deleted += dto.id
+                now == null && dto.parent == null && dto.deleted -> deleted += dto.id
+                now == null && dto.parent == null -> {
+                    lagging += dto
+                    changedTopLevel += dto.id
+                }
                 now == null -> dto.parent?.let { changedTopLevel += it }
                 now.parent == null -> changedTopLevel += now.id
                 else -> {
@@ -112,7 +120,7 @@ class GoogleTasksProvider internal constructor(
                 }
             }
         }
-        val all = assemble(listId, live)
+        val all = assemble(listId, live + lagging)
         val changed = all.filter { it.id in changedTopLevel }
         val gone = (deleted - all.map { it.id }.toSet()).toList()
         return TaskChangePage(changed, gone, nextCursor, hasMore = false)

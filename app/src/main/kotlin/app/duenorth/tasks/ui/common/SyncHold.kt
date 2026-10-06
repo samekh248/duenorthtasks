@@ -77,6 +77,11 @@ fun <T> TouchHold.frozen(value: T): T {
     return snapshot.value
 }
 
+/** Rows frozen like [frozen], except that rows the user just [added] show up at once. */
+@Composable
+fun TouchHold.frozen(rows: List<TaskRowUi>, added: Set<String>): List<TaskRowUi> =
+    PendingAdds.admit(frozen(rows), rows, added)
+
 private class Snapshot<T>(var value: T)
 
 /**
