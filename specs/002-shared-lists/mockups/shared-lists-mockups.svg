@@ -1,0 +1,258 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 1752 1852" width="1752" height="1852"><rect x="-24" y="-24" width="1752" height="1852" fill="#F2F2F2"/><svg x="0" y="0" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
+<text x="-196" y="116" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="118" font-weight="300" fill="#111111" letter-spacing="-4.7">due north</text>
+<text x="-20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#111111" text-anchor="end">today</text>
+<text x="20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#111111" >lists</text>
+<rect x="20" y="240" width="64" height="64" fill="#B0005E"/>
+<text x="78" y="298" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">4</text>
+<text x="98" y="270" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Tasks</text>
+<text x="98" y="292" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >next: Renew car registration</text>
+<rect x="20" y="320" width="64" height="64" fill="#D0669E"/>
+<text x="78" y="378" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#111111" text-anchor="end">7</text>
+<g transform="translate(25,325) scale(0.8333333333333334)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#111111" stroke-width="2.4" stroke-linecap="square"/></g>
+<text x="98" y="350" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Family groceries</text>
+<text x="98" y="372" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >shared · next: Oat milk, 2 cartons</text>
+<rect x="20" y="400" width="64" height="64" fill="#8D004B"/>
+<text x="78" y="458" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">2</text>
+<g transform="translate(25,405) scale(0.8333333333333334)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="square"/></g>
+<text x="98" y="430" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Book club</text>
+<text x="98" y="452" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >shared with you · next: Pick October book</text>
+<rect x="20" y="480" width="64" height="64" fill="#6A0038"/>
+<text x="78" y="538" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">12</text>
+<text x="98" y="510" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Work</text>
+<text x="98" y="532" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >next: Q4 budget review, Thu</text>
+<rect x="20" y="560" width="64" height="64" fill="#C0337E"/>
+<text x="78" y="618" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">9</text>
+<text x="98" y="590" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#111111" >Someday</text>
+<text x="98" y="612" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#5C5C5C" >no dates</text>
+<rect x="21" y="641" width="62" height="62" fill="none" stroke="#111111" stroke-width="2"/>
+<path d="M52 658v28M38 672h28" stroke="#111111" stroke-width="2"/>
+<text x="98" y="679" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >new list</text>
+<text x="370" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#111111" >done</text>
+<rect x="0" y="772" width="390" height="72" fill="#E5E5E5"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.9166666666666666)"><path d="M12 4v16M4 12h16" fill="none" stroke="#111111" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.9166666666666666)"><path d="M19.5 10A8 8 0 0 0 5 7.5M4.5 14A8 8 0 0 0 19 16.5M5 3v5h5M19 21v-5h-5" fill="none" stroke="#111111" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.9166666666666666)"><path d="M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M12 3v3M12 18v3M3 12h3M18 12h3" fill="none" stroke="#111111" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#111111" >···</text>
+</svg>
+<text x="0" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >home: lists, shared marked (light)</text>
+<svg x="438" y="0" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
+<text x="20" y="48" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#111111" letter-spacing="0.8">DUE NORTH · LISTS</text>
+<text x="16" y="110" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="56" font-weight="300" fill="#111111" >book club</text>
+<g transform="translate(20,128) scale(0.8333333333333334)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#8D004B" stroke-width="2.4" stroke-linecap="square"/></g>
+<text x="48" y="145" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#8D004B" >shared with you · details</text>
+<rect x="21" y="170" width="348" height="40" fill="none" stroke="#5C5C5C" stroke-width="2"/>
+<text x="32" y="196" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="17" font-weight="400" fill="#5C5C5C" >add a task</text>
+<rect x="21" y="236" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="252" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >Pick October book</text>
+<text x="58" y="274" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#8D004B" >due friday</text>
+<rect x="21" y="302" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="318" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >Book the back room at Rosie's</text>
+<text x="58" y="340" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#8D004B" >due october 14</text>
+<rect x="21" y="368" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="384" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >Collect $10 from everyone</text>
+<rect x="21" y="434" width="22" height="22" fill="none" stroke="#111111" stroke-width="2"/>
+<text x="58" y="450" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#111111" >Send reading schedule</text>
+<text x="20" y="512" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >completed (3)</text>
+<rect x="0" y="772" width="390" height="72" fill="#E5E5E5"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.9166666666666666)"><path d="M12 4v16M4 12h16" fill="none" stroke="#111111" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.9166666666666666)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#111111" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.9166666666666666)"><path d="M7 4v16M3 16l4 4l4-4M17 20V4M13 8l4-4l4 4" fill="none" stroke="#111111" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#111111" >···</text>
+</svg>
+<text x="438" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >shared list you don't own (light)</text>
+<svg x="876" y="0" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
+<text x="20" y="48" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#111111" letter-spacing="0.8">BOOK CLUB</text>
+<text x="17" y="108" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="52" font-weight="300" fill="#111111" >sharing</text>
+<text x="20" y="160" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >status</text>
+<g transform="translate(20,172) scale(1.0)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#111111" stroke-width="2.0" stroke-linecap="square"/></g>
+<text x="54" y="191" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#111111" >shared with you</text>
+<text x="54" y="214" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >someone else owns this list</text>
+<text x="20" y="262" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >who's in it</text>
+<text x="20" y="288" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#111111" >Microsoft To Do doesn't tell other apps who a</text>
+<text x="20" y="310" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#111111" >list is shared with, so the names aren't here.</text>
+<g transform="translate(20,330) scale(0.8333333333333334)"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" fill="none" stroke="#B0005E" stroke-width="2.4" stroke-linecap="square"/></g>
+<text x="48" y="346" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="17" font-weight="400" fill="#B0005E" >see people in microsoft to do</text>
+<text x="20" y="398" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >what you can do here</text>
+<path d="M22 424 l5 5 l9 -11" stroke="#111111" stroke-width="2" fill="none"/>
+<text x="46" y="432" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#111111" >add, edit, complete and delete tasks</text>
+<path d="M22 458 l5 5 l9 -11" stroke="#111111" stroke-width="2" fill="none"/>
+<text x="46" y="466" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#111111" >pick this list's shade (only on this phone)</text>
+<path d="M23 494 h12" stroke="#5C5C5C" stroke-width="2"/>
+<text x="46" y="500" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#5C5C5C" >rename or delete the list: only the owner</text>
+<path d="M23 528 h12" stroke="#5C5C5C" stroke-width="2"/>
+<text x="46" y="534" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#5C5C5C" >invite people or leave: in microsoft to do</text>
+<text x="20" y="578" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >list shade</text>
+<rect x="20" y="590" width="44" height="44" fill="#DF99BF"/>
+<rect x="70" y="590" width="44" height="44" fill="#D0669E"/>
+<rect x="120" y="590" width="44" height="44" fill="#C0337E"/>
+<rect x="170" y="590" width="44" height="44" fill="#B0005E"/>
+<rect x="220" y="590" width="44" height="44" fill="#8D004B"/>
+<rect x="222" y="592" width="40" height="40" fill="none" stroke="#111111" stroke-width="3"/>
+<rect x="270" y="590" width="44" height="44" fill="#6A0038"/>
+<rect x="320" y="590" width="44" height="44" fill="#460026"/>
+</svg>
+<text x="876" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >sharing page (light)</text>
+<svg x="1314" y="0" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#FFFFFF"/>
+<text x="20" y="48" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#111111" letter-spacing="0.8">DUE NORTH · MY TASKS</text>
+<text x="18" y="100" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="38" font-weight="300" fill="#111111" >review section 3 edits</text>
+<text x="20" y="132" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#B0005E" >due wednesday, october 7</text>
+<text x="20" y="180" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >assigned to you</text>
+<rect x="21" y="192" width="348" height="92" fill="none" stroke="#5C5C5C" stroke-width="2"/>
+<g transform="translate(34,206) scale(1.0)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#111111" stroke-width="2.0" stroke-linecap="square"/></g>
+<text x="68" y="225" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="300" fill="#111111" >from a google doc</text>
+<g transform="translate(68,244) scale(0.75)"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" fill="none" stroke="#B0005E" stroke-width="2.6666666666666665" stroke-linecap="square"/></g>
+<text x="92" y="259" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#B0005E" >open in google docs</text>
+<text x="20" y="312" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#5C5C5C" >Google doesn't say who assigned it. Edits</text>
+<text x="20" y="334" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#5C5C5C" >here sync back to the doc's task.</text>
+<text x="20" y="380" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#5C5C5C" >details</text>
+<text x="20" y="406" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#111111" >Tighten the pricing table and check the</text>
+<text x="20" y="430" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#111111" >figures against the Q3 report.</text>
+<rect x="0" y="772" width="390" height="72" fill="#E5E5E5"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.9166666666666666)"><path d="M5 12l5 5l9-11" fill="none" stroke="#111111" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.9166666666666666)"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4" fill="none" stroke="#111111" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#111111" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.9166666666666666)"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" fill="none" stroke="#111111" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#111111" >···</text>
+</svg>
+<text x="1314" y="878" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >google: assigned task (light)</text>
+<svg x="0" y="924" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#000000"/>
+<text x="-196" y="116" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="118" font-weight="300" fill="#FFFFFF" letter-spacing="-4.7">due north</text>
+<text x="-20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#FFFFFF" text-anchor="end">today</text>
+<text x="20" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#FFFFFF" >lists</text>
+<rect x="20" y="240" width="64" height="64" fill="#F0389A"/>
+<text x="78" y="298" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#111111" text-anchor="end">4</text>
+<text x="98" y="270" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Tasks</text>
+<text x="98" y="292" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >next: Renew car registration</text>
+<rect x="20" y="320" width="64" height="64" fill="#F688C2"/>
+<text x="78" y="378" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#111111" text-anchor="end">7</text>
+<g transform="translate(25,325) scale(0.8333333333333334)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#111111" stroke-width="2.4" stroke-linecap="square"/></g>
+<text x="98" y="350" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Family groceries</text>
+<text x="98" y="372" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >shared · next: Oat milk, 2 cartons</text>
+<rect x="20" y="400" width="64" height="64" fill="#C02D7B"/>
+<text x="78" y="458" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">2</text>
+<g transform="translate(25,405) scale(0.8333333333333334)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="square"/></g>
+<text x="98" y="430" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Book club</text>
+<text x="98" y="452" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >shared with you · next: Pick October book</text>
+<rect x="20" y="480" width="64" height="64" fill="#90225C"/>
+<text x="78" y="538" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" text-anchor="end">12</text>
+<text x="98" y="510" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Work</text>
+<text x="98" y="532" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >next: Q4 budget review, Thu</text>
+<rect x="20" y="560" width="64" height="64" fill="#F360AE"/>
+<text x="78" y="618" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#111111" text-anchor="end">9</text>
+<text x="98" y="590" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="24" font-weight="300" fill="#FFFFFF" >Someday</text>
+<text x="98" y="612" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#A6A6A6" >no dates</text>
+<rect x="21" y="641" width="62" height="62" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<path d="M52 658v28M38 672h28" stroke="#FFFFFF" stroke-width="2"/>
+<text x="98" y="679" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >new list</text>
+<text x="370" y="210" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="40" font-weight="300" fill="#FFFFFF" >done</text>
+<rect x="0" y="772" width="390" height="72" fill="#1F1F1F"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.9166666666666666)"><path d="M12 4v16M4 12h16" fill="none" stroke="#FFFFFF" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.9166666666666666)"><path d="M19.5 10A8 8 0 0 0 5 7.5M4.5 14A8 8 0 0 0 19 16.5M5 3v5h5M19 21v-5h-5" fill="none" stroke="#FFFFFF" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.9166666666666666)"><path d="M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M12 3v3M12 18v3M3 12h3M18 12h3" fill="none" stroke="#FFFFFF" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#FFFFFF" >···</text>
+</svg>
+<text x="0" y="1802" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >home: lists, shared marked (dark)</text>
+<svg x="438" y="924" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#000000"/>
+<text x="20" y="48" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" letter-spacing="0.8">DUE NORTH · LISTS</text>
+<text x="16" y="110" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="56" font-weight="300" fill="#FFFFFF" >book club</text>
+<g transform="translate(20,128) scale(0.8333333333333334)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#F0389A" stroke-width="2.4" stroke-linecap="square"/></g>
+<text x="48" y="145" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#F0389A" >shared with you · details</text>
+<rect x="21" y="170" width="348" height="40" fill="none" stroke="#A6A6A6" stroke-width="2"/>
+<text x="32" y="196" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="17" font-weight="400" fill="#A6A6A6" >add a task</text>
+<rect x="21" y="236" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="58" y="252" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >Pick October book</text>
+<text x="58" y="274" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#F0389A" >due friday</text>
+<rect x="21" y="302" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="58" y="318" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >Book the back room at Rosie's</text>
+<text x="58" y="340" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="400" fill="#F0389A" >due october 14</text>
+<rect x="21" y="368" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="58" y="384" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >Collect $10 from everyone</text>
+<rect x="21" y="434" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<text x="58" y="450" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="400" fill="#FFFFFF" >Send reading schedule</text>
+<text x="20" y="512" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >completed (3)</text>
+<rect x="0" y="772" width="390" height="72" fill="#1F1F1F"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.9166666666666666)"><path d="M12 4v16M4 12h16" fill="none" stroke="#FFFFFF" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.9166666666666666)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#FFFFFF" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.9166666666666666)"><path d="M7 4v16M3 16l4 4l4-4M17 20V4M13 8l4-4l4 4" fill="none" stroke="#FFFFFF" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#FFFFFF" >···</text>
+</svg>
+<text x="438" y="1802" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >shared list you don't own (dark)</text>
+<svg x="876" y="924" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#000000"/>
+<text x="20" y="48" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" letter-spacing="0.8">BOOK CLUB</text>
+<text x="17" y="108" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="52" font-weight="300" fill="#FFFFFF" >sharing</text>
+<text x="20" y="160" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >status</text>
+<g transform="translate(20,172) scale(1.0)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#FFFFFF" stroke-width="2.0" stroke-linecap="square"/></g>
+<text x="54" y="191" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="300" fill="#FFFFFF" >shared with you</text>
+<text x="54" y="214" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >someone else owns this list</text>
+<text x="20" y="262" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >who's in it</text>
+<text x="20" y="288" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#FFFFFF" >Microsoft To Do doesn't tell other apps who a</text>
+<text x="20" y="310" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#FFFFFF" >list is shared with, so the names aren't here.</text>
+<g transform="translate(20,330) scale(0.8333333333333334)"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" fill="none" stroke="#F0389A" stroke-width="2.4" stroke-linecap="square"/></g>
+<text x="48" y="346" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="17" font-weight="400" fill="#F0389A" >see people in microsoft to do</text>
+<text x="20" y="398" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >what you can do here</text>
+<path d="M22 424 l5 5 l9 -11" stroke="#FFFFFF" stroke-width="2" fill="none"/>
+<text x="46" y="432" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#FFFFFF" >add, edit, complete and delete tasks</text>
+<path d="M22 458 l5 5 l9 -11" stroke="#FFFFFF" stroke-width="2" fill="none"/>
+<text x="46" y="466" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#FFFFFF" >pick this list's shade (only on this phone)</text>
+<path d="M23 494 h12" stroke="#A6A6A6" stroke-width="2"/>
+<text x="46" y="500" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#A6A6A6" >rename or delete the list: only the owner</text>
+<path d="M23 528 h12" stroke="#A6A6A6" stroke-width="2"/>
+<text x="46" y="534" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#A6A6A6" >invite people or leave: in microsoft to do</text>
+<text x="20" y="578" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >list shade</text>
+<rect x="20" y="590" width="44" height="44" fill="#F9AFD7"/>
+<rect x="70" y="590" width="44" height="44" fill="#F688C2"/>
+<rect x="120" y="590" width="44" height="44" fill="#F360AE"/>
+<rect x="170" y="590" width="44" height="44" fill="#F0389A"/>
+<rect x="220" y="590" width="44" height="44" fill="#C02D7B"/>
+<rect x="222" y="592" width="40" height="40" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="270" y="590" width="44" height="44" fill="#90225C"/>
+<rect x="320" y="590" width="44" height="44" fill="#60163E"/>
+</svg>
+<text x="876" y="1802" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >sharing page (dark)</text>
+<svg x="1314" y="924" width="390" height="844" overflow="hidden">
+<rect x="0" y="0" width="390" height="844" fill="#000000"/>
+<text x="20" y="48" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" letter-spacing="0.8">DUE NORTH · MY TASKS</text>
+<text x="18" y="100" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="38" font-weight="300" fill="#FFFFFF" >review section 3 edits</text>
+<text x="20" y="132" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#F0389A" >due wednesday, october 7</text>
+<text x="20" y="180" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >assigned to you</text>
+<rect x="21" y="192" width="348" height="92" fill="none" stroke="#A6A6A6" stroke-width="2"/>
+<g transform="translate(34,206) scale(1.0)"><path d="M6 9a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M15 6.2a2.8 2.8 0 1 1 0 5.6M17 14.6c2.6.5 4 2.4 4 5.4" fill="none" stroke="#FFFFFF" stroke-width="2.0" stroke-linecap="square"/></g>
+<text x="68" y="225" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="20" font-weight="300" fill="#FFFFFF" >from a google doc</text>
+<g transform="translate(68,244) scale(0.75)"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" fill="none" stroke="#F0389A" stroke-width="2.6666666666666665" stroke-linecap="square"/></g>
+<text x="92" y="259" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#F0389A" >open in google docs</text>
+<text x="20" y="312" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#A6A6A6" >Google doesn't say who assigned it. Edits</text>
+<text x="20" y="334" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="15" font-weight="400" fill="#A6A6A6" >here sync back to the doc's task.</text>
+<text x="20" y="380" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="14" font-weight="400" fill="#A6A6A6" >details</text>
+<text x="20" y="406" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#FFFFFF" >Tighten the pricing table and check the</text>
+<text x="20" y="430" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="400" fill="#FFFFFF" >figures against the Q3 report.</text>
+<rect x="0" y="772" width="390" height="72" fill="#1F1F1F"/>
+<circle cx="113.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(102.0,797) scale(0.9166666666666666)"><path d="M5 12l5 5l9-11" fill="none" stroke="#FFFFFF" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="195.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(184.0,797) scale(0.9166666666666666)"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4" fill="none" stroke="#FFFFFF" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<circle cx="277.0" cy="808" r="22" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+<g transform="translate(266.0,797) scale(0.9166666666666666)"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" fill="none" stroke="#FFFFFF" stroke-width="2.181818181818182" stroke-linecap="square"/></g>
+<text x="350" y="794" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="22" font-weight="400" fill="#FFFFFF" >···</text>
+</svg>
+<text x="1314" y="1802" font-family="Selawik, 'Segoe UI', 'Open Sans', sans-serif" font-size="16" font-weight="600" fill="#333" >google: assigned task (dark)</text></svg>
