@@ -81,7 +81,12 @@ class AppActions(val syncNow: () -> Unit, val switchTo: (ProviderKind) -> Unit, 
  * away first, then the new one swings in, so the NavHost keeps the old page on screen until then.
  */
 @Composable
-fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = rememberNavController()) {
+fun DueNorthNavHost(
+    app: AppActions,
+    syncing: Boolean,
+    syncButtonTurning: Boolean = syncing,
+    nav: NavHostController = rememberNavController()
+) {
     val keepOldPage = fadeOut(tween(1, delayMillis = TURNSTILE_MS))
     NavHost(
         navController = nav,
@@ -114,7 +119,13 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
                 }
             )
             Page(this) {
-                HomeScreen(actions, syncing, showLists, onListsShown = { entry.savedStateHandle[SHOW_LISTS] = false })
+                HomeScreen(
+                    actions,
+                    syncing,
+                    syncButtonTurning = syncButtonTurning,
+                    showLists = showLists,
+                    onListsShown = { entry.savedStateHandle[SHOW_LISTS] = false }
+                )
             }
         }
         composable(Routes.LIST) { entry ->

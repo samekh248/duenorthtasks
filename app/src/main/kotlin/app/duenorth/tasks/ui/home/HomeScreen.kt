@@ -96,12 +96,13 @@ class HomeActions(
 fun HomeScreen(
     actions: HomeActions,
     syncing: Boolean,
+    syncButtonTurning: Boolean = syncing,
     showLists: Boolean = false,
     onListsShown: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    HomeContent(state, viewModel, actions, syncing, showLists, onListsShown)
+    HomeContent(state, viewModel, actions, syncing, syncButtonTurning, showLists, onListsShown)
 }
 
 /** The Light Panorama home (FR-002): "tasks" (with "due north" under it) over today, lists and done. */
@@ -111,6 +112,7 @@ fun HomeContent(
     viewModel: HomeViewModel,
     actions: HomeActions,
     syncing: Boolean = false,
+    syncButtonTurning: Boolean = syncing,
     /** Jump to the lists section, as after making a list from a template; [onListsShown] then clears it. */
     showLists: Boolean = false,
     onListsShown: () -> Unit = {}
@@ -192,7 +194,10 @@ fun HomeContent(
             )
             if (syncing) MetroProgressDots()
         }
-        HomeAppBar(pager, actions, syncing, onNewTask = { addFocus.requestFocus() }, onNewList = { newList = true })
+        HomeAppBar(pager, actions, syncButtonTurning, onNewTask = { addFocus.requestFocus() }, onNewList = {
+            newList =
+                true
+        })
     }
 
     if (newList) {

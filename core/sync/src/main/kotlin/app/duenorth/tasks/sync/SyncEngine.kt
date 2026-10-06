@@ -47,6 +47,7 @@ class SyncEngine(
     private val backfillMutex = Mutex()
     private val store = SyncStore(db, clock, newId, journal)
     private val running = MutableStateFlow(false)
+    private val loadingHistory = MutableStateFlow(false)
 
     /** Lists whose open tasks are in but whose history (completed tasks, change cursor) is not yet. */
     private val deferred = MutableStateFlow<Set<String>>(emptySet())
@@ -56,6 +57,12 @@ class SyncEngine(
      * [backfill] does not count, so the dots stop once open tasks are in.
      */
     val isSyncing: StateFlow<Boolean> = running.asStateFlow()
+
+    /**
+     * True while a [backfill] runs. The dots ignore it so the app reads as ready, but the sync
+     * button keeps turning, so a first sync of a long history still shows it is working.
+     */
+    val isLoadingHistory: StateFlow<Boolean> = loadingHistory.asStateFlow()
 
     /** True when a sync left lists for [backfill]; the scheduler then runs it as its own job. */
     val backfillPending: Boolean get() = deferred.value.isNotEmpty()
@@ -98,22 +105,29 @@ class SyncEngine(
      */
     suspend fun backfill(): SyncResult = backfillMutex.withLock {
         withContext(dispatcher) {
-            guarded { provider, stillConnected ->
-                val lists = store.sync.allLists().filter {
-                    it.localId in deferred.value && it.remoteId != null && !it.deletedLocally && it.tasksCursor == null
-                }
-                try {
-                    Puller(store, provider, holds, stillConnected).backfill(lists)
-                } finally {
-                    // A list is done once it has a cursor; the rest wait for the next attempt.
-                    val done = store.sync.allLists().filter { it.tasksCursor != null || it.deletedLocally }
-                        .map { it.localId }.toSet()
-                    val gone = deferred.value - store.sync.allLists().map { it.localId }.toSet()
-                    deferred.update { it - done - gone }
-                }
-                if (!stillConnected()) SyncResult.NoAccount else SyncResult.Success
+            loadingHistory.value = deferred.value.isNotEmpty()
+            try {
+                loadHistory()
+            } finally {
+                loadingHistory.value = false
             }
         }
+    }
+
+    private suspend fun loadHistory(): SyncResult = guarded { provider, stillConnected ->
+        val lists = store.sync.allLists().filter {
+            it.localId in deferred.value && it.remoteId != null && !it.deletedLocally && it.tasksCursor == null
+        }
+        try {
+            Puller(store, provider, holds, stillConnected).backfill(lists)
+        } finally {
+            // A list is done once it has a cursor; the rest wait for the next attempt.
+            val done = store.sync.allLists().filter { it.tasksCursor != null || it.deletedLocally }
+                .map { it.localId }.toSet()
+            val gone = deferred.value - store.sync.allLists().map { it.localId }.toSet()
+            deferred.update { it - done - gone }
+        }
+        if (!stillConnected()) SyncResult.NoAccount else SyncResult.Success
     }
 
     /** Checks the account, then runs [block], handling each [ProviderError] as the class comment says. */

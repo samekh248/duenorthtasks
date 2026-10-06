@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.components.AppBarButton
@@ -279,6 +280,15 @@ class MetroComponentScreenshotTest {
     }
 
     /** Captures [content] once per theme. */
+    @Test
+    fun syncGlyph() = snap("sync_glyph") {
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
+            MetroIconGlyph(MetroIcon.Sync, size = 160.dp)
+            MetroIconGlyph(MetroIcon.Sync, size = 48.dp)
+            MetroIconGlyph(MetroIcon.Sync, size = 24.dp)
+        }
+    }
+
     private fun snap(name: String, padded: Boolean = true, content: @Composable () -> Unit) {
         for (dark in listOf(false, true)) {
             captureRoboImage("build/outputs/roborazzi/${name}_${if (dark) "dark" else "light"}.png") {

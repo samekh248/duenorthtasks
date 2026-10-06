@@ -139,7 +139,12 @@ fun SyncAccountContent(
         }
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Sync, "sync now", spinning = state.syncing, onClick = onSyncNow),
+                AppBarButton(
+                    MetroIcon.Sync,
+                    "sync now",
+                    spinning = state.syncing || state.loadingHistory,
+                    onClick = onSyncNow
+                ),
                 AppBarButton(MetroIcon.Close, "sign out") { signingOut = true }
             )
         )
