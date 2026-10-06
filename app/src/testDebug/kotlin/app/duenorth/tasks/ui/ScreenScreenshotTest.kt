@@ -25,6 +25,7 @@ import app.duenorth.tasks.demo.DemoSeeder
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
+import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.account.AccountScreen
 import app.duenorth.tasks.ui.account.SyncAccountActions
@@ -36,8 +37,11 @@ import app.duenorth.tasks.ui.detail.TaskDetailViewModel
 import app.duenorth.tasks.ui.home.HomeActions
 import app.duenorth.tasks.ui.home.HomeContent
 import app.duenorth.tasks.ui.home.HomeViewModel
+import app.duenorth.tasks.ui.home.ListRowUi
 import app.duenorth.tasks.ui.list.ListContent
 import app.duenorth.tasks.ui.list.ListViewModel
+import app.duenorth.tasks.ui.order.ReorderListsContent
+import app.duenorth.tasks.ui.order.ReorderListsUiState
 import app.duenorth.tasks.ui.search.SearchScreen
 import app.duenorth.tasks.ui.search.SearchViewModel
 import app.duenorth.tasks.ui.synclog.SyncLogContent
@@ -119,6 +123,24 @@ class ScreenScreenshotTest {
 
     @Test
     fun listDark() = list(dark = true)
+
+    @Test
+    fun listReorderLight() = list(dark = false, reorder = true)
+
+    @Test
+    fun listReorderDark() = list(dark = true, reorder = true)
+
+    @Test
+    fun stepsReorderLight() = detail(dark = false, reorder = true)
+
+    @Test
+    fun stepsReorderDark() = detail(dark = true, reorder = true)
+
+    @Test
+    fun reorderListsLight() = reorderLists(dark = false)
+
+    @Test
+    fun reorderListsDark() = reorderLists(dark = true)
 
     @Test
     fun taskDetailLight() = detail(dark = false)
@@ -227,7 +249,7 @@ class ScreenScreenshotTest {
     }
 
     private fun home(dark: Boolean, name: String? = "home_today") {
-        val viewModel = HomeViewModel(tasks, accounts, features, ListHolds(), clock)
+        val viewModel = HomeViewModel(tasks, accounts, features, ListHolds(), testListOrder(tasks, accounts), clock)
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
         show(dark) {
             val state by viewModel.state.collectAsState()
@@ -237,29 +259,65 @@ class ScreenScreenshotTest {
         if (name != null) snap(name, dark)
     }
 
-    private fun list(dark: Boolean) {
+    private fun reorderLists(dark: Boolean) {
+        val state = ReorderListsUiState(
+            loading = false,
+            lists = listOf(
+                ListRowUi("1", "Errands", 3, null),
+                ListRowUi("2", "Home", 2, null),
+                ListRowUi("3", "Work", 5, null),
+                ListRowUi("4", "Groceries", 0, null)
+            )
+        )
+        show(dark) { ReorderListsContent(state, onMove = {}, onDone = {}) }
+        compose.waitUntilAtLeastOneExists(hasText("this order is kept on this phone"), TIMEOUT)
+        snap("reorder_lists", dark)
+    }
+
+    private fun list(dark: Boolean, reorder: Boolean = false) {
         val id = runBlocking { tasks.listSummaries().first().first { it.title == "Errands" }.localId }
         val viewModel =
-            ListViewModel(SavedStateHandle(mapOf("id" to id)), tasks, accounts, features, ListHolds(), clock)
+            ListViewModel(
+                SavedStateHandle(mapOf("id" to id)),
+                tasks,
+                accounts,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                clock
+            )
         viewModel.toggleCompletedGroup()
+        if (reorder) viewModel.startReorder()
         show(dark) {
             val state by viewModel.state.collectAsState()
             ListContent(state, viewModel, onOpenTask = {})
         }
         compose.waitUntilAtLeastOneExists(hasText("Mail the birthday card"), TIMEOUT)
-        snap("list", dark)
+        snap(if (reorder) "list_reorder" else "list", dark)
     }
 
-    private fun detail(dark: Boolean) {
+    private fun detail(dark: Boolean, reorder: Boolean = false) {
         val id = runBlocking { tasks.tasksDueBy(clock.instant().atZone(clock.zone).toLocalDate().plusDays(1)).first() }
             .first { it.task.title == "Call the vet" }.task.localId
-        val viewModel = TaskDetailViewModel(SavedStateHandle(mapOf("id" to id)), tasks, features, clock)
+        val viewModel = TaskDetailViewModel(
+            SavedStateHandle(mapOf("id" to id)),
+            tasks,
+            features,
+            ListHolds(),
+            testListOrder(tasks, accounts),
+            accounts,
+            clock
+        )
         show(dark) {
             val state by viewModel.state.collectAsState()
             TaskDetailContent(state, viewModel, animatedScope = null)
         }
         compose.waitUntilAtLeastOneExists(hasText("Check Thursday afternoon"), TIMEOUT)
-        snap("task_detail", dark)
+        if (reorder) {
+            viewModel.startReorder()
+            compose.waitUntilAtLeastOneExists(hasText("drag a step to move it"), TIMEOUT)
+        }
+        snap(if (reorder) "steps_reorder" else "task_detail", dark)
     }
 
     private fun show(dark: Boolean, content: @Composable () -> Unit) {

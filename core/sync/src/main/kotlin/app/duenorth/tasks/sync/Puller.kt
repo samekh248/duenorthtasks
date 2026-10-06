@@ -404,13 +404,20 @@ internal class Puller(
         private var top: String? = null
         private var topRead = false
 
+        /** Keys given on a first fetch: tasks created in the same millisecond still get their own. */
+        private val used = mutableSetOf<String>()
+
         /**
          * The task's place. A service with order sends it. Without one, a list's first fetch puts
          * the newest created first; after that, a task new to the phone goes to the top.
          */
         private suspend fun positionFor(remote: RemoteTask): String? {
             if (storesOrder) return remote.position
-            if (firstFetch) return OrderKeys.timeKey(remote.createdAt ?: remote.updatedAt)
+            if (firstFetch) {
+                var key = OrderKeys.timeKey(remote.createdAt ?: remote.updatedAt)
+                while (!used.add(key)) key += "5"
+                return key
+            }
             if (!topRead) {
                 top = store.tasks.firstPosition(list.localId)
                 topRead = true

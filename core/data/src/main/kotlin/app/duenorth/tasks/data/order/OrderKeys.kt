@@ -62,7 +62,8 @@ object OrderKeys {
     }
 
     /** Newest first: a later [at] gives a smaller key. Used to seed services that keep no order. */
-    fun timeKey(at: Instant): String = (TIME_BASE - at.toEpochMilli().coerceIn(0, TIME_BASE)).toString().padStart(13, '0')
+    fun timeKey(at: Instant): String =
+        (TIME_BASE - at.toEpochMilli().coerceIn(0, TIME_BASE)).toString().padStart(13, '0')
 
     /** "My order": tasks with no key first (newest edit first), then by key. */
     val taskComparator: Comparator<TaskEntity> =

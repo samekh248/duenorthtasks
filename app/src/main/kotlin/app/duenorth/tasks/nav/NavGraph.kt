@@ -8,9 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import app.duenorth.tasks.DebugRoutes
 import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.motion.TURNSTILE_MS
@@ -21,6 +23,7 @@ import app.duenorth.tasks.ui.detail.TaskDetailScreen
 import app.duenorth.tasks.ui.home.HomeActions
 import app.duenorth.tasks.ui.home.HomeScreen
 import app.duenorth.tasks.ui.list.ListScreen
+import app.duenorth.tasks.ui.order.ReorderListsScreen
 import app.duenorth.tasks.ui.search.SearchScreen
 import app.duenorth.tasks.ui.settings.SettingsScreen
 import app.duenorth.tasks.ui.shade.ListShadeScreen
@@ -36,12 +39,15 @@ object Routes {
     const val SETTINGS = "settings"
     const val LIST_SHADE = "list/{id}/shade"
     const val SYNC_LOG = "sync-log"
+    const val REORDER_LISTS = "lists/reorder?from={from}"
 
     fun list(id: String) = "list/$id"
 
     fun listShade(id: String) = "list/$id/shade"
 
     fun task(id: String) = "task/$id"
+
+    fun reorderLists(from: String?) = if (from == null) "lists/reorder" else "lists/reorder?from=$from"
 }
 
 /** App-wide actions the pages need; signing out and switching outlive the page that asked. */
@@ -73,6 +79,7 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
                 openSettings = { nav.navigate(Routes.SETTINGS) },
                 openListShade = { nav.navigate(Routes.listShade(it)) },
                 openSyncLog = { nav.navigate(Routes.SYNC_LOG) },
+                reorderLists = { nav.navigate(Routes.reorderLists(it)) },
                 menuItems = if (DebugRoutes.GALLERY_ENABLED) {
                     listOf(AppBarMenuItem("component gallery") { nav.navigate(Routes.GALLERY) })
                 } else {
@@ -100,6 +107,18 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
                     onOpenSyncLog = { nav.navigate(Routes.SYNC_LOG) }
                 )
             }
+        }
+        composable(
+            Routes.REORDER_LISTS,
+            arguments = listOf(
+                navArgument("from") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { entry ->
+            Page(this) { ReorderListsScreen(onDone = { nav.closeIfOn(entry) }) }
         }
         composable(Routes.SYNC_LOG) {
             Page(this) { SyncLogScreen() }

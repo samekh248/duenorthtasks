@@ -2,7 +2,6 @@ package app.duenorth.tasks.design.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -29,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -50,7 +51,6 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import app.duenorth.tasks.design.motion.LocalAnimationsEnabled
 import app.duenorth.tasks.design.motion.MetroEasing
 import app.duenorth.tasks.design.theme.MetroDimens
@@ -58,7 +58,7 @@ import app.duenorth.tasks.design.theme.MetroTheme
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /** How much the held row grows: "pops forward" like a tile on the WP8.1 Start screen. */
@@ -140,79 +140,107 @@ fun <T> MetroReorderList(
     val handleWidth = with(density) { HANDLE.toPx() }
     val slot = MetroTheme.accent.fill
     val background = MetroTheme.colors.background
-    LazyColumn(
+    val body: @Composable RowScope.(T) -> Unit = { item ->
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) { rowContent(item) }
+        Box(
+            Modifier.width(HANDLE).heightIn(min = MetroDimens.TouchTarget).clearAndSetSemantics {},
+            contentAlignment = Alignment.Center
+        ) {
+            MetroIconGlyph(MetroIcon.Gripper, size = 22.dp)
+        }
+    }
+    // The held row is drawn above the list, not in it, so it always passes over its neighbors.
+    Box(
         modifier
             .testTag("reorder-list")
-            .pointerInput(reorder) { with(reorder) { detectDrags(handleWidth) } },
-        state = state,
-        contentPadding = contentPadding
+            .pointerInput(reorder) { with(reorder) { detectDrags(handleWidth) } }
     ) {
-        header()
-        items(shown, key = { key(it) }, contentType = { "reorder-row" }) { item ->
-            val k = key(item)
-            val held = reorder.draggedKey == k || reorder.settlingKey == k
-            val position = shown.indexOf(item)
-            Row(
-                Modifier
-                    .then(
-                        if (held || !animate) {
-                            Modifier.zIndex(1f)
-                        } else {
-                            Modifier.animateItem(
-                                fadeInSpec = null,
-                                fadeOutSpec = null,
-                                placementSpec = tween(SLIDE_MS, easing = MetroEasing)
+        LazyColumn(Modifier.matchParentSize(), state = state, contentPadding = contentPadding) {
+            header()
+            items(shown, key = { key(it) }, contentType = { "reorder-row" }) { item ->
+                val k = key(item)
+                val position = shown.indexOf(item)
+                Row(
+                    Modifier
+                        .then(
+                            if (animate) {
+                                Modifier.animateItem(
+                                    fadeInSpec = null,
+                                    fadeOutSpec = null,
+                                    placementSpec = tween(SLIDE_MS, easing = MetroEasing)
+                                )
+                            } else {
+                                Modifier
+                            }
+                        )
+                        .fillMaxWidth()
+                        .drawBehind {
+                            if (reorder.draggedKey != k) return@drawBehind
+                            val inset = 1.dp.toPx()
+                            drawRect(
+                                slot,
+                                topLeft = Offset(MetroDimens.Gutter.toPx() + inset, inset),
+                                size = Size(
+                                    size.width - 2 * MetroDimens.Gutter.toPx() - 2 * inset,
+                                    size.height - 2 * inset
+                                ),
+                                style = Stroke(
+                                    width = 2.dp.toPx(),
+                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx()))
+                                )
                             )
                         }
-                    )
-                    .fillMaxWidth()
-                    .drawBehind {
-                        if (reorder.draggedKey != k) return@drawBehind
-                        val inset = 1.dp.toPx()
-                        drawRect(
-                            slot,
-                            topLeft = Offset(MetroDimens.Gutter.toPx() + inset, inset),
-                            size = Size(size.width - 2 * MetroDimens.Gutter.toPx() - 2 * inset, size.height - 2 * inset),
-                            style = Stroke(
-                                width = 2.dp.toPx(),
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx()))
+                        .graphicsLayer {
+                            // Hidden while the copy above the list stands in for it; the others recede.
+                            alpha = when {
+                                reorder.draggedKey == k || reorder.settlingKey == k -> 0f
+                                reorder.draggedKey != null -> RECEDE_ALPHA
+                                else -> 1f
+                            }
+                        }
+                        .semantics {
+                            stateDescription = "position ${position + 1} of ${shown.size}"
+                            customActions = listOfNotNull(
+                                CustomAccessibilityAction("move up") { reorder.step(k, -1) }.takeIf { position > 0 },
+                                CustomAccessibilityAction("move down") {
+                                    reorder.step(k, 1)
+                                }.takeIf { position < shown.lastIndex }
                             )
-                        )
-                    }
+                        }
+                        .heightIn(min = MetroDimens.TouchTarget),
+                    verticalAlignment = Alignment.CenterVertically
+                ) { body(item) }
+            }
+            footer()
+        }
+        val heldKey = reorder.draggedKey ?: reorder.settlingKey
+        val heldItem = heldKey?.let { k -> shown.firstOrNull { key(it) == k } }
+        if (heldItem != null) {
+            Row(
+                Modifier
+                    .testTag("reorder-held")
+                    .fillMaxWidth()
                     .graphicsLayer {
-                        translationY = reorder.offsetOf(k)
-                        val lifted = reorder.draggedKey == k
-                        val scale = if (lifted && animate) LIFT_SCALE else 1f
+                        val top = reorder.heldTop()
+                        alpha = if (top == null) 0f else 1f
+                        translationY = top ?: 0f
+                        val scale = if (reorder.draggedKey != null && animate) LIFT_SCALE else 1f
                         scaleX = scale
                         scaleY = scale
-                        alpha = if (reorder.draggedKey != null && !lifted) RECEDE_ALPHA else 1f
                     }
-                    .then(if (held) Modifier.background(background) else Modifier)
                     .drawBehind {
-                        if (reorder.draggedKey == k) drawRect(slot, size = Size(4.dp.toPx(), size.height))
+                        drawRect(background)
+                        if (reorder.draggedKey != null) {
+                            // The row grows from its middle; keep the accent edge at the screen's left.
+                            val left = if (animate) size.width / 2 * (1 - 1 / LIFT_SCALE) else 0f
+                            drawRect(slot, topLeft = Offset(left, 0f), size = Size(4.dp.toPx(), size.height))
+                        }
                     }
-                    .semantics {
-                        stateDescription = "position ${position + 1} of ${shown.size}"
-                        customActions = listOfNotNull(
-                            CustomAccessibilityAction("move up") { reorder.step(k, -1) }.takeIf { position > 0 },
-                            CustomAccessibilityAction("move down") {
-                                reorder.step(k, 1)
-                            }.takeIf { position < shown.lastIndex }
-                        )
-                    }
+                    .clearAndSetSemantics {}
                     .heightIn(min = MetroDimens.TouchTarget),
                 verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) { rowContent(item) }
-                Box(
-                    Modifier.width(HANDLE).heightIn(min = MetroDimens.TouchTarget).clearAndSetSemantics {},
-                    contentAlignment = Alignment.Center
-                ) {
-                    MetroIconGlyph(MetroIcon.Gripper, size = 22.dp)
-                }
-            }
+            ) { body(heldItem) }
         }
-        footer()
     }
 }
 
@@ -262,10 +290,17 @@ internal class ReorderState(
     private fun top(item: LazyListItemInfo): Float = (item.offset - list.layoutInfo.viewportStartOffset).toFloat()
 
     /** How far the row [key] is drawn from where it is laid out. */
-    fun offsetOf(key: String): Float = when (key) {
+    private fun offsetOf(key: String): Float = when (key) {
         draggedKey -> visible(key)?.let { fingerY - grab - top(it) } ?: 0f
         settlingKey -> settle.value
         else -> 0f
+    }
+
+    /** Where the held (or settling) row is drawn, from the list's top; null when off screen. */
+    fun heldTop(): Float? {
+        if (draggedKey != null) return fingerY - grab
+        val key = settlingKey ?: return null
+        return visible(key)?.let { top(it) + settle.value }
     }
 
     private fun keyAt(y: Float): String? {
@@ -344,10 +379,10 @@ internal class ReorderState(
     }
 
     /** Scrolls while the held row is near an edge, faster the closer it gets; re-checks swaps. */
-    suspend fun autoScroll() {
-        while (scope.isActive) {
+    suspend fun autoScroll() = snapshotFlow { draggedKey != null }.collectLatest { dragging ->
+        // Frames only while a row is held, so an idle reorder page draws nothing.
+        while (dragging) {
             withFrameNanos { }
-            if (draggedKey == null) continue
             val height = list.layoutInfo.viewportSize.height.toFloat()
             val speed = when {
                 fingerY < edgePx -> -MAX_SCROLL_PER_FRAME * (1f - fingerY / edgePx).coerceIn(0f, 1f)
@@ -361,36 +396,35 @@ internal class ReorderState(
     }
 
     /** The gripper picks up on touch-down; the rest of the row after a short press. */
-    suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectDrags(handleWidth: Float) =
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            val key = keyAt(down.position.y) ?: return@awaitEachGesture
-            if (down.position.x < size.width - handleWidth) {
-                // Not on the gripper: wait for a still press; moving or lifting first means scroll or tap.
-                val ended = withTimeoutOrNull(PRESS_MS) {
-                    var gone = false
-                    while (!gone) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        val change = event.changes.firstOrNull { it.id == down.id }
-                        gone = change == null || !change.pressed || change.isConsumed ||
-                            (change.position - down.position).getDistance() > viewConfiguration.touchSlop
-                    }
-                    gone
-                }
-                if (ended != null) return@awaitEachGesture
-            }
-            start(key, down.position.y)
-            if (draggedKey == null) return@awaitEachGesture
-            try {
-                while (true) {
+    suspend fun PointerInputScope.detectDrags(handleWidth: Float) = awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        val key = keyAt(down.position.y) ?: return@awaitEachGesture
+        if (down.position.x < size.width - handleWidth) {
+            // Not on the gripper: wait for a still press; moving or lifting first means scroll or tap.
+            val ended = withTimeoutOrNull(PRESS_MS) {
+                var gone = false
+                while (!gone) {
                     val event = awaitPointerEvent(PointerEventPass.Initial)
-                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                    change.consume()
-                    if (!change.pressed) break
-                    drag(change.position.y)
+                    val change = event.changes.firstOrNull { it.id == down.id }
+                    gone = change == null || !change.pressed || change.isConsumed ||
+                        (change.position - down.position).getDistance() > viewConfiguration.touchSlop
                 }
-            } finally {
-                end()
+                gone
             }
+            if (ended != null) return@awaitEachGesture
         }
+        start(key, down.position.y)
+        if (draggedKey == null) return@awaitEachGesture
+        try {
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                change.consume()
+                if (!change.pressed) break
+                drag(change.position.y)
+            }
+        } finally {
+            end()
+        }
+    }
 }

@@ -23,7 +23,22 @@ import kotlin.math.sin
  * The app's glyphs, drawn as thin flat strokes like the WP8.1 app bar icons. Drawn in code so the
  * design module needs no Material icon library.
  */
-enum class MetroIcon { Add, Sync, Search, Settings, Check, Delete, Edit, Sort, Close, More, Back, Star, Reorder, Gripper }
+enum class MetroIcon {
+    Add,
+    Sync,
+    Search,
+    Settings,
+    Check,
+    Delete,
+    Edit,
+    Sort,
+    Close,
+    More,
+    Back,
+    Star,
+    Reorder,
+    Gripper
+}
 
 @Composable
 fun MetroIconGlyph(
