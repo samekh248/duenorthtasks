@@ -27,16 +27,18 @@ import kotlinx.coroutines.sync.withPermit
  * user is touching that list ([ListHolds]), so the screen never jumps under a finger (FR-008).
  *
  * Lists never fetched before get their open tasks first, all lists at once, when the provider can
- * filter them ([TaskProvider.getOpenTasks]). [onOpenTasksLoaded] then fires, and the full fetch that
- * brings in completed tasks and the change cursor carries on behind it, so an account with years of
- * finished tasks is usable in seconds.
+ * filter them ([TaskProvider.getOpenTasks]). Lists that have a cursor are brought up to date next,
+ * and then [beforeBackfill] runs (the engine stops the dots and sends local changes). Only then
+ * does the full fetch that brings in completed tasks and the change cursor carry on, so an account
+ * with years of finished tasks is usable in seconds, and a slow or failing backfill never holds
+ * back what was changed on the phone.
  */
 internal class Puller(
     private val store: SyncStore,
     private val provider: TaskProvider,
     private val holds: ListHolds,
     private val stillConnected: suspend () -> Boolean,
-    private val onOpenTasksLoaded: () -> Unit = {}
+    private val beforeBackfill: suspend () -> Unit = {}
 ) {
     private val canStoreImportance = provider.capabilities.importance
 
@@ -51,10 +53,17 @@ internal class Puller(
                 .map { list -> async { gate.withPermit { stillConnected() && pullOpenTasks(list) } } }
                 .awaitAll()
         }
-        if (loadedOpen.any { it }) onOpenTasksLoaded()
-        coroutineScope {
-            lists.map { list -> async { gate.withPermit { if (stillConnected()) pullList(list) } } }.awaitAll()
-        }
+        val (fresh, known) = lists.partition { it.tasksCursor == null }
+        // With open tasks in hand, a fresh list's full history can wait; without them it cannot.
+        val backfill = if (loadedOpen.any { it }) fresh else emptyList()
+        pullLists(known + (fresh - backfill.toSet()), gate)
+        if (backfill.isEmpty()) return
+        if (stillConnected()) beforeBackfill()
+        pullLists(backfill, gate)
+    }
+
+    private suspend fun pullLists(lists: List<TaskListEntity>, gate: Semaphore) = coroutineScope {
+        lists.map { list -> async { gate.withPermit { if (stillConnected()) pullList(list) } } }.awaitAll()
     }
 
     // Lists
@@ -104,11 +113,15 @@ internal class Puller(
             }
             if (existing.deletedLocally) continue // our delete is still on its way
             val pending = store.opsFor(EntityType.LIST, existing.localId).any { it.kind == OperationKind.UPDATE }
+            // Microsoft has no modified time for lists and reports "now"; an unchanged etag means
+            // unchanged, or every rename made here would lose to a remote that never moved.
+            val remoteUpdatedAt = existing.remoteUpdatedAt?.takeIf { existing.etag != null && existing.etag == rl.etag }
+                ?: rl.updatedAt
             val decision = ConflictResolver.decide(
                 pending,
                 existing.localUpdatedAt,
                 existing.remoteUpdatedAt,
-                rl.updatedAt
+                remoteUpdatedAt
             )
             val takeRemote = decision == Decision.APPLY_REMOTE || decision == Decision.REMOTE_WINS
             if (decision == Decision.REMOTE_WINS && existing.title != rl.title) {
@@ -129,8 +142,8 @@ internal class Puller(
                     title = if (takeRemote) rl.title else existing.title,
                     isDefault = rl.isDefault,
                     etag = rl.etag,
-                    remoteUpdatedAt = rl.updatedAt,
-                    localUpdatedAt = if (takeRemote) rl.updatedAt else existing.localUpdatedAt
+                    remoteUpdatedAt = remoteUpdatedAt,
+                    localUpdatedAt = if (takeRemote) remoteUpdatedAt else existing.localUpdatedAt
                 )
             )
         }
@@ -180,6 +193,8 @@ internal class Puller(
             provider.getOpenTasks(checkNotNull(list.remoteId))
         } catch (_: ProviderError.NotFound) {
             null
+        } catch (_: ProviderError.NotAllowed) {
+            null
         } ?: return false
         applyChanged(list, open, mayAdopt(list))
         return true
@@ -223,6 +238,8 @@ internal class Puller(
                 continue
             } catch (_: ProviderError.NotFound) {
                 return // gone since the list check; the next sync's list check recovers it
+            } catch (_: ProviderError.NotAllowed) {
+                return // a list we may not read; the others still sync
             }
             seen += page.changed.map { it.id }
             applyChanged(list, page.changed, mayAdopt)

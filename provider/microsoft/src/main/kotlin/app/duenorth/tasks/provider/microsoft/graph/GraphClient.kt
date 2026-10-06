@@ -101,7 +101,9 @@ internal fun httpError(
     listId: String?,
     cause: Throwable? = null
 ): ProviderError = when {
-    status == 401 || status == 403 -> ProviderError.AuthRequired(cause)
+    status == 401 -> ProviderError.AuthRequired(cause)
+    // A refused change (say, to a list shared by someone else), not an expired sign-in.
+    status == 403 -> ProviderError.NotAllowed(id, cause)
     status == 404 -> ProviderError.NotFound(id, cause)
     status == 409 || status == 412 -> ProviderError.Conflict(id, cause)
     status == 429 -> ProviderError.RateLimited(parseRetryAfter(retryAfter), cause)

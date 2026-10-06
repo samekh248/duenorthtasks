@@ -28,7 +28,7 @@ internal object GoogleErrors {
             code == 401 -> ProviderError.AuthRequired()
             code == 429 || (code == 403 && reasons.any { it in RATE_LIMIT_REASONS }) ->
                 ProviderError.RateLimited(retryAfter(response))
-            code == 403 -> ProviderError.AuthRequired()
+            code == 403 -> ProviderError.NotAllowed(id)
             code == 404 -> ProviderError.NotFound(id)
             code == 410 -> ProviderError.CursorExpired(id)
             code == 412 -> ProviderError.Conflict(id)

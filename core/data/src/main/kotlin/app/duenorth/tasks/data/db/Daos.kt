@@ -154,6 +154,9 @@ interface TaskDao {
     @Query("UPDATE task SET deletedLocally = 1 WHERE listId = :listId")
     suspend fun markDeletedInList(listId: String)
 
+    @Query("UPDATE task SET deletedLocally = 0 WHERE listId = :listId")
+    suspend fun restoreInList(listId: String)
+
     @Query("DELETE FROM task WHERE localId = :localId")
     suspend fun delete(localId: String)
 }

@@ -200,7 +200,7 @@ class MicrosoftTodoProviderTest {
     @ParameterizedTest(name = "{0} -> {1}")
     @CsvSource(
         "401, AuthRequired",
-        "403, AuthRequired",
+        "403, NotAllowed",
         "404, NotFound",
         "409, Conflict",
         "412, Conflict",

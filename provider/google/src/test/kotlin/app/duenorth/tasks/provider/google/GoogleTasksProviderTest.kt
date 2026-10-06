@@ -228,6 +228,13 @@ class GoogleTasksProviderTest {
         }
 
         @Test
+        fun otherForbiddenIsNotAllowedNotSignIn() = runTest {
+            server.failNext(403)
+
+            assertThrows<ProviderError.NotAllowed> { provider.getLists() }
+        }
+
+        @Test
         fun status429UsesRetryAfter() = runTest {
             server.failNext(429, headers = mapOf("Retry-After" to "7"))
 
