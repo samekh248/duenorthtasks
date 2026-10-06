@@ -165,6 +165,9 @@ Every month Dustin adds "pay rent". He taps the "add a task" box, taps "use a te
 - **FR-324**: The add box on today and on list pages MUST show an accent "use a template" link while
   it is empty and at least one task template exists. Picking one adds the task where a typed task
   would go.
+- **FR-325**: Using a template MUST NOT leave the templates pages behind it (Dustin, 2026-10-06).
+  The new list opens in place of them, and back from it goes to the home lists section. A task
+  template is used from the add box, so you stay on the today or list page you were on.
 
 **Managing templates**
 
