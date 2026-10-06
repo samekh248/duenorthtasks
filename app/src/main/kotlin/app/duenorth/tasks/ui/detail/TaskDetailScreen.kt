@@ -1,5 +1,6 @@
 package app.duenorth.tasks.ui.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -7,6 +8,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,6 +53,7 @@ import app.duenorth.tasks.design.components.MetroIcon
 import app.duenorth.tasks.design.components.MetroLink
 import app.duenorth.tasks.design.components.MetroLinkifiedText
 import app.duenorth.tasks.design.components.MetroPickerDialog
+import app.duenorth.tasks.design.components.MetroReorderList
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
@@ -61,6 +64,9 @@ import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.listAccent
 import app.duenorth.tasks.ui.common.Chip
 import app.duenorth.tasks.ui.common.DueText
+import app.duenorth.tasks.ui.common.OrderNoteDialog
+import app.duenorth.tasks.ui.common.ReorderHint
+import app.duenorth.tasks.ui.common.ReorderRow
 
 /** A task's page (contracts/ui-screens.md "Task detail"); the title lands with the continuum. */
 @Composable
@@ -72,6 +78,40 @@ fun TaskDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
     TaskDetailContent(state, viewModel, animatedScope)
+}
+
+/** Reorder steps mode (specs/003-reordering US3): the steps get the page; done or back ends it. */
+@Composable
+private fun ReorderStepsPage(state: TaskDetailUiState, viewModel: TaskDetailViewModel) {
+    BackHandler(onBack = viewModel::endReorder)
+    Column(Modifier.fillMaxSize().background(MetroTheme.colors.background)) {
+        Column(Modifier.weight(1f).statusBarsPadding()) {
+            MetroText(
+                "DUE NORTH · ${state.listTitle.uppercase()}",
+                MetroTheme.typography.pageTitle,
+                Modifier.padding(start = MetroDimens.Gutter, top = 16.dp, end = MetroDimens.Gutter),
+                maxLines = 1
+            )
+            MetroText(
+                state.title,
+                MetroTheme.typography.detailTitle,
+                Modifier.padding(horizontal = MetroDimens.Gutter, vertical = 4.dp).semantics { heading() }
+            )
+            MetroReorderList(
+                items = state.steps,
+                key = { it.id },
+                onMove = viewModel::reorderSteps,
+                modifier = Modifier.fillMaxSize().testTag("reorder-steps"),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+                initialKey = state.reorderFrom,
+                headerItems = 1,
+                header = { item(key = "hint", contentType = "hint") { ReorderHint("drag a step to move it") } }
+            ) { step ->
+                ReorderRow(title = step.title, caption = null, checked = step.done)
+            }
+        }
+        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = viewModel::endReorder)))
+    }
 }
 
 @Composable
@@ -86,6 +126,12 @@ fun TaskDetailContent(
     var pickingDate by rememberSaveable { mutableStateOf(false) }
     val type = MetroTheme.typography
     val colors = MetroTheme.colors
+
+    if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
+    if (state.reordering) {
+        ReorderStepsPage(state, viewModel)
+        return
+    }
 
     Column(Modifier.fillMaxSize().background(colors.background).imePadding()) {
         Column(
@@ -139,9 +185,12 @@ fun TaskDetailContent(
 
             Label("steps")
             state.steps.forEach { step ->
-                StepRow(step, onDone = {
-                    viewModel.setStepDone(step.id, it)
-                }, onRemove = { viewModel.removeStep(step.id) })
+                StepRow(
+                    step,
+                    onDone = { viewModel.setStepDone(step.id, it) },
+                    onRemove = { viewModel.removeStep(step.id) },
+                    onReorder = { viewModel.startReorder(step.id) }.takeIf { state.steps.size > 1 }
+                )
             }
             AddStepField(onAdd = viewModel::addStep)
 
@@ -180,7 +229,10 @@ fun TaskDetailContent(
                 AppBarButton(MetroIcon.Edit, "edit") { editing = true },
                 AppBarButton(MetroIcon.Delete, "delete") { deleting = true }
             ),
-            menuItems = listOf(AppBarMenuItem("move to list") { moving = true })
+            menuItems = listOfNotNull(
+                AppBarMenuItem("reorder steps") { viewModel.startReorder() }.takeIf { state.steps.size > 1 },
+                AppBarMenuItem("move to list") { moving = true }
+            )
         )
     }
 
@@ -249,7 +301,7 @@ private fun EditForm(title: String, details: String, onSave: (String, String) ->
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun StepRow(step: StepUi, onDone: (Boolean) -> Unit, onRemove: () -> Unit) {
+private fun StepRow(step: StepUi, onDone: (Boolean) -> Unit, onRemove: () -> Unit, onReorder: (() -> Unit)?) {
     var menu by remember { mutableStateOf(false) }
     Box {
         Row(
@@ -274,9 +326,18 @@ private fun StepRow(step: StepUi, onDone: (Boolean) -> Unit, onRemove: () -> Uni
                 color = if (step.done) MetroTheme.colors.secondary else MetroTheme.colors.foreground
             )
         }
-        MetroContextMenu(expanded = menu, onDismiss = {
-            menu = false
-        }, items = listOf(ContextMenuItem("remove", onRemove)))
+        MetroContextMenu(
+            expanded = menu,
+            onDismiss = {
+                menu = false
+            },
+            items = listOfNotNull(
+                onReorder?.let {
+                    ContextMenuItem("reorder", it)
+                },
+                ContextMenuItem("remove", onRemove)
+            )
+        )
     }
 }
 

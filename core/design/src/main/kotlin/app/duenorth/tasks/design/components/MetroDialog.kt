@@ -29,7 +29,8 @@ fun MetroDialog(
     confirmLabel: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    dismissLabel: String = "cancel"
+    /** Null for a note with one button, which then also dismisses. */
+    dismissLabel: String? = "cancel"
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -61,7 +62,7 @@ fun MetroDialogContent(
     message: String,
     confirmLabel: String,
     onConfirm: () -> Unit,
-    dismissLabel: String,
+    dismissLabel: String?,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -82,7 +83,7 @@ fun MetroDialogContent(
             horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
         ) {
             MetroButton(confirmLabel, onConfirm, Modifier.weight(1f))
-            MetroButton(dismissLabel, onDismiss, Modifier.weight(1f))
+            if (dismissLabel != null) MetroButton(dismissLabel, onDismiss, Modifier.weight(1f))
         }
         Box(Modifier.padding(bottom = 4.dp))
     }

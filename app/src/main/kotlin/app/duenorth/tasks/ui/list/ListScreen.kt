@@ -1,5 +1,6 @@
 package app.duenorth.tasks.ui.list
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import app.duenorth.tasks.design.components.MetroDialog
 import app.duenorth.tasks.design.components.MetroIcon
 import app.duenorth.tasks.design.components.MetroInputDialog
 import app.duenorth.tasks.design.components.MetroPickerDialog
+import app.duenorth.tasks.design.components.MetroReorderList
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
@@ -49,7 +51,12 @@ import app.duenorth.tasks.design.motion.rememberContinuumState
 import app.duenorth.tasks.design.theme.ListAccent
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.design.theme.listAccent
+import app.duenorth.tasks.ui.common.OrderNoteDialog
 import app.duenorth.tasks.ui.common.PageHeader
+import app.duenorth.tasks.ui.common.ReorderFooter
+import app.duenorth.tasks.ui.common.ReorderHint
+import app.duenorth.tasks.ui.common.ReorderRow
 import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.frozen
@@ -80,7 +87,45 @@ fun ListContent(
     onOpenTask: (String) -> Unit,
     onShade: (String) -> Unit = {}
 ) {
-    ListAccent(viewModel.listId) { ListPage(state, viewModel, onOpenTask, onShade) }
+    ListAccent(viewModel.listId) {
+        if (state.reordering) ReorderTasksPage(state, viewModel) else ListPage(state, viewModel, onOpenTask, onShade)
+        if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
+    }
+}
+
+/** Reorder mode (specs/003-reordering US1): open tasks only, with grippers; done or back ends it. */
+@Composable
+private fun ReorderTasksPage(state: ListUiState, viewModel: ListViewModel) {
+    BackHandler(onBack = viewModel::endReorder)
+    Column(Modifier.fillMaxSize().background(MetroTheme.colors.background)) {
+        Column(Modifier.weight(1f).statusBarsPadding()) {
+            PageHeader(state.title)
+            MetroReorderList(
+                items = state.open,
+                key = { it.id },
+                onMove = viewModel::reorder,
+                modifier = Modifier.fillMaxSize().testTag("reorder-tasks"),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+                initialKey = state.reorderFrom,
+                headerItems = 1,
+                header = { item(key = "hint", contentType = "hint") { ReorderHint("drag a task to move it") } },
+                footer = {
+                    if (state.completed.isNotEmpty()) {
+                        item(key = "footer", contentType = "footer") {
+                            ReorderFooter("completed tasks stay where they are")
+                        }
+                    }
+                }
+            ) { task ->
+                ReorderRow(
+                    title = task.title,
+                    caption = task.caption,
+                    captionColor = if (task.overdue) MetroTheme.colors.overdue else listAccent(task.listId).text
+                )
+            }
+        }
+        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = viewModel::endReorder)))
+    }
 }
 
 @Composable
@@ -115,6 +160,7 @@ private fun ListPage(
             onToggle = { viewModel.setCompleted(task.id, it) },
             onOpen = { openTask(task.id) },
             menuItems = listOfNotNull(
+                ContextMenuItem("reorder") { viewModel.startReorder(task.id) }.takeIf { !task.completed },
                 ContextMenuItem("edit") { onOpenTask(task.id) },
                 ContextMenuItem("delete") { viewModel.deleteTask(task.id) },
                 ContextMenuItem("move to") { moving = task },
@@ -188,6 +234,7 @@ private fun ListPage(
         MetroAppBar(
             buttons = listOf(
                 AppBarButton(MetroIcon.Add, "new task") { addFocus.requestFocus() },
+                AppBarButton(MetroIcon.Reorder, "reorder", enabled = state.open.size > 1) { viewModel.startReorder() },
                 AppBarButton(MetroIcon.Sort, "sort") { sorting = true }
             ),
             menuItems = listOf(

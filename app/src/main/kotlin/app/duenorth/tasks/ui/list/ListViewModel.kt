@@ -5,9 +5,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.duenorth.tasks.data.db.TaskWithList
+import app.duenorth.tasks.data.order.OrderKeys
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
+import app.duenorth.tasks.settings.ListOrder
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
 import app.duenorth.tasks.ui.common.HeldLists
@@ -51,10 +53,23 @@ data class ListUiState(
     val serviceName: String = "",
     val today: LocalDate = LocalDate.MIN,
     /** The connected service has an importance star (To Do); false hides it everywhere. */
-    val importance: Boolean = false
+    val importance: Boolean = false,
+    /** Reorder mode (specs/003-reordering US1): grippers, no add box, no completed group. */
+    val reordering: Boolean = false,
+    /** The row to bring into view when reorder mode opens from its long-press menu. */
+    val reorderFrom: String? = null,
+    /** The one-time "order stays on this phone" note (FR-231), for services that don't store order. */
+    val orderNote: Boolean = false
 )
 
-private data class ListPrefs(val sort: ListSort = ListSort.MY_ORDER, val completedExpanded: Boolean = false)
+private data class ListPrefs(
+    val sort: ListSort = ListSort.MY_ORDER,
+    val completedExpanded: Boolean = false,
+    val reordering: Boolean = false,
+    val reorderFrom: String? = null
+)
+
+private data class OrderFeatures(val storesOrder: Boolean, val noteShown: Boolean)
 
 /** One list's page (T028): open tasks in the chosen order and a collapsible "completed" group. */
 @HiltViewModel
@@ -63,7 +78,8 @@ class ListViewModel @Inject constructor(
     private val tasks: TaskRepository,
     accounts: AccountRepository,
     features: ServiceFeatures,
-    holds: ListHolds,
+    private val holds: ListHolds,
+    private val listOrder: ListOrder,
     clock: Clock
 ) : ViewModel() {
     val listId: String = checkNotNull(savedState["id"]) { "list route needs an id" }
@@ -71,6 +87,7 @@ class ListViewModel @Inject constructor(
     private val overrides = CompletionOverrides()
     private val heldLists = HeldLists(holds)
     private val prefs = MutableStateFlow(ListPrefs())
+    private var pinned = false
 
     private val content = combine(
         tasks.list(listId),
@@ -81,11 +98,15 @@ class ListViewModel @Inject constructor(
 
     val state: StateFlow<ListUiState> = combine(
         content,
-        tasks.listSummaries(),
-        combine(accounts.account, features.importance, ::Pair),
+        combine(tasks.listSummaries(), listOrder.rank) { lists, rank -> ListOrder.sort(lists, rank) { it.localId } },
+        combine(
+            accounts.account,
+            features.importance,
+            combine(features.storesOrder, listOrder.noteShown, ::OrderFeatures)
+        ) { account, importance, order -> Triple(account, importance, order) },
         prefs,
         overrides.overrides
-    ) { content, lists, (account, importance), prefs, pending ->
+    ) { content, lists, (account, importance, order), prefs, pending ->
         overrides.settle((content.open + content.done).associate { it.task.localId to it.task.completed })
         val all = content.open + content.done
         val rows = all.map { it.toRow(content.today, pending[it.task.localId], importance) }
@@ -101,13 +122,42 @@ class ListViewModel @Inject constructor(
             lists = lists.map { ListRowUi(it.localId, it.title, it.openCount, it.nextTaskTitle) },
             serviceName = serviceName(account?.provider),
             today = content.today,
-            importance = importance
+            importance = importance,
+            reordering = prefs.reordering,
+            reorderFrom = prefs.reorderFrom,
+            orderNote = prefs.reordering && !order.storesOrder && !order.noteShown
         )
     }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListUiState())
 
     fun setSort(sort: ListSort) = prefs.update { it.copy(sort = sort) }
+
+    /** Opens reorder mode in "my order" (FR-207), holding sync for this list until it ends (FR-228). */
+    fun startReorder(from: String? = null) {
+        if (!pinned) holds.pin(listId)
+        pinned = true
+        prefs.update { it.copy(sort = ListSort.MY_ORDER, reordering = true, reorderFrom = from) }
+    }
+
+    fun endReorder() {
+        if (pinned) holds.unpin(listId)
+        pinned = false
+        prefs.update { it.copy(reordering = false, reorderFrom = null) }
+    }
+
+    fun dismissOrderNote() {
+        viewModelScope.launch { runCatching { listOrder.markNoteShown() } }
+    }
+
+    /** Saves a drop: [order] is every open task id in its new order (FR-220, FR-241). */
+    fun reorder(moved: String, order: List<String>) {
+        val index = order.indexOf(moved)
+        if (index < 0) return
+        viewModelScope.launch {
+            runCatching { tasks.moveTask(moved, order.getOrNull(index - 1), order.getOrNull(index + 1)) }
+        }
+    }
 
     fun toggleCompletedGroup() = prefs.update { it.copy(completedExpanded = !it.completedExpanded) }
 
@@ -130,7 +180,10 @@ class ListViewModel @Inject constructor(
     /** Holds sync for this list while a finger is on it or it is still flinging (FR-008). */
     fun holdSync(active: Boolean) = heldLists.set(active) { listOf(listId) }
 
-    override fun onCleared() = heldLists.releaseAll()
+    override fun onCleared() {
+        heldLists.releaseAll()
+        if (pinned) holds.unpin(listId)
+    }
 
     fun deleteTask(id: String) {
         viewModelScope.launch { runCatching { tasks.deleteTask(id) } }
@@ -152,10 +205,7 @@ class ListViewModel @Inject constructor(
         val byId = source.associateBy { it.task.localId }
         return when (sort) {
             // The service's own order: its position string, newest first when it has none yet.
-            ListSort.MY_ORDER -> rows.sortedWith(
-                compareBy<TaskRowUi, String?>(nullsFirst()) { byId[it.id]?.task?.position }
-                    .thenByDescending { byId[it.id]?.task?.localUpdatedAt }
-            )
+            ListSort.MY_ORDER -> rows.sortedWith(compareBy(OrderKeys.taskComparator) { byId.getValue(it.id).task })
             ListSort.DUE -> rows.sortedWith(compareBy(nullsLast()) { byId[it.id]?.task?.dueDate })
             ListSort.TITLE -> rows.sortedBy { it.title.lowercase() }
         }

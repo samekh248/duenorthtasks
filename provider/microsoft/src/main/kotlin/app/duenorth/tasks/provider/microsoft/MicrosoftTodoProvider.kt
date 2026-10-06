@@ -319,7 +319,9 @@ class MicrosoftTodoProvider internal constructor(
     )
 
     /** Sends step changes as `$batch` calls of up to [MAX_BATCH] requests each, in order. */
-    private suspend fun applySteps(listId: String, taskId: String, steps: List<StepPatch>) {
+    private suspend fun applySteps(listId: String, taskId: String, patches: List<StepPatch>) {
+        // To Do keeps no order for checklist items that other apps can set (spec 003, research R5).
+        val steps = patches.filterNot { it is StepPatch.Move }
         val base = "/me/todo/lists/${listId.urlSegment()}/tasks/${taskId.urlSegment()}/checklistItems"
         steps.chunked(MAX_BATCH).forEach { chunk ->
             // Adds are chained with dependsOn so new steps keep their order; edits and removals run freely.
@@ -370,6 +372,7 @@ class MicrosoftTodoProvider internal constructor(
             headers = JSON_HEADERS
         )
         is StepPatch.Remove -> BatchRequestItem(id = id, method = "DELETE", url = "$base/${this.id.urlSegment()}")
+        is StepPatch.Move -> error("Moves are filtered out before batching")
     }
 
     /** A stored link is followed only if it points at Graph; anything else means "fetch again". */

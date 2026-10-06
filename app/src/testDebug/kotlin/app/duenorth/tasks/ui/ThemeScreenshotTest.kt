@@ -23,6 +23,7 @@ import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.ThemeMode
 import app.duenorth.tasks.settings.ThemeSettings
+import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.home.HomeActions
@@ -130,7 +131,14 @@ class ThemeScreenshotTest {
 
     /** The lists section with Errands two shades lighter and Work two darker. */
     private fun shadedLists(accent: Accent, dark: Boolean) {
-        val viewModel = HomeViewModel(tasks, accounts, ServiceFeatures(accounts) { FakeProvider() }, ListHolds(), clock)
+        val viewModel = HomeViewModel(
+            tasks,
+            accounts,
+            ServiceFeatures(accounts) { FakeProvider() },
+            ListHolds(),
+            testListOrder(tasks, accounts),
+            clock
+        )
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
         show(dark, accent, demoShades()) {
             val state by viewModel.state.collectAsState()
@@ -152,6 +160,7 @@ class ThemeScreenshotTest {
             accounts,
             ServiceFeatures(accounts) { FakeProvider() },
             ListHolds(),
+            testListOrder(tasks, accounts),
             clock
         )
         viewModel.toggleCompletedGroup()

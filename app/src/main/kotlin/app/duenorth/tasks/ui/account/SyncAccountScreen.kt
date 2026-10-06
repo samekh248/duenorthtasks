@@ -108,6 +108,18 @@ fun SyncAccountContent(
                         type.caption,
                         color = colors.secondary
                     )
+                    if (current != null) {
+                        MetroText(
+                            if (state.storesOrder) {
+                                "Task and step order sync; list order stays on this phone."
+                            } else {
+                                "Task, step and list order stay on this phone."
+                            },
+                            type.caption,
+                            Modifier.testTag("order note"),
+                            color = colors.secondary
+                        )
+                    }
                     Spacer(Modifier.height(8.dp))
                     MetroText("sync every", type.caption, color = colors.secondary)
                     Chip(intervalLabel(state.settings.intervalMinutes)) { pickingInterval = true }

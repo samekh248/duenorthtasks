@@ -2,6 +2,7 @@ package app.duenorth.tasks.di
 
 import android.content.Context
 import app.duenorth.tasks.data.db.DueNorthDatabase
+import app.duenorth.tasks.data.provider.ProviderRegistry
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.SyncLogRepository
 import app.duenorth.tasks.data.repo.TaskRepository
@@ -26,7 +27,8 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun taskRepository(db: DueNorthDatabase, clock: Clock): TaskRepository = TaskRepository(db, clock)
+    fun taskRepository(db: DueNorthDatabase, clock: Clock, registry: ProviderRegistry): TaskRepository =
+        TaskRepository(db, clock, serviceStoresOrder = { registry.current()?.capabilities?.manualOrder != false })
 
     @Provides
     @Singleton
