@@ -1,0 +1,124 @@
+<!doctype html>
+<!-- Mockups for specs/004-templates. Render: node render.js (writes templates-mockups.png). -->
+<html><head><meta charset="utf-8"><style>
+@font-face{font-family:Selawik;font-weight:300;src:url(../../../core/design/src/main/res/font/selawik_light.ttf)}
+@font-face{font-family:Selawik;font-weight:350;src:url(../../../core/design/src/main/res/font/selawik_semilight.ttf)}
+@font-face{font-family:Selawik;font-weight:400;src:url(../../../core/design/src/main/res/font/selawik_regular.ttf)}
+*{box-sizing:border-box;margin:0}
+body{font-family:Selawik;background:#ECECEC;padding:36px;width:2382px;color:#111}
+h1{font-weight:300;font-size:44px;margin-bottom:6px}
+.sub{font-size:20px;color:#5C5C5C;margin-bottom:28px}
+.flow{display:flex;align-items:center;gap:18px;margin-bottom:36px;font-size:20px}
+.box{background:#fff;padding:16px 20px;min-width:300px;border-left:8px solid #B0005E}
+.box b{font-weight:400;font-size:24px;display:block;margin-bottom:4px}
+.box small{color:#5C5C5C;font-size:17px;line-height:1.4;display:block}
+.box.sync{border-left-color:#1BA1E2}
+.arrow{font-size:40px;color:#5C5C5C;font-weight:300}
+.arrow span{display:block;font-size:16px;text-align:center}
+.row{display:flex;gap:30px;margin-bottom:30px}
+.cap{width:360px;font-size:18px;color:#333;margin-top:12px;line-height:1.35}
+.cap b{font-weight:400;color:#B0005E}
+.ph{--bg:#fff;--fg:#111;--sub:#5C5C5C;--bar:#E5E5E5;--acc:#B0005E;--off:#BBB;
+  width:360px;height:700px;background:var(--bg);color:var(--fg);position:relative;overflow:hidden;padding:26px 22px}
+.dark .ph{--bg:#000;--fg:#fff;--sub:#A6A6A6;--bar:#1F1F1F;--acc:#F0389A;--off:#555}
+.small{font-size:15px;letter-spacing:.5px}
+.title{font-size:48px;font-weight:300;margin:6px 0 14px;white-space:nowrap}
+.pivot{font-size:40px;font-weight:300;white-space:nowrap;margin:4px 0 18px}
+.off{color:var(--off)}
+.t{font-size:22px;font-weight:350;margin-bottom:2px}
+.g{color:var(--sub);font-size:16px;margin-bottom:18px}
+.acc{color:var(--acc)}
+.chk{display:inline-block;width:22px;height:22px;border:2px solid var(--fg);vertical-align:-4px;margin-right:12px;flex:none}
+.trow{display:flex;align-items:flex-start;margin-bottom:6px}
+.field{border:2px solid var(--fg);padding:8px 10px;font-size:20px;margin:6px 0 18px;background:#fff;color:#111}
+.lbl{font-size:15px;color:var(--sub)}
+.bar{position:absolute;left:0;right:0;bottom:0;height:96px;background:var(--bar);display:flex;justify-content:center;gap:40px;padding-top:10px}
+.bi{display:flex;flex-direction:column;align-items:center;font-size:13px;gap:4px}
+.ic{width:44px;height:44px;border:2px solid var(--fg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:300}
+.more{position:absolute;right:16px;top:4px;font-size:22px}
+.menu{position:absolute;left:0;right:0;top:250px;background:var(--bg);border:2px solid var(--fg);padding:14px 22px}
+.dark .menu{border-color:#1F1F1F;background:#1F1F1F}
+.veil{position:absolute;inset:0;background:var(--bg);opacity:.6}
+.menu div{font-size:24px;font-weight:350;padding:9px 0}
+.tile{width:22px;height:22px;display:inline-block;margin-right:12px;vertical-align:-3px}
+.btn{display:inline-block;border:2px solid var(--fg);padding:6px 22px;font-size:20px;margin-right:10px}
+.dot{display:inline-block;width:8px;height:8px;background:#1BA1E2;margin-left:6px;vertical-align:2px}
+.tag{font-size:13px;letter-spacing:1px;color:var(--sub)}
+.addbox{border:2px solid var(--fg);padding:10px;font-size:20px;margin:14px 0 6px;color:var(--sub)}
+.rowlabel{font-size:15px;letter-spacing:1px;color:#5C5C5C;margin-bottom:10px}
+</style></head><body>
+<h1>templates</h1>
+<div class="sub">A template is a recipe kept on this phone. Using it makes ordinary lists and tasks, which sync to Google or Microsoft like any other.</div>
+<div class="flow">
+ <div class="box"><b>task template</b><small>title, details, steps, important (Microsoft),<br>due "N days after" the day you use it</small></div>
+ <div class="arrow">+</div>
+ <div class="box"><b>list template</b><small>list name and shade, plus tasks<br>due "N days before / after start"</small></div>
+ <div class="arrow">→<span>use</span></div>
+ <div class="box"><b>pick a start date</b><small>only asked when a task has a due offset;<br>offsets become real dates</small></div>
+ <div class="arrow">→</div>
+ <div class="box sync"><b>real list and tasks</b><small>appear at once and sync normally.<br>The template itself never syncs.</small></div>
+</div>
+<div id="rows"></div>
+<template id="screens">
+<div class="row">
+<div><div class="ph">
+  <div class="small">PACKING</div>
+  <div class="trow" style="margin-top:20px"><span class="chk"></span><div><div class="t">passport</div><div class="g"></div></div></div>
+  <div class="trow"><span class="chk"></span><div><div class="t">chargers</div><div class="g">phone, watch, laptop</div></div></div>
+  <div class="veil"></div>
+  <div class="menu"><div>reorder</div><div>edit</div><div class="acc">save as template</div><div>move to list...</div><div>delete</div></div>
+ </div><div class="cap"><b>1. save a task.</b> Long-press a task, "save as template". A list's ••• menu has "save as template" too.</div></div>
+
+<div><div class="ph">
+  <div class="pivot">lists <span class="off">tasks</span></div>
+  <div class="t"><span class="tile" style="background:var(--acc)"></span>trip packing</div><div class="g" style="margin-left:34px">14 tasks · dates from a start day</div>
+  <div class="t"><span class="tile" style="background:#7A0041"></span>weekly review</div><div class="g" style="margin-left:34px">6 tasks</div>
+  <div class="t"><span class="tile" style="background:#D04D93"></span>move house</div><div class="g" style="margin-left:34px">22 tasks · dates from a start day</div>
+  <div class="bar"><div class="bi"><div class="ic">+</div>new</div><div class="more">···</div></div>
+ </div><div class="cap"><b>2. templates page.</b> Pivot "lists" and "tasks". Tap to use, long-press to edit, rename or delete. Opened from settings and the lists section's ••• menu.</div></div>
+
+<div><div class="ph">
+  <div class="small">LIST TEMPLATE</div>
+  <div class="title">trip packing</div>
+  <div class="trow"><span class="chk" style="opacity:.3"></span><div><div class="t">book parking</div><div class="g">3 days before start</div></div></div>
+  <div class="trow"><span class="chk" style="opacity:.3"></span><div><div class="t">passport</div><div class="g">1 day before start</div></div></div>
+  <div class="trow"><span class="chk" style="opacity:.3"></span><div><div class="t">chargers</div><div class="g">3 steps</div></div></div>
+  <div class="trow"><span class="chk" style="opacity:.3"></span><div><div class="t">water the plants</div><div class="g">on the start day</div></div></div>
+  <div class="bar"><div class="bi"><div class="ic">✓</div>use</div><div class="bi"><div class="ic">+</div>add</div><div class="more">···</div></div>
+ </div><div class="cap"><b>3. edit a template.</b> Looks like a list page, marked "list template". Due dates are offsets ("3 days before start"), never real dates.</div></div>
+
+<div><div class="ph">
+  <div class="small">NEW LIST FROM TEMPLATE</div>
+  <div class="title" style="font-size:44px">trip packing</div>
+  <div class="lbl">name</div><div class="field">Denver trip</div>
+  <div class="lbl">start date</div><div class="field">Fri, Oct 17</div>
+  <div class="g">14 tasks, 4 with due dates</div>
+  <div class="btn">create</div><div class="btn">cancel</div>
+ </div><div class="cap"><b>4. use a list template.</b> Name the new list, pick a start date (skipped when no task has a due offset), create.</div></div>
+
+<div><div class="ph">
+  <div class="small">DENVER TRIP <span class="dot"></span></div>
+  <div class="title">tasks</div>
+  <div class="trow"><span class="chk"></span><div><div class="t">book parking</div><div class="g">due Tue, Oct 14</div></div></div>
+  <div class="trow"><span class="chk"></span><div><div class="t">passport</div><div class="g">due Thu, Oct 16</div></div></div>
+  <div class="trow"><span class="chk"></span><div><div class="t">chargers</div><div class="g">phone, watch, laptop</div></div></div>
+  <div class="trow"><span class="chk"></span><div><div class="t">water the plants</div><div class="g">due Fri, Oct 17</div></div></div>
+ </div><div class="cap"><b>5. result.</b> A normal list, shown at once and synced. Changing it later doesn't touch the template.</div></div>
+
+<div><div class="ph">
+  <div class="small">TODAY</div>
+  <div class="addbox">add a task</div>
+  <div class="acc" style="font-size:17px;margin-bottom:18px">use a template</div>
+  <div class="tag" style="margin-bottom:10px">TASK TEMPLATES</div>
+  <div class="t">pay rent</div><div class="g">due in 3 days · important</div>
+  <div class="t">change furnace filter</div><div class="g">4 steps</div>
+  <div class="t">weekly 1:1 prep</div><div class="g">details · 3 steps</div>
+ </div><div class="cap"><b>6. use a task template.</b> "use a template" under the add box. Tap one and it's added at once, like a typed task.</div></div>
+</div>
+</template>
+<script>
+const tpl=document.getElementById('screens').innerHTML, rows=document.getElementById('rows');
+rows.innerHTML='<div class="rowlabel">LIGHT</div>'+tpl+'<div class="rowlabel">DARK</div><div class="dark">'+tpl+'</div>';
+document.querySelectorAll('.dark .cap').forEach(c=>c.remove());
+</script>
+</body></html>
