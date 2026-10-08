@@ -50,10 +50,11 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExternalResource
+import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -65,8 +66,18 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(application = Application::class, qualifiers = "w411dp-h891dp-xxhdpi")
 class TemplatesScreenshotTest {
+    private val compose = createComposeRule()
+
+    /** Closes the database only after the compose rule has torn down, so no query outlives it. */
+    private val database = object : ExternalResource() {
+        override fun after() {
+            viewModels.clear()
+            if (::db.isInitialized) db.close()
+        }
+    }
+
     @get:Rule
-    val compose = createComposeRule()
+    val rules: RuleChain = RuleChain.outerRule(database).around(compose)
 
     private val clock = Clock.fixed(Instant.parse("2026-10-06T09:00:00Z"), ZoneOffset.UTC)
     private lateinit var db: DueNorthDatabase
@@ -105,14 +116,6 @@ class TemplatesScreenshotTest {
                 templates.addTemplateStep(filter, it)
             }
         }
-    }
-
-    @After
-    fun tearDown() {
-        // Stop the home page's database watchers before the database goes.
-        viewModels.clear()
-        compose.waitForIdle()
-        db.close()
     }
 
     @Test
