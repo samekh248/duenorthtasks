@@ -125,7 +125,7 @@ private fun easeOut(x: Float): Float {
 }
 
 /** Draws "check north" at [progress] (0 = start of the splash, 1 = the launcher icon). */
-private fun DrawScope.drawLogo(progress: Float, color: Color) {
+internal fun DrawScope.drawLogo(progress: Float, color: Color) {
     val m = LogoMotion
     val scale = size.height / m.HEIGHT
     fun p(x: Float, y: Float) = Offset((x - m.LEFT) * scale, (y - m.TOP) * scale)
@@ -161,7 +161,19 @@ private fun DrawScope.drawLogo(progress: Float, color: Color) {
         val to = p(58f - 19.94f * easeOut(tick), 76f - 19.94f * easeOut(tick))
         drawLine(color, from, to, width, StrokeCap.Butt)
     }
-    drawLine(color, p(58f, 76f), p(58f, 32f + rise), width, StrokeCap.Butt)
+    // The stem carries the check's pointed bottom from the first frame (the resting miter's
+    // outline, cut along the short stroke's outer edge), so the point rides up with the arrow
+    // instead of snapping in at rest. The short stroke later lands flush on that cut.
+    val half = m.STROKE / 2f
+    val cut = half * 1.4142135f
+    val stem = Path().apply {
+        moveTo(p(58f - half, 32f + rise).x, p(58f - half, 32f + rise).y)
+        lineTo(p(58f + half, 32f + rise).x, p(58f + half, 32f + rise).y)
+        lineTo(p(58f + half, 76f + half + cut).x, p(58f + half, 76f + half + cut).y)
+        lineTo(p(58f - half, 76f - half + cut).x, p(58f - half, 76f - half + cut).y)
+        close()
+    }
+    drawPath(stem, color)
     drawPath(chevron(rise), color, style = square)
 }
 

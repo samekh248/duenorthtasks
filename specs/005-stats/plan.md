@@ -31,4 +31,6 @@ Decisions made while building:
   account isn't compared with empty weeks.
 - The empty-today logo is drawn on a Canvas from the launcher icon's paths, replaying the splash
   timeline (head rises 30 units over 600 ms, four fading trail frames, the short stroke ticks in
-  from 320 ms); at rest it is one path so the corner is a clean miter.
+  from 320 ms); at rest it is one path so the corner is a clean miter. While moving, the stem
+  is drawn with that miter's pointed bottom already on it, so the point rises with the arrow
+  and the short stroke lands flush on it.
