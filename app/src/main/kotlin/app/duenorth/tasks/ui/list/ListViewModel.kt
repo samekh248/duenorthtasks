@@ -131,10 +131,10 @@ class ListViewModel @Inject constructor(
         prefs,
         combine(overrides.overrides, adds.pending, taskTemplatePicks(templates, features.importance), ::Triple)
     ) { content, lists, (account, importance, order), prefs, (pending, added, picks) ->
-        overrides.settle((content.open + content.done).associate { it.task.localId to it.task.completed })
         val all = content.open + content.done
         val ids = all.mapTo(HashSet()) { it.task.localId }
         adds.settle(ids)
+        overrides.settle(all.associate { it.task.localId to it.task.completed }, waiting = adds.waiting())
         // Once the clear is written the rows are gone; one put back by the service shows again.
         if (prefs.cleared.any { it !in ids }) settleCleared(ids)
         val rows = all.map { it.toRow(content.today, pending[it.task.localId], importance) }
@@ -148,7 +148,9 @@ class ListViewModel @Inject constructor(
             open = PendingAdds.merge(
                 sorted(open, all, prefs.sort),
                 // The list's name may have changed since the add; the caption follows it.
-                added.rows.map { it.copy(caption = DueText.caption(title, it.due, content.today, completed = false)) }
+                PendingAdds.ticked(added.rows, pending).map {
+                    it.copy(caption = DueText.caption(title, it.due, content.today, it.completed))
+                }
             ) { new, row ->
                 when (prefs.sort) {
                     ListSort.MY_ORDER -> true // a new task's order key is the list's top

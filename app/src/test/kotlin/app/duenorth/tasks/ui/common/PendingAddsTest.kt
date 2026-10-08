@@ -89,4 +89,15 @@ class PendingAddsTest {
 
         assertSame(live, PendingAdds.admit(live, live, added = setOf("new")))
     }
+
+    @Test
+    fun aTapOnARowNotStoredYetShowsItsTick() {
+        val rows = listOf(row("new").copy(overdue = true), row("other"))
+
+        val shown = PendingAdds.ticked(rows, mapOf("new" to true))
+
+        assertEquals(listOf(true, false), shown.map { it.completed })
+        assertEquals(listOf(false, false), shown.map { it.overdue })
+        assertSame(rows, PendingAdds.ticked(rows, emptyMap()))
+    }
 }

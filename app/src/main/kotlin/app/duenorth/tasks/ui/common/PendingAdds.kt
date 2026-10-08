@@ -33,6 +33,9 @@ class PendingAdds {
         }
     }
 
+    /** Ids of the rows shown that the database doesn't have yet. */
+    fun waiting(): Set<String> = state.value.rows.mapTo(HashSet()) { it.id }
+
     /** The write failed or the task is gone: stop showing it. */
     fun clear(id: String) = state.update { current -> current.copy(rows = current.rows.filterNot { it.id == id }) }
 
@@ -57,6 +60,15 @@ class PendingAdds {
                 result = result.toMutableList().apply { add(index, added) }
             }
             return result
+        }
+
+        /** [rows] showing the ticks in [overrides], so a tap on a row not stored yet shows at once. */
+        fun ticked(rows: List<TaskRowUi>, overrides: Map<String, Boolean>): List<TaskRowUi> {
+            if (overrides.isEmpty()) return rows
+            return rows.map { row ->
+                val completed = overrides[row.id] ?: return@map row
+                row.copy(completed = completed, overdue = row.overdue && !completed)
+            }
         }
 
         /**

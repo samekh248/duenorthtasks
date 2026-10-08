@@ -104,10 +104,13 @@ class HomeViewModel @Inject constructor(
         combine(overrides.overrides, linger.ticked, adds.pending, ::Triple)
     ) { (day, dueRows), doneRows, lists, (account, importance, picks), (pending, ticked, added) ->
         knownLists = lists
-        overrides.settle((dueRows + doneRows).associate { it.task.localId to it.task.completed })
-        adds.settle(dueRows.mapTo(HashSet()) { it.task.localId })
+        val stored = (dueRows + doneRows).associate { it.task.localId to it.task.completed }
+        // Done counts too: a task ticked before its add was ever read back goes straight there.
+        adds.settle(stored.keys)
+        overrides.settle(stored, waiting = adds.waiting())
         val (soon, later) = dueRows.partition { it.task.dueDate?.isAfter(day) == false }
-        val (addedSoon, addedLater) = added.rows.partition { it.due?.isAfter(day) == false }
+        val (addedSoon, addedLater) = PendingAdds.ticked(added.rows, pending)
+            .partition { it.due?.isAfter(day) == false }
         HomeUiState(
             loading = false,
             today = day,
