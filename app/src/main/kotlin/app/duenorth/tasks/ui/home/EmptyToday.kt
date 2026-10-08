@@ -125,7 +125,7 @@ private fun easeOut(x: Float): Float {
 }
 
 /** Draws "check north" at [progress] (0 = start of the splash, 1 = the launcher icon). */
-private fun DrawScope.drawLogo(progress: Float, color: Color) {
+internal fun DrawScope.drawLogo(progress: Float, color: Color) {
     val m = LogoMotion
     val scale = size.height / m.HEIGHT
     fun p(x: Float, y: Float) = Offset((x - m.LEFT) * scale, (y - m.TOP) * scale)
