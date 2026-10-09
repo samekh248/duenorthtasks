@@ -33,8 +33,8 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         // CI passes APP_VERSIONCODE so every Play upload gets a higher number (T068).
-        versionCode = secret("app.versionCode").toIntOrNull() ?: 1
-        versionName = "0.1.0"
+        versionCode = secret("app.versionCode").toIntOrNull() ?: 2
+        versionName = "0.1.2"
 
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${secret("google.webClientId")}\"")
         buildConfigField("String", "MSAL_CLIENT_ID", "\"${secret("msal.clientId")}\"")
