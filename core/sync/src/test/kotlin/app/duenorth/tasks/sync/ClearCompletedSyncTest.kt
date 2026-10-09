@@ -31,6 +31,31 @@ class ClearCompletedSyncTest : SyncTestBase() {
     }
 
     @Test
+    fun clearingOneListLeavesAnotherListsCompletedTasksAlone() = runBlocking {
+        val home = remote.seed("Home", (1..3).map { TaskDraft(title = "Chore $it") })
+        val work = remote.seed("Work", (1..3).map { TaskDraft(title = "Report $it") })
+        remoteTasks(home.id).take(2).forEach { remote.editRemotely(home.id, it.id, TaskPatch(completed = true)) }
+        remoteTasks(work.id).take(2).forEach { remote.editRemotely(work.id, it.id, TaskPatch(completed = true)) }
+        sync()
+        val workDone = tasks("Work").filter { it.completed }.map { it.title }.sorted()
+        assertEquals(2, workDone.size)
+
+        val cleared = io { repo.clearCompleted(list("Home").localId) }
+
+        assertEquals(2, cleared)
+        assertEquals(workDone, tasks("Work").filter { it.completed }.map { it.title }.sorted())
+        assertEquals(3, tasks("Work").size)
+        sync()
+        // A later history load of Work, after Home's clear, must not treat Work's tasks as cleared.
+        io { engine.backfill() }
+        assertEquals(1, remoteTasks(home.id).size)
+        assertEquals(3, remoteTasks(work.id).size)
+        assertEquals(2, remoteTasks(work.id).count { it.completed })
+        assertEquals(workDone, tasks("Work").filter { it.completed }.map { it.title }.sorted())
+        assertEquals(0, pending())
+    }
+
+    @Test
     fun aCompletedTaskNeverSyncedIsClearedWithoutAskingTheService() = runBlocking {
         remote.seed("Home")
         sync()
