@@ -108,8 +108,10 @@ it](mockups/empty-today.png)
    **When** the user arrives at "today", **Then** the logo appears centered across the section
    (the part left of the next section's peek) and centered between the add box and the app bar,
    with "all clear." and a gray "nothing due today" centered under it.
-2. **Then** it plays the launch splash motion once: the arrowhead climbs out of the check leaving
-   a fading trail, and the short stroke ticks in behind it, in under 1 s; then it rests.
+2. **Then** it plays the launch splash motion once, in two parts and under 1 s: the arrow climbs
+   out of the check leaving a fading trail, carrying the check's pointed bottom corner with it,
+   and then the short stroke ticks in behind it; then it rests. Nothing appears in a third step
+   (Dustin, 2026-10-06: the corner point is part of the arrow).
 3. **When** the user taps the logo, **Then** it plays again.
 4. **Given** the system "remove animations" setting, **Then** the logo shows at rest, no motion.
 5. **When** a task becomes due today (added, synced or re-dated), **Then** the logo fades out and
