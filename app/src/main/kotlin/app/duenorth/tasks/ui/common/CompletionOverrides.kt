@@ -15,9 +15,12 @@ class CompletionOverrides {
 
     fun set(id: String, completed: Boolean) = state.update { it + (id to completed) }
 
-    /** Drops overrides the database now agrees with, or whose rows are gone from [stored]. */
-    fun settle(stored: Map<String, Boolean>) = state.update { current ->
-        current.filter { (id, value) -> id in stored && stored[id] != value }
+    /**
+     * Drops overrides the database now agrees with, or whose rows are gone from [stored], except
+     * for rows still on their way in ([waiting], added but not read back yet).
+     */
+    fun settle(stored: Map<String, Boolean>, waiting: Set<String> = emptySet()) = state.update { current ->
+        current.filter { (id, value) -> if (id in stored) stored[id] != value else id in waiting }
     }
 
     fun clear(id: String) = state.update { it - id }
