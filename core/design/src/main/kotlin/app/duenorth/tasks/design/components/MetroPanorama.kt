@@ -24,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,9 +57,12 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-/** One panorama section: its lowercase header and its content. */
+/**
+ * One panorama section: its lowercase header and its content. [key] keeps the section's state with
+ * it when sections are added or taken away around it; it defaults to the header.
+ */
 @Immutable
-class PanoramaSection(val header: String, val content: @Composable () -> Unit)
+class PanoramaSection(val header: String, val key: Any = header, val content: @Composable () -> Unit)
 
 /** Section geometry (research R3): each section fills the screen except a narrow strip where the next one peeks in. */
 object PanoramaDefaults {
@@ -201,16 +205,18 @@ fun MetroPanorama(
         Layout(
             content = {
                 sections.forEachIndexed { i, section ->
-                    Box {
-                        if (warm || i in onScreen) {
-                            Column(Modifier.fillMaxWidth().padding(start = MetroDimens.Gutter)) {
-                                MetroText(
-                                    section.header,
-                                    type.sectionHeader,
-                                    Modifier.semantics { heading() },
-                                    maxLines = 1
-                                )
-                                Box(Modifier.fillMaxSize()) { section.content() }
+                    key(section.key) {
+                        Box {
+                            if (warm || i in onScreen) {
+                                Column(Modifier.fillMaxWidth().padding(start = MetroDimens.Gutter)) {
+                                    MetroText(
+                                        section.header,
+                                        type.sectionHeader,
+                                        Modifier.semantics { heading() },
+                                        maxLines = 1
+                                    )
+                                    Box(Modifier.fillMaxSize()) { section.content() }
+                                }
                             }
                         }
                     }

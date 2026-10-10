@@ -26,6 +26,7 @@ import app.duenorth.tasks.settings.ThemeMode
 import app.duenorth.tasks.settings.ThemeSettings
 import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.settings.testListShades
+import app.duenorth.tasks.settings.testPinnedLists
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.home.HomeActions
@@ -140,6 +141,7 @@ class ThemeScreenshotTest {
             ServiceFeatures(accounts) { FakeProvider() },
             ListHolds(),
             testListOrder(tasks, accounts),
+            testPinnedLists(tasks, accounts),
             clock
         )
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
@@ -166,6 +168,7 @@ class ThemeScreenshotTest {
             ServiceFeatures(accounts) { FakeProvider() },
             ListHolds(),
             testListOrder(tasks, accounts),
+            testPinnedLists(tasks, accounts),
             clock
         )
         viewModel.toggleCompletedGroup()

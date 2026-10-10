@@ -28,6 +28,7 @@ import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.settings.testListShades
+import app.duenorth.tasks.settings.testPinnedLists
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.account.AccountScreen
 import app.duenorth.tasks.ui.account.SyncAccountActions
@@ -259,6 +260,7 @@ class ScreenScreenshotTest {
                 features,
                 ListHolds(),
                 testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
                 clock
             )
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
@@ -297,6 +299,7 @@ class ScreenScreenshotTest {
                 features,
                 ListHolds(),
                 testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
                 clock
             )
         viewModel.toggleCompletedGroup()

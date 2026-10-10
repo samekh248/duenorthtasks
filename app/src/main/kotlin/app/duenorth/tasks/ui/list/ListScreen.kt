@@ -278,6 +278,9 @@ private fun ListPage(
             menuItems = listOfNotNull(
                 AppBarMenuItem("rename list") { renaming = true }.takeIf { state.sharing.canManage },
                 AppBarMenuItem("clear completed") { clearing = true }.takeIf { state.completed.isNotEmpty() },
+                AppBarMenuItem(if (state.pinned) "unpin from home" else "pin to home") {
+                    viewModel.setPinned(!state.pinned)
+                },
                 AppBarMenuItem("list shade") { onShade(viewModel.listId) },
                 AppBarMenuItem("list info") { onInfo(viewModel.listId) },
                 AppBarMenuItem("save as template") { viewModel.saveAsTemplate(onTemplates.openListTemplate) },

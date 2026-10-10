@@ -25,6 +25,7 @@ import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.settings.testListShades
+import app.duenorth.tasks.settings.testPinnedLists
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.list.ListContent
@@ -90,6 +91,7 @@ class ClearCompletedScreenshotTest {
             features,
             ListHolds(),
             testListOrder(tasks, accounts),
+            testPinnedLists(tasks, accounts),
             clock
         )
     }
