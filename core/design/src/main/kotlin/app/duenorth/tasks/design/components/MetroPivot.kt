@@ -14,6 +14,8 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,17 +29,48 @@ import kotlinx.coroutines.launch
 
 private const val INACTIVE_HEADER_ALPHA = 0.4f
 
+/** Times round the ring the pager has room for, half of them either side of where it starts. */
+private const val LAPS = 100_000
+
+/**
+ * Where a [MetroPivot] is. The pages form a ring, like the panorama's sections: past the last page
+ * comes the first again, and before the first comes the last. Underneath it is a pager many laps
+ * long that starts in the middle, so there is no end to swipe into.
+ */
+@Stable
+class PivotState internal constructor(val pageCount: Int, internal val pager: PagerState) {
+    /** The page showing, within [0, pageCount). */
+    val currentPage: Int get() = pager.currentPage.mod(pageCount)
+
+    /** Slides on to [page], forwards round the ring like tapping its header. */
+    suspend fun animateScrollToPage(page: Int) {
+        pager.animateScrollToPage(pager.currentPage + (page - currentPage).mod(pageCount))
+    }
+}
+
+/** A [PivotState] that survives configuration changes and process death. */
+@Composable
+fun rememberPivotState(pageCount: Int, initialPage: Int = 0): PivotState {
+    require(pageCount > 0) { "A pivot needs at least one page" }
+    val laps = if (pageCount > 1) LAPS else 1
+    val pager = rememberPagerState(initialPage = pageCount * (laps / 2) + initialPage.mod(pageCount)) {
+        pageCount * laps
+    }
+    return remember(pageCount, pager) { PivotState(pageCount, pager) }
+}
+
 /**
  * The WP8.1 Pivot, for secondary pages with tabs (settings). The current header comes first and
  * the others follow it in order, at 40% opacity, running off the right edge; tapping one jumps to
- * it. Pages swipe like a pager.
+ * it. Pages swipe like a pager and loop: swiping on from the last page brings the first, and
+ * swiping back from the first brings the last.
  */
 @Composable
 fun MetroPivot(
     headers: List<String>,
     modifier: Modifier = Modifier,
     pageTitle: String? = null,
-    state: PagerState = rememberPagerState { headers.size },
+    state: PivotState = rememberPivotState(headers.size),
     page: @Composable (index: Int) -> Unit
 ) {
     val colors = MetroTheme.colors
@@ -51,6 +84,7 @@ fun MetroPivot(
                 Modifier.padding(start = MetroDimens.Gutter, top = MetroDimens.Gutter)
             )
         }
+        val pager = state.pager
         val current = state.currentPage
         val ordered = headers.indices.map { (current + it) % headers.size }
         Box(Modifier.fillMaxWidth().clipToBounds()) {
@@ -60,7 +94,7 @@ fun MetroPivot(
                     .padding(start = MetroDimens.Gutter)
                     .graphicsLayer {
                         // Headers drift with the finger, then settle when the page changes.
-                        translationX = -state.currentPageOffsetFraction * 120.dp.toPx()
+                        translationX = -pager.currentPageOffsetFraction * 120.dp.toPx()
                     },
                 horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter * 2)
             ) {
@@ -85,11 +119,11 @@ fun MetroPivot(
             }
         }
         HorizontalPager(
-            state = state,
+            state = pager,
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.Top
-        ) { index ->
-            Box(Modifier.fillMaxSize().padding(horizontal = MetroDimens.Gutter)) { page(index) }
+        ) { slot ->
+            Box(Modifier.fillMaxSize().padding(horizontal = MetroDimens.Gutter)) { page(slot.mod(headers.size)) }
         }
     }
 }

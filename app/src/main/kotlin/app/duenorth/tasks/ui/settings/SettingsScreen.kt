@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -43,6 +42,7 @@ import app.duenorth.tasks.design.components.MetroLink
 import app.duenorth.tasks.design.components.MetroPivot
 import app.duenorth.tasks.design.components.MetroRadio
 import app.duenorth.tasks.design.components.MetroText
+import app.duenorth.tasks.design.components.rememberPivotState
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.Accent
 import app.duenorth.tasks.design.theme.MetroDimens
@@ -83,7 +83,7 @@ fun SettingsContent(
         headers = headers,
         pageTitle = "settings",
         modifier = Modifier.statusBarsPadding(),
-        state = rememberPagerState(initialPage) { headers.size }
+        state = rememberPivotState(headers.size, initialPage)
     ) { index ->
         when (index) {
             0 -> ThemePage(theme, onMode, onAccent)

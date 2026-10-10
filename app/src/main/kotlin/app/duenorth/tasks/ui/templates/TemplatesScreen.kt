@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +32,7 @@ import app.duenorth.tasks.design.components.MetroInputDialog
 import app.duenorth.tasks.design.components.MetroListItem
 import app.duenorth.tasks.design.components.MetroPivot
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
+import app.duenorth.tasks.design.components.rememberPivotState
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.shadeAccent
@@ -62,7 +62,7 @@ private sealed interface Prompt {
  */
 @Composable
 fun TemplatesContent(state: TemplatesUiState, viewModel: TemplatesViewModel, actions: TemplatesActions) {
-    val pager = rememberPagerState { 2 }
+    val pager = rememberPivotState(2)
     var prompt by remember { mutableStateOf<Prompt?>(null) }
     var newName by rememberSaveable { mutableStateOf<Kind?>(null) }
 
