@@ -85,7 +85,7 @@ fun SyncAccountContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     MetroText(
-                        "Due North syncs your tasks with one service at a time.",
+                        "Due North Tasks syncs your tasks with one service at a time.",
                         type.body,
                         color = colors.secondary
                     )

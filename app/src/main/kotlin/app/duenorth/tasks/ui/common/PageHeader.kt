@@ -11,12 +11,12 @@ import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 
-/** "DUE NORTH" in small caps over a 52sp lowercase page title, aligned to the gutter. */
+/** "DUE NORTH TASKS" in small caps over a 52sp lowercase page title, aligned to the gutter. */
 @Composable
 fun PageHeader(
     title: String,
     modifier: Modifier = Modifier,
-    overline: String = "DUE NORTH",
+    overline: String = "DUE NORTH TASKS",
     titleModifier: Modifier = Modifier
 ) {
     Column(modifier.padding(start = MetroDimens.Gutter, end = MetroDimens.Gutter, top = 16.dp)) {

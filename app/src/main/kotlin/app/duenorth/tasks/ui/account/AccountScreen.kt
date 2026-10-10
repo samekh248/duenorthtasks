@@ -41,7 +41,7 @@ fun AccountScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 MetroText(
-                    "Due North keeps your tasks in one service at a time. Pick the one you use.",
+                    "Due North Tasks keeps your tasks in one service at a time. Pick the one you use.",
                     MetroTheme.typography.body,
                     color = MetroTheme.colors.secondary
                 )
