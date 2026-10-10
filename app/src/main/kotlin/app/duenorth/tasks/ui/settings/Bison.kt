@@ -56,13 +56,14 @@ internal class TapStreak(private val needed: Int = 7, private val gapMs: Long = 
 
 /**
  * The bison easter egg: it walks in from the left, stops in the middle, turns its head to look at
- * you, looks ahead again and walks off to the right. It plays each time [runs] goes up. It is drawn
+ * you, looks ahead again and walks off to the right. It plays each time [runs] goes up, then calls
+ * [onDone] so the caller can set [runs] back to zero; a run never replays on its own. It is drawn
  * on a Canvas that only redraws (the clock is read in the draw phase, so nothing recomposes per
  * frame) and takes no touches, so the page under it stays usable. With animations off it stands
  * still in the middle, looking at you, for a moment instead.
  */
 @Composable
-internal fun BisonWalk(runs: Int, modifier: Modifier = Modifier, bleed: Dp = 0.dp) {
+internal fun BisonWalk(runs: Int, onDone: () -> Unit, modifier: Modifier = Modifier, bleed: Dp = 0.dp) {
     if (runs == 0) return
     val animate = LocalAnimationsEnabled.current
     val clock = remember { Animatable(0f) }
@@ -77,6 +78,7 @@ internal fun BisonWalk(runs: Int, modifier: Modifier = Modifier, bleed: Dp = 0.d
             delay(STILL_MS)
         }
         showing = false
+        onDone()
     }
     if (showing) BisonCanvas({ clock.value }, modifier, bleed)
 }

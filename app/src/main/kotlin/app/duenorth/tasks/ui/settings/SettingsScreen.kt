@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -180,14 +179,15 @@ internal const val REPO_URL = "https://github.com/samekh248/duenorthtasks"
 
 /**
  * The about page: the tile, name and version, who makes it, and credits. Seven quick taps on the
- * version send a bison across the page ([BisonWalk]). [bisonPreviewMs] pins a bison frame for
- * screenshot tests.
+ * version send a bison across the page ([BisonWalk]) once; the walk and the tap count are plain
+ * remembered state, so leaving the page forgets both and the taps are needed again.
+ * [bisonPreviewMs] pins a bison frame for screenshot tests.
  */
 @Composable
 internal fun AboutPage(bisonPreviewMs: Float? = null) {
     val uriHandler = LocalUriHandler.current
     val streak = remember { TapStreak() }
-    var bisonRuns by rememberSaveable { mutableIntStateOf(0) }
+    var bisonRuns by remember { mutableIntStateOf(0) }
     Box(Modifier.fillMaxSize().background(MetroTheme.colors.background).testTag("about")) {
         Column(
             Modifier
@@ -238,7 +238,7 @@ internal fun AboutPage(bisonPreviewMs: Float? = null) {
         if (bisonPreviewMs != null) {
             BisonCanvas({ bisonPreviewMs }, bisonModifier, bleed = MetroDimens.Gutter)
         } else {
-            BisonWalk(bisonRuns, bisonModifier, bleed = MetroDimens.Gutter)
+            BisonWalk(bisonRuns, onDone = { bisonRuns = 0 }, bisonModifier, bleed = MetroDimens.Gutter)
         }
     }
 }
