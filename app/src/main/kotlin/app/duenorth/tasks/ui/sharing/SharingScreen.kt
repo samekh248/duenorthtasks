@@ -64,7 +64,7 @@ fun SharingContent(state: SharingUiState, onShade: () -> Unit, onHandOff: () -> 
                 .verticalScroll(rememberScrollState())
                 .testTag("sharing")
         ) {
-            PageHeader("sharing", overline = state.title.ifEmpty { "DUE NORTH TASKS" })
+            PageHeader("sharing", overline = state.title.ifEmpty { "DUE NORTH" })
             Column(
                 Modifier.padding(horizontal = MetroDimens.Gutter).padding(bottom = MetroDimens.Grid),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
