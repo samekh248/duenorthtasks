@@ -126,7 +126,7 @@ private fun GalleryContent(
 private fun TypeSection() {
     val type = MetroTheme.typography
     Column(Modifier.verticalScroll(rememberScrollState())) {
-        MetroText("DUE NORTH TASKS", type.pageTitle)
+        MetroText("DUE NORTH", type.pageTitle)
         MetroText("header", type.header, maxLines = 1)
         MetroText("detail title", type.detailTitle)
         MetroText("List name", type.listName)

@@ -45,7 +45,7 @@ fun ListShadeContent(state: ListShadeUiState, onPick: (Int) -> Unit) {
             .statusBarsPadding()
             .testTag("list shade")
     ) {
-        PageHeader("list shade", overline = state.title.ifEmpty { "DUE NORTH TASKS" })
+        PageHeader("list shade", overline = state.title.ifEmpty { "DUE NORTH" })
         Column(Modifier.padding(horizontal = MetroDimens.Gutter)) {
             Row(
                 Modifier.fillMaxWidth().padding(top = MetroDimens.Grid, bottom = MetroDimens.Grid),
