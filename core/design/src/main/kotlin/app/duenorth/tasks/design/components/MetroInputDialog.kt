@@ -21,9 +21,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -86,8 +88,15 @@ fun MetroInputDialog(
             MetroButton(confirmLabel, { confirm() }, Modifier.weight(1f), enabled = value.isNotBlank())
             MetroButton(dismissLabel, onDismiss, Modifier.weight(1f))
         }
+        // Runs inside the dialog's own window, after its first frame, so the text box is
+        // attached when it asks for focus and the keyboard comes up with it.
+        val keyboard = LocalSoftwareKeyboardController.current
+        LaunchedEffect(Unit) {
+            withFrameNanos { }
+            focus.requestFocus()
+            keyboard?.show()
+        }
     }
-    LaunchedEffect(Unit) { focus.requestFocus() }
 }
 
 /** Picks one option from a short list, such as the list a task belongs to. */
