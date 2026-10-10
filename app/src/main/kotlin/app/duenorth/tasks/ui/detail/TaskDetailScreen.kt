@@ -94,7 +94,7 @@ private fun ReorderStepsPage(state: TaskDetailUiState, viewModel: TaskDetailView
     Column(Modifier.fillMaxSize().background(MetroTheme.colors.background)) {
         Column(Modifier.weight(1f).statusBarsPadding()) {
             MetroText(
-                "DUE NORTH · ${state.listTitle.uppercase()}",
+                "DUE NORTH TASKS · ${state.listTitle.uppercase()}",
                 MetroTheme.typography.pageTitle,
                 Modifier.padding(start = MetroDimens.Gutter, top = 16.dp, end = MetroDimens.Gutter),
                 maxLines = 1
@@ -151,7 +151,7 @@ fun TaskDetailContent(
                 .testTag("detail"),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            MetroText("DUE NORTH · ${state.listTitle.uppercase()}", type.pageTitle, maxLines = 1)
+            MetroText("DUE NORTH TASKS · ${state.listTitle.uppercase()}", type.pageTitle, maxLines = 1)
             if (state.loading) {
                 // Task-shaped placeholders until Room answers, never empty fields (FR-009).
                 MetroTaskPlaceholders(count = 2)

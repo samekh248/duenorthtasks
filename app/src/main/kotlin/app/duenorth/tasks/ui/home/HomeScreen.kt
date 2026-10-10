@@ -131,7 +131,7 @@ fun HomeScreen(
 }
 
 /**
- * The Light Panorama home (FR-002): "tasks" (with "due north" under it) over today, lists, done
+ * The Light Panorama home (FR-002): "tasks" (with "due north tasks" under it) over today, lists, done
  * and stats (spec 005). [onStatsSeen] fires the first time the panorama moves, so stats are only
  * counted once they may be looked at (FR-431).
  */
@@ -214,7 +214,7 @@ fun HomeContent(
         Box(Modifier.weight(1f).statusBarsPadding()) {
             MetroPanorama(
                 title = "tasks",
-                subtitle = "due north",
+                subtitle = "due north tasks",
                 state = pager,
                 sections = listOf(
                     PanoramaSection("today") {
