@@ -37,9 +37,8 @@ import kotlinx.coroutines.launch
 
 /**
  * What "today" shows when nothing is due (spec 005 US4): the check-north logo drawing itself,
- * large and centered, with "all clear." under it. It plays the launch splash's motion
- * (`splash_icon_animated.xml`) each time [arrivals] changes and on tap, and rests when
- * animations are off. Two strokes on a Canvas: nothing to load, so it costs cold start nothing.
+ * large and centered, with "all clear." under it. It plays [LogoMotion] each time [arrivals]
+ * changes and on tap, and rests when animations are off. Two strokes on a Canvas: nothing to load, so it costs cold start nothing.
  */
 @Composable
 internal fun EmptyToday(arrivals: () -> Int, modifier: Modifier = Modifier) {
@@ -93,7 +92,7 @@ internal fun EmptyToday(arrivals: () -> Int, modifier: Modifier = Modifier) {
     }
 }
 
-/** The splash animation's timeline, in the launcher icon's 108-unit space. */
+/** The logo animation's timeline, in the launcher icon's 108-unit space. */
 internal object LogoMotion {
     const val DURATION_MS = 700
 
@@ -124,7 +123,7 @@ private fun easeOut(x: Float): Float {
     return 1f - (1f - t) * (1f - t) * (1f - t)
 }
 
-/** Draws "check north" at [progress] (0 = start of the splash, 1 = the launcher icon). */
+/** Draws "check north" at [progress] (0 = start of the animation, 1 = the launcher icon). */
 internal fun DrawScope.drawLogo(progress: Float, color: Color) {
     val m = LogoMotion
     val scale = size.height / m.HEIGHT
