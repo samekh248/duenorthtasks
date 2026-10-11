@@ -88,7 +88,6 @@ import kotlinx.coroutines.launch
 /** Section keys. Pinned lists sit between "today" and "lists", each under [pinKey]. */
 private const val TODAY = "today"
 private const val LISTS = "lists"
-private const val DONE = "done"
 private const val STATS = "stats"
 
 private fun pinKey(listId: String) = "pin:$listId"
@@ -140,9 +139,9 @@ fun HomeScreen(
 }
 
 /**
- * The Light Panorama home (FR-002): "tasks" (with "due north" under it) over today, lists, done
- * and stats (spec 005). [onStatsSeen] fires the first time the panorama moves, so stats are only
- * counted once they may be looked at (FR-431).
+ * The Light Panorama home (FR-002): "tasks" (with "due north" under it) over today, any pinned
+ * lists, lists and stats (spec 005). [onStatsSeen] fires the first time the panorama moves, so
+ * stats are only counted once they may be looked at (FR-431).
  */
 @Composable
 fun HomeContent(
@@ -158,7 +157,7 @@ fun HomeContent(
     onStatsSeen: () -> Unit = {}
 ) {
     val sectionKeys = remember(state.pinned) {
-        listOf(TODAY) + state.pinned.map { pinKey(it.list.id) } + listOf(LISTS, DONE, STATS)
+        listOf(TODAY) + state.pinned.map { pinKey(it.list.id) } + listOf(LISTS, STATS)
     }
     // The section in view, by key and by place, so that pinning or unpinning a list keeps it in
     // view; unpinning the one in view shows the section that took its place.
@@ -267,9 +266,6 @@ fun HomeContent(
                             onPin = { viewModel.pin(it.id) },
                             onUnpin = { viewModel.unpin(it.id) }
                         )
-                    },
-                    PanoramaSection(DONE) {
-                        DoneSection(state, viewModel, continuum, openTask)
                     },
                     PanoramaSection(STATS) {
                         StatsSection(stats, state.lists, state.serviceName, actions.openList)
@@ -631,40 +627,6 @@ private fun ListRow(
                 ContextMenuItem("delete", onDelete).takeIf { list.sharing.canManage }
             )
         )
-    }
-}
-
-@Composable
-private fun DoneSection(
-    state: HomeUiState,
-    viewModel: HomeViewModel,
-    continuum: ContinuumState,
-    openTask: (String) -> Unit
-) {
-    val list = rememberLazyListState()
-    val hold = rememberTouchHold(list, viewModel::holdSync)
-    val done = hold.frozen(state.done)
-    LazyColumn(
-        Modifier.fillMaxSize().touchHold(hold).testTag("done"),
-        state = list,
-        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
-    ) {
-        if (state.loading) {
-            item(key = "loading") { MetroTaskPlaceholders() }
-            return@LazyColumn
-        }
-        if (done.isEmpty()) {
-            item(key = "empty") { EmptyNote("nothing done yet") }
-        }
-        items(done, key = { it.id }, contentType = { "task" }) { row ->
-            TaskRow(
-                row = row,
-                onToggle = { viewModel.setCompleted(row.id, it) },
-                onOpen = { openTask(row.id) },
-                continuum = continuum,
-                modifier = Modifier.animateItem()
-            )
-        }
     }
 }
 

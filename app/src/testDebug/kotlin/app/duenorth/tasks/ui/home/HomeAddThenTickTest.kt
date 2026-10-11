@@ -27,11 +27,13 @@ import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.settings.testPinnedLists
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
+import app.duenorth.tasks.ui.common.TickLinger
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertTrue
@@ -41,6 +43,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLooper
 
 /**
  * A task ticked on today before the screen has read its add back from the database: the tick
@@ -114,15 +117,17 @@ class HomeAddThenTickTest {
         // The tap shows at once, though the stored row hasn't been read yet.
         compose.waitUntil(TIMEOUT) { compose.onAllNodes(box and isOn).fetchSemanticsNodes().isNotEmpty() }
 
-        // Reads catch up: the task is done, and today never shows it unticked again.
+        // Reads catch up: the task is done and leaves today, never shown unticked on the way.
         reads.open()
-        compose.waitUntil(TIMEOUT) { viewModel.state.value.done.any { it.title == "Call the vet" } }
-        compose.waitForIdle()
-        assertTrue(
-            "today still shows the done task unticked",
-            viewModel.state.value.dueToday.none { it.title == "Call the vet" && !it.completed }
-        )
-        assertTrue(compose.onAllNodes(box and !isOn).fetchSemanticsNodes().isEmpty())
+        compose.waitUntil(TIMEOUT) {
+            assertTrue(
+                "today shows the done task unticked",
+                viewModel.state.value.dueToday.none { it.title == "Call the vet" && !it.completed }
+            )
+            assertTrue(compose.onAllNodes(box and !isOn).fetchSemanticsNodes().isEmpty())
+            ShadowLooper.idleMainLooper(TickLinger.LINGER_MS, TimeUnit.MILLISECONDS)
+            viewModel.state.value.dueToday.none { it.title == "Call the vet" }
+        }
     }
 
     /** Reads the stored row on this thread, around the gated executor. */

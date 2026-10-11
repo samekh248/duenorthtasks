@@ -14,7 +14,7 @@ reason this app exists, so it outranks Material defaults whenever the two disagr
   Material ripple. Flat color fills only.
 - The chosen look is **Light Panorama** (design C, picked 2026-10-04): the home screen is a
   Panorama hub with an oversized "due north" title that scrolls sideways more slowly than the
-  sections under it ("today", "lists", "done"), like the WP8.1 Calendar and People hubs. The next
+  sections under it ("today", "lists", "stats"), like the WP8.1 Calendar and People hubs. The next
   section always peeks in from the right edge. Secondary pages use the Pivot where they need tabs.
   Every screen has a bottom Application Bar with round outlined icon buttons and an ellipsis
   (`•••`) that expands labels and a menu.
@@ -122,4 +122,4 @@ PATCH for wording) and states the reason. Plans and reviews MUST check the Const
 gates in `plan.md` against the principles above; any violation is listed in that plan's
 Complexity Tracking table with a justification.
 
-**Version**: 1.3.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
+**Version**: 1.3.1 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-11

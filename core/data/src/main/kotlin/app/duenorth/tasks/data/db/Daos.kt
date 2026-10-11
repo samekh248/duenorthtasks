@@ -121,7 +121,7 @@ interface TaskDao {
     )
     fun observeDueBy(lastDay: Long): Flow<List<TaskWithList>>
 
-    /** The "done" section, newest first. */
+    /** Recently completed tasks, newest first. */
     @Query(
         """
         SELECT t.*, l.title AS listTitle FROM task t JOIN task_list l ON l.localId = t.listId

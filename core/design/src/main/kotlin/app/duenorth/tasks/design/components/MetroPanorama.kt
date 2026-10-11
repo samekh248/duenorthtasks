@@ -73,7 +73,7 @@ object PanoramaDefaults {
     /**
      * How much of the title's own width it slides by between the first and last section. The
      * title drifts slower than the sections (the panorama feel) but stays mostly on screen, so
-     * "tasks" is still readable on the last section ("done") instead of scrolled off.
+     * "tasks" is still readable on the last section ("stats") instead of scrolled off.
      */
     const val TITLE_TRAVEL = 0.15f
 
