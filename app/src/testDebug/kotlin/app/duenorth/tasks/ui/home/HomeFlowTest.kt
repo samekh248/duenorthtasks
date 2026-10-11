@@ -39,10 +39,12 @@ import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.settings.testPinnedLists
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
+import app.duenorth.tasks.ui.common.TickLinger
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -56,6 +58,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLooper
 
 /** T025: swipe the panorama, add, complete, edit and delete a task, against a real (in-memory) Room. */
 @OptIn(ExperimentalTestApi::class)
@@ -109,23 +112,25 @@ class HomeFlowTest {
         add("Call the vet")
         waitFor(hasText("Call the vet") and hasAnyAncestor(hasTestTag("today")))
 
-        // Complete: the first check box ticks, and the task leaves today for done.
+        // Complete: the first check box ticks, and the task leaves today. Done tasks have no
+        // section of their own; they stay in their list.
         compose.onAllNodes(isToggleable() and hasAnyAncestor(hasTestTag("today"))).onFirst().performClick()
         compose.waitUntil(TIMEOUT) { runBlocking { tasks.recentlyCompleted().first().size == 1 } }
         val done = runBlocking { tasks.recentlyCompleted().first().single().task }
+        compose.waitUntil(TIMEOUT) {
+            ShadowLooper.idleMainLooper(TickLinger.LINGER_MS, TimeUnit.MILLISECONDS)
+            compose.onAllNodes(hasText(done.title) and hasAnyAncestor(hasTestTag("today")))
+                .fetchSemanticsNodes().isEmpty()
+        }
 
-        // Swipe to "done" and find it there.
+        // Swipe to "lists" and back.
         compose.onNode(hasTestTag("today")).performTouchInput { swipeLeft() }
+        waitFor(hasTestTag("lists"))
+        compose.onNode(hasTestTag("lists")).performTouchInput { swipeRight() }
         compose.waitForIdle()
-        compose.onNode(hasTestTag("lists")).performTouchInput { swipeLeft() }
-        waitFor(hasText(done.title) and hasAnyAncestor(hasTestTag("done")))
 
         // Edit and delete from the long-press menu on the task still open.
         val open = runBlocking { tasks.tasksDueBy(LocalDate.of(2026, 10, 6)).first().single().task }
-        compose.onNode(hasTestTag("done")).performTouchInput { swipeRight() }
-        compose.waitForIdle()
-        compose.onNode(hasTestTag("lists")).performTouchInput { swipeRight() }
-        compose.waitForIdle()
         longPress(open.title)
         compose.onNode(hasText("edit")).performClick()
         assertEquals(listOf(open.localId), opened)

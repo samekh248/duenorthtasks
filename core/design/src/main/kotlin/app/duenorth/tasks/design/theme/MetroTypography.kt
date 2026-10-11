@@ -25,7 +25,7 @@ object MetroWeights {
 data class MetroTypography(
     /** "due north" across the home panorama. */
     val panoramaTitle: TextStyle,
-    /** Panorama sections: "today", "lists", "done". */
+    /** Panorama sections: "today", "lists", "stats". */
     val sectionHeader: TextStyle,
     /** Small uppercase app name above a page title ("DUE NORTH"). */
     val pageTitle: TextStyle,

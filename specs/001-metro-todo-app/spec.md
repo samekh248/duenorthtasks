@@ -68,7 +68,7 @@ Metro reference mockups in `docs/design/`.
 4c. **Given** the user taps a task with details, **When** the task page opens, **Then** it shows
    the full details text with tappable links.
 5. **Given** an open task, **When** the user taps its checkbox, **Then** it moves to the list's
-   "completed" group and to the panorama's "done" section, and the change survives an app restart.
+   "completed" group, and the change survives an app restart.
 6. **Given** any screen, **When** the user taps the app bar ellipsis (`•••`), **Then** the app bar
    expands to show button labels and the overflow menu, as on Windows Phone.
 7. **Given** the device has no network, **When** the user does any of the above, **Then** every
@@ -202,14 +202,15 @@ tap, with no restart.
 
 - **FR-001**: Every screen MUST use the Windows Phone 8.1 Metro design language defined in the
   constitution (Principle I) and the reference mockups in `docs/design/`.
-- **FR-002**: The home screen MUST be a Panorama with an oversized "due north" title and three
-  sections, "today", "lists" and "done", swiped sideways with parallax; the next section MUST be
+- **FR-002**: The home screen MUST be a Panorama with an oversized "due north" title and the
+  sections "today" and "lists" (then "stats", spec 005), swiped sideways with parallax; the next section MUST be
   partly visible at the right edge.
 - **FR-002a**: "today" MUST show open tasks that are overdue or due today across all lists
   (overdue first, captioned in red), followed by tasks due tomorrow.
 - **FR-002b**: "lists" MUST show each list as a square in that list's color (the app accent unless
   changed) with its open-task count, the list name and its next task, plus a "new list" row.
-- **FR-002c**: "done" MUST show recently completed tasks, newest first.
+- **FR-002c**: Removed 2026-10-11: the home panorama no longer has a "done" section; completed
+  tasks show in their list's "completed" group.
 - **FR-003**: Primary actions MUST live in a bottom Application Bar with circular outlined icon
   buttons and an ellipsis that reveals labels and an overflow menu.
 - **FR-004**: The app MUST support light and dark themes, following the phone's setting by

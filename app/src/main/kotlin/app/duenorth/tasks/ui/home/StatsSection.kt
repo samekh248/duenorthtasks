@@ -47,7 +47,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
- * The stats section after "done" (spec 005): this week, streak, on time, 12 weeks, right now, by
+ * The stats section after "lists" (spec 005): this week, streak, on time, 12 weeks, right now, by
  * list and all time, counted on the phone. Null [stats] shows placeholders (FR-430).
  */
 @Composable

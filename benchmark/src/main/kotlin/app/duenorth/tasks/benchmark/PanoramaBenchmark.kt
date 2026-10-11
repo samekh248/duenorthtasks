@@ -50,8 +50,8 @@ class PanoramaBenchmark {
 private const val TIMEOUT_MS = 10_000L
 private const val SWIPE_STEPS = 6
 
-/** today, lists, done and stats (spec 005 FR-432). */
-private const val SECTIONS = 4
+/** today, lists and stats (spec 005 FR-432). */
+private const val SECTIONS = 3
 
 /** Waits until the home panorama shows its first section. */
 internal fun MacrobenchmarkScope.waitForHome() {
@@ -60,7 +60,7 @@ internal fun MacrobenchmarkScope.waitForHome() {
 
 /**
  * Swipes from "today" round the ring back to "today", then the other way round, one section at a
- * time, so the seam between "done" and "today" is crossed both ways.
+ * time, so the seam between "stats" and "today" is crossed both ways.
  */
 internal fun MacrobenchmarkScope.swipePanorama() {
     val y = device.displayHeight / 2

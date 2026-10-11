@@ -69,7 +69,6 @@ data class HomeUiState(
     val lists: List<ListRowUi> = emptyList(),
     /** Pinned lists, in the order they were pinned: sections between "today" and "lists". */
     val pinned: List<PinnedListUi> = emptyList(),
-    val done: List<TaskRowUi> = emptyList(),
     val serviceName: String = "",
     /** The connected service has an importance star (To Do); false hides it everywhere. */
     val importance: Boolean = false,
@@ -80,7 +79,7 @@ data class HomeUiState(
 )
 
 /**
- * The home panorama's three sections, read straight from Room (constitution Principle IV), with
+ * The home panorama's task sections, read straight from Room (constitution Principle IV), with
  * ticks shown before the write lands (FR-006). Mapping runs off the main thread.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -136,7 +135,8 @@ class HomeViewModel @Inject constructor(
         val pinnedIds = pinnedRows.mapTo(HashSet()) { it.first }
         val stored = (dueRows + doneRows + pinnedRows.flatMap { it.second })
             .associate { it.task.localId to it.task.completed }
-        // Done counts too: a task ticked before its add was ever read back goes straight there.
+        // Done tasks are not shown, but they count: a task ticked before its add was ever read back
+        // is stored done, and only then may its pending row go.
         adds.settle(stored.keys)
         overrides.settle(stored, waiting = adds.waiting())
         val (soon, later) = dueRows.partition { it.task.dueDate?.isAfter(day) == false }
@@ -176,13 +176,6 @@ class HomeViewModel @Inject constructor(
                     )
                 )
             },
-            done = TickLinger.keep(
-                shown.done,
-                doneRows.map {
-                    it.toRow(day, pending[it.task.localId], importance)
-                },
-                ticked
-            ),
             serviceName = serviceName(account?.provider),
             importance = importance,
             added = added.added,
@@ -260,8 +253,8 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Today and done mix every list, so a finger on either holds sync for all of them until it
-     * lifts and the fling settles.
+     * Today mixes every list, so a finger on it holds sync for all of them until it lifts and the
+     * fling settles.
      */
     fun holdSync(active: Boolean) = heldLists.set(active) { state.value.lists.map { it.id } }
 
