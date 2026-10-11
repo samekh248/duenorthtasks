@@ -4,11 +4,14 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.duenorth.tasks.data.db.ListSummary
+import app.duenorth.tasks.data.db.TaskWithList
+import app.duenorth.tasks.data.order.OrderKeys
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskEdit
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.settings.ListOrder
+import app.duenorth.tasks.settings.PinnedLists
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
 import app.duenorth.tasks.ui.common.DueText
@@ -30,10 +33,12 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -45,8 +50,14 @@ data class ListRowUi(
     val title: String,
     val openCount: Int,
     val next: String?,
-    val sharing: ListSharing = ListSharing.PRIVATE
+    val sharing: ListSharing = ListSharing.PRIVATE,
+    /** Pinned to the home panorama as its own section. */
+    val pinned: Boolean = false
 )
+
+/** A pinned list's own home section: the list and its open tasks in the list's own order. */
+@Immutable
+data class PinnedListUi(val list: ListRowUi, val open: List<TaskRowUi>)
 
 @Immutable
 data class HomeUiState(
@@ -56,6 +67,8 @@ data class HomeUiState(
     val dueToday: List<TaskRowUi> = emptyList(),
     val tomorrow: List<TaskRowUi> = emptyList(),
     val lists: List<ListRowUi> = emptyList(),
+    /** Pinned lists, in the order they were pinned: sections between "today" and "lists". */
+    val pinned: List<PinnedListUi> = emptyList(),
     val done: List<TaskRowUi> = emptyList(),
     val serviceName: String = "",
     /** The connected service has an importance star (To Do); false hides it everywhere. */
@@ -79,6 +92,7 @@ class HomeViewModel @Inject constructor(
     features: ServiceFeatures,
     holds: ListHolds,
     listOrder: ListOrder,
+    private val pins: PinnedLists,
     clock: Clock
 ) : ViewModel() {
     private val overrides = CompletionOverrides()
@@ -96,15 +110,32 @@ class HomeViewModel @Inject constructor(
 
     private val due = today.flatMapLatest { day -> tasks.tasksDueBy(day.plusDays(1)).map { day to it } }
 
+    /** Each pinned list's open tasks, in pin order. */
+    private val pinnedOpen: Flow<List<Pair<String, List<TaskWithList>>>> = pins.pinned.flatMapLatest { ids ->
+        if (ids.isEmpty()) {
+            flowOf(emptyList())
+        } else {
+            combine(ids.map { id -> tasks.openTasks(id).map { id to it } }) { it.toList() }
+        }
+    }
+
     val state: StateFlow<HomeUiState> = combine(
         due,
         tasks.recentlyCompleted(),
-        combine(tasks.listSummaries(), listOrder.rank) { lists, rank -> ListOrder.sort(lists, rank) { it.localId } },
+        combine(
+            combine(tasks.listSummaries(), listOrder.rank) { lists, rank ->
+                ListOrder.sort(lists, rank) { it.localId }
+            },
+            pinnedOpen,
+            ::Pair
+        ),
         combine(accounts.account, features.importance, taskTemplatePicks(templates, features.importance), ::Triple),
         combine(overrides.overrides, linger.ticked, adds.pending, ::Triple)
-    ) { (day, dueRows), doneRows, lists, (account, importance, picks), (pending, ticked, added) ->
+    ) { (day, dueRows), doneRows, (lists, pinnedRows), (account, importance, picks), (pending, ticked, added) ->
         knownLists = lists
-        val stored = (dueRows + doneRows).associate { it.task.localId to it.task.completed }
+        val pinnedIds = pinnedRows.mapTo(HashSet()) { it.first }
+        val stored = (dueRows + doneRows + pinnedRows.flatMap { it.second })
+            .associate { it.task.localId to it.task.completed }
         // Done counts too: a task ticked before its add was ever read back goes straight there.
         adds.settle(stored.keys)
         overrides.settle(stored, waiting = adds.waiting())
@@ -132,7 +163,19 @@ class HomeViewModel @Inject constructor(
                 ),
                 ticked
             ),
-            lists = lists.map(ListSummary::toUi),
+            lists = lists.map { it.toUi(pinned = it.localId in pinnedIds) },
+            pinned = pinnedRows.mapNotNull { (id, open) ->
+                val list = lists.firstOrNull { it.localId == id } ?: return@mapNotNull null
+                PinnedListUi(
+                    list.toUi(pinned = true),
+                    TickLinger.keep(
+                        shown.pinned.firstOrNull { it.list.id == id }?.open.orEmpty(),
+                        open.sortedWith(compareBy(OrderKeys.taskComparator) { it.task })
+                            .map { it.toRow(day, pending[it.task.localId], importance) },
+                        ticked
+                    )
+                )
+            },
             done = TickLinger.keep(
                 shown.done,
                 doneRows.map {
@@ -242,7 +285,19 @@ class HomeViewModel @Inject constructor(
     }
 
     fun deleteList(id: String) {
-        viewModelScope.launch { tasks.deleteList(id) }
+        viewModelScope.launch {
+            runCatching { pins.unpin(id) }
+            tasks.deleteList(id)
+        }
+    }
+
+    /** Pins list [id] to the home panorama, after the lists already pinned. */
+    fun pin(id: String) {
+        viewModelScope.launch { runCatching { pins.pin(id) } }
+    }
+
+    fun unpin(id: String) {
+        viewModelScope.launch { runCatching { pins.unpin(id) } }
     }
 }
 
@@ -250,10 +305,11 @@ class HomeViewModel @Inject constructor(
 private fun dueFirst(added: TaskRowUi, row: TaskRowUi): Boolean =
     row.due == null || added.due == null || !row.due.isBefore(added.due)
 
-internal fun ListSummary.toUi() = ListRowUi(
+internal fun ListSummary.toUi(pinned: Boolean = false) = ListRowUi(
     id = localId,
     title = title,
     openCount = openCount,
     next = nextTaskTitle,
-    sharing = ListSharing.of(isShared, isOwner)
+    sharing = ListSharing.of(isShared, isOwner),
+    pinned = pinned
 )

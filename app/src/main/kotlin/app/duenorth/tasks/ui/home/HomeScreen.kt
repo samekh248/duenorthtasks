@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,12 +33,15 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,12 +59,13 @@ import app.duenorth.tasks.design.components.MetroPickerDialog
 import app.duenorth.tasks.design.components.MetroProgressDots
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
+import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.components.PanoramaSection
 import app.duenorth.tasks.design.components.PanoramaState
-import app.duenorth.tasks.design.components.rememberPanoramaState
 import app.duenorth.tasks.design.motion.ContinuumState
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.motion.rememberContinuumState
+import app.duenorth.tasks.design.theme.ListAccent
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.listAccent
@@ -79,10 +85,13 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-private const val TODAY = 0
-private const val LISTS = 1
-private const val DONE = 2
-private const val STATS = 3
+/** Section keys. Pinned lists sit between "today" and "lists", each under [pinKey]. */
+private const val TODAY = "today"
+private const val LISTS = "lists"
+private const val DONE = "done"
+private const val STATS = "stats"
+
+private fun pinKey(listId: String) = "pin:$listId"
 
 /** What the home screen can ask of the rest of the app. */
 class HomeActions(
@@ -148,7 +157,27 @@ fun HomeContent(
     stats: StatsUi? = null,
     onStatsSeen: () -> Unit = {}
 ) {
-    val pager = rememberPanoramaState(4)
+    val sectionKeys = remember(state.pinned) {
+        listOf(TODAY) + state.pinned.map { pinKey(it.list.id) } + listOf(LISTS, DONE, STATS)
+    }
+    // The section in view, by key and by place, so that pinning or unpinning a list keeps it in
+    // view; unpinning the one in view shows the section that took its place.
+    var resting by rememberSaveable { mutableStateOf(TODAY) }
+    var restingIndex by rememberSaveable { mutableIntStateOf(0) }
+    val pager = remember(sectionKeys.size) {
+        val at = sectionKeys.indexOf(resting).takeIf { it >= 0 } ?: restingIndex.coerceAtMost(sectionKeys.lastIndex)
+        PanoramaState(sectionKeys.size, at)
+    }
+    LaunchedEffect(pager, sectionKeys, state.loading) {
+        // Pins are not known until the first load; until then, keep the section from before.
+        if (state.loading) return@LaunchedEffect
+        snapshotFlow { pager.currentSection }.collect {
+            resting = sectionKeys[it]
+            restingIndex = it
+        }
+    }
+    val pinnedFocus = remember { mutableMapOf<String, FocusRequester>() }
+    val focusFor: (String) -> FocusRequester = { id -> pinnedFocus.getOrPut(id) { FocusRequester() } }
     val scope = rememberCoroutineScope()
     val addFocus = remember { FocusRequester() }
     val continuum = rememberContinuumState()
@@ -175,7 +204,7 @@ fun HomeContent(
 
     LaunchedEffect(showLists) {
         if (showLists) {
-            pager.scrollToSection(LISTS)
+            pager.scrollToSection(sectionKeys.indexOf(LISTS))
             onListsShown()
         }
     }
@@ -183,14 +212,14 @@ fun HomeContent(
     // Each return to "today" replays the empty-today logo (spec 005 US4); the first showing plays by itself.
     var arrivals by remember { mutableIntStateOf(0) }
     LaunchedEffect(pager) {
-        snapshotFlow { pager.currentSection == TODAY && !pager.isScrollInProgress }
+        snapshotFlow { pager.currentSection == 0 && !pager.isScrollInProgress }
             .distinctUntilChanged()
             .drop(1)
             .filter { it }
             .collect { arrivals++ }
     }
     LaunchedEffect(pager) {
-        snapshotFlow { pager.isScrollInProgress || pager.currentSection != TODAY }.first { it }
+        snapshotFlow { pager.isScrollInProgress || pager.currentSection != 0 }.first { it }
         onStatsSeen()
     }
 
@@ -217,10 +246,15 @@ fun HomeContent(
                 subtitle = "due north",
                 state = pager,
                 sections = listOf(
-                    PanoramaSection("today") {
+                    PanoramaSection(TODAY) {
                         TodaySection(state, viewModel, addFocus, continuum, openTask, taskMenu) { arrivals }
-                    },
-                    PanoramaSection("lists") {
+                    }
+                ) + state.pinned.map { pinned ->
+                    PanoramaSection(pinned.list.title.lowercase(), key = pinKey(pinned.list.id)) {
+                        PinnedSection(pinned, state, viewModel, focusFor(pinned.list.id), continuum, openTask, taskMenu)
+                    }
+                } + listOf(
+                    PanoramaSection(LISTS) {
                         ListsSection(
                             state = state,
                             onOpen = actions.openList,
@@ -229,23 +263,32 @@ fun HomeContent(
                             onShade = { actions.openListShade(it.id) },
                             onInfo = { actions.openListInfo(it.id) },
                             onDelete = { deleting = it },
-                            onReorder = { actions.reorderLists(it.id) }
+                            onReorder = { actions.reorderLists(it.id) },
+                            onPin = { viewModel.pin(it.id) },
+                            onUnpin = { viewModel.unpin(it.id) }
                         )
                     },
-                    PanoramaSection("done") {
+                    PanoramaSection(DONE) {
                         DoneSection(state, viewModel, continuum, openTask)
                     },
-                    PanoramaSection("stats") {
+                    PanoramaSection(STATS) {
                         StatsSection(stats, state.lists, state.serviceName, actions.openList)
                     }
                 )
             )
             if (syncing) MetroProgressDots()
         }
-        HomeAppBar(pager, actions, syncButtonTurning, onNewTask = { addFocus.requestFocus() }, onNewList = {
-            newList =
-                true
-        })
+        HomeAppBar(
+            pager,
+            sectionKeys,
+            actions,
+            syncButtonTurning,
+            onNewTask = { section ->
+                if (section == TODAY) addFocus.requestFocus() else focusFor(section.removePrefix("pin:")).requestFocus()
+            },
+            onNewList = { newList = true },
+            onUnpin = { viewModel.unpin(it) }
+        )
     }
 
     if (newList) {
@@ -307,23 +350,28 @@ fun HomeContent(
 @Composable
 private fun HomeAppBar(
     pager: PanoramaState,
+    sectionKeys: List<String>,
     actions: HomeActions,
     syncing: Boolean,
-    onNewTask: () -> Unit,
-    onNewList: () -> Unit
+    onNewTask: (section: String) -> Unit,
+    onNewList: () -> Unit,
+    onUnpin: (listId: String) -> Unit
 ) {
+    val section = sectionKeys.getOrElse(pager.currentSection) { TODAY }
+    val pinned = section.takeIf { it.startsWith("pin:") }?.removePrefix("pin:")
     val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
     val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", spinning = syncing, onClick = it) }
     val menu = listOfNotNull(
-        AppBarMenuItem("reorder lists") { actions.reorderLists(null) }.takeIf { pager.currentSection == LISTS },
+        pinned?.let { AppBarMenuItem("unpin from home") { onUnpin(it) } },
+        AppBarMenuItem("reorder lists") { actions.reorderLists(null) }.takeIf { section == LISTS },
         AppBarMenuItem("templates", actions.openTemplates),
         AppBarMenuItem("settings", actions.openSettings),
         AppBarMenuItem("sync account", actions.openSyncAccount),
         AppBarMenuItem("sync log", actions.openSyncLog)
     ) + actions.menuItems
-    val first = when (pager.currentSection) {
-        TODAY -> AppBarButton(MetroIcon.Add, "new task", onClick = onNewTask)
-        LISTS -> AppBarButton(MetroIcon.Add, "new list", onClick = onNewList)
+    val first = when {
+        section == TODAY || pinned != null -> AppBarButton(MetroIcon.Add, "new task") { onNewTask(section) }
+        section == LISTS -> AppBarButton(MetroIcon.Add, "new list", onClick = onNewList)
         else -> null
     }
     MetroAppBar(buttons = listOfNotNull(first, sync, search), menuItems = menu)
@@ -405,6 +453,67 @@ private fun TodaySection(
     }
 }
 
+/**
+ * A pinned list's own section: an "add a task" box for that list and its open tasks in the list's
+ * own order, all in the list's shade.
+ */
+@Composable
+private fun PinnedSection(
+    pinned: PinnedListUi,
+    state: HomeUiState,
+    viewModel: HomeViewModel,
+    addFocus: FocusRequester,
+    continuum: ContinuumState,
+    openTask: (String) -> Unit,
+    taskMenu: (TaskRowUi) -> List<ContextMenuItem>
+) {
+    val list = rememberLazyListState()
+    val hold = rememberTouchHold(list, viewModel::holdSync)
+    val open = hold.frozen(pinned.open)
+    var draft by rememberSaveable(pinned.list.id) { mutableStateOf("") }
+    ListAccent(pinned.list.id) {
+        LazyColumn(
+            Modifier.fillMaxSize().touchHold(hold).testTag("pinned:${pinned.list.title}"),
+            state = list,
+            contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
+        ) {
+            item(key = "add", contentType = "add") {
+                MetroTextField(
+                    value = draft,
+                    onValueChange = { draft = it },
+                    placeholder = "add a task",
+                    modifier = Modifier.padding(end = MetroDimens.Gutter, bottom = 4.dp).focusRequester(addFocus),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = {
+                        viewModel.addTask(draft.trim(), due = null, listId = pinned.list.id)
+                        draft = ""
+                    })
+                )
+            }
+            if (state.loading) {
+                item(key = "loading", contentType = "loading") { MetroTaskPlaceholders() }
+                return@LazyColumn
+            }
+            if (open.isEmpty()) {
+                item(key = "empty", contentType = "empty") { EmptyNote("nothing to do here") }
+            }
+            items(open, key = { it.id }, contentType = { "task" }) { row ->
+                TaskRow(
+                    row = row,
+                    onToggle = { viewModel.setCompleted(row.id, it) },
+                    onOpen = { openTask(row.id) },
+                    menuItems = taskMenu(row),
+                    continuum = continuum,
+                    modifier = Modifier.animateItem()
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun ListsSection(
     state: HomeUiState,
@@ -414,7 +523,9 @@ private fun ListsSection(
     onShade: (ListRowUi) -> Unit,
     onInfo: (ListRowUi) -> Unit,
     onDelete: (ListRowUi) -> Unit,
-    onReorder: (ListRowUi) -> Unit
+    onReorder: (ListRowUi) -> Unit,
+    onPin: (ListRowUi) -> Unit,
+    onUnpin: (ListRowUi) -> Unit
 ) {
     LazyColumn(
         Modifier.fillMaxSize().testTag("lists"),
@@ -433,7 +544,8 @@ private fun ListsSection(
                 onShade = { onShade(list) },
                 onInfo = { onInfo(list) },
                 onDelete = { onDelete(list) },
-                onReorder = { onReorder(list) }.takeIf { state.lists.size > 1 }
+                onReorder = { onReorder(list) }.takeIf { state.lists.size > 1 },
+                onPin = { if (list.pinned) onUnpin(list) else onPin(list) }
             )
         }
         item(key = "new", contentType = "new") {
@@ -461,7 +573,8 @@ private fun ListRow(
     onShade: () -> Unit,
     onInfo: () -> Unit,
     onDelete: () -> Unit,
-    onReorder: (() -> Unit)?
+    onReorder: (() -> Unit)?,
+    onPin: () -> Unit
 ) {
     var menu by remember { mutableStateOf(false) }
     Box {
@@ -511,6 +624,7 @@ private fun ListRow(
             // Only the owner can rename or delete a shared list; "list info" says so (spec 002 FR-120).
             items = listOfNotNull(
                 onReorder?.let { ContextMenuItem("reorder", it) },
+                ContextMenuItem(if (list.pinned) "unpin from home" else "pin to home", onPin),
                 ContextMenuItem("rename", onRename).takeIf { list.sharing.canManage },
                 ContextMenuItem("list shade", onShade),
                 ContextMenuItem("list info", onInfo),

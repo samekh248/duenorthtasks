@@ -24,6 +24,7 @@ import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.testListOrder
+import app.duenorth.tasks.settings.testPinnedLists
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import java.time.Clock
@@ -82,6 +83,7 @@ class HomeAddThenTickTest {
             ServiceFeatures(accounts) { FakeProvider() },
             ListHolds(),
             testListOrder(tasks, accounts),
+            testPinnedLists(tasks, accounts),
             clock
         )
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})

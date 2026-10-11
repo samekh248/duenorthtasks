@@ -32,3 +32,14 @@ fun testListShades(tasks: TaskRepository, accounts: AccountRepository): ListShad
     )
     return ListShades(store, tasks, accounts)
 }
+
+/** Pinned lists in their own temp file, for tests that build ViewModels by hand. */
+fun testPinnedLists(tasks: TaskRepository, accounts: AccountRepository): PinnedLists {
+    val dir = Files.createTempDirectory("pinned-lists").toFile().apply { deleteOnExit() }
+    val store = PinnedListStore(
+        PreferenceDataStoreFactory.create(scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)) {
+            File(dir, "pins.preferences_pb")
+        }
+    )
+    return PinnedLists(store, tasks, accounts)
+}

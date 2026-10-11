@@ -12,6 +12,7 @@ import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.settings.ListOrder
 import app.duenorth.tasks.settings.ListShades
+import app.duenorth.tasks.settings.PinnedLists
 import app.duenorth.tasks.sync.ListHolds
 import app.duenorth.tasks.ui.common.CompletionOverrides
 import app.duenorth.tasks.ui.common.DueText
@@ -57,6 +58,8 @@ data class ListUiState(
     val title: String = "",
     /** Shared, and by whom (spec 002); decides the header line and whether rename/delete show. */
     val sharing: ListSharing = ListSharing.PRIVATE,
+    /** Pinned to the home panorama as its own section; decides "pin" or "unpin" in the menu. */
+    val pinned: Boolean = false,
     val open: List<TaskRowUi> = emptyList(),
     val completed: List<TaskRowUi> = emptyList(),
     val completedExpanded: Boolean = false,
@@ -100,6 +103,7 @@ class ListViewModel @Inject constructor(
     features: ServiceFeatures,
     private val holds: ListHolds,
     private val listOrder: ListOrder,
+    private val pins: PinnedLists,
     clock: Clock
 ) : ViewModel() {
     val listId: String = checkNotNull(savedState["id"]) { "list route needs an id" }
@@ -122,7 +126,9 @@ class ListViewModel @Inject constructor(
 
     val state: StateFlow<ListUiState> = combine(
         content,
-        combine(tasks.listSummaries(), listOrder.rank) { lists, rank -> ListOrder.sort(lists, rank) { it.localId } },
+        combine(tasks.listSummaries(), listOrder.rank, pins.pinned) { lists, rank, pinned ->
+            ListOrder.sort(lists, rank) { it.localId } to (listId in pinned)
+        },
         combine(
             accounts.account,
             features.importance,
@@ -130,7 +136,7 @@ class ListViewModel @Inject constructor(
         ) { account, importance, order -> Triple(account, importance, order) },
         prefs,
         combine(overrides.overrides, adds.pending, taskTemplatePicks(templates, features.importance), ::Triple)
-    ) { content, lists, (account, importance, order), prefs, (pending, added, picks) ->
+    ) { content, (lists, pinned), (account, importance, order), prefs, (pending, added, picks) ->
         val all = content.open + content.done
         val ids = all.mapTo(HashSet()) { it.task.localId }
         adds.settle(ids)
@@ -145,6 +151,7 @@ class ListViewModel @Inject constructor(
             exists = content.title != null,
             title = title,
             sharing = content.sharing,
+            pinned = pinned,
             open = PendingAdds.merge(
                 sorted(open, all, prefs.sort),
                 // The list's name may have changed since the add; the caption follows it.
@@ -305,7 +312,15 @@ class ListViewModel @Inject constructor(
     }
 
     fun delete() {
-        viewModelScope.launch { runCatching { tasks.deleteList(listId) } }
+        viewModelScope.launch {
+            runCatching { pins.unpin(listId) }
+            runCatching { tasks.deleteList(listId) }
+        }
+    }
+
+    /** Pins this list to the home panorama as its own section, or takes it off. */
+    fun setPinned(pinned: Boolean) {
+        viewModelScope.launch { runCatching { if (pinned) pins.pin(listId) else pins.unpin(listId) } }
     }
 
     private fun sorted(rows: List<TaskRowUi>, source: List<TaskWithList>, sort: ListSort): List<TaskRowUi> {
