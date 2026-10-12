@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -42,47 +45,103 @@ fun MetroTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     interactionSource: MutableInteractionSource? = null
 ) {
-    val colors = MetroTheme.colors
-    val accent = MetroTheme.accent
     val source = interactionSource ?: remember { MutableInteractionSource() }
-    val focused by source.collectIsFocusedAsState()
-    val fill = if (focused) Color.White else Color.Transparent
-    val textColor = if (focused) FocusedText else colors.foreground
-    val outline = when {
-        !enabled -> colors.outline
-        focused -> accent.fill
-        else -> colors.outline
-    }
+    val look = metroFieldLook(source, enabled)
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier,
         enabled = enabled,
-        textStyle = textStyle.copy(color = textColor),
+        textStyle = textStyle.copy(color = look.text),
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         singleLine = singleLine,
         minLines = minLines,
         maxLines = maxLines,
         interactionSource = source,
-        cursorBrush = SolidColor(if (focused) FocusedText else colors.foreground),
-        decorationBox = { inner ->
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = MetroDimens.TouchTarget)
-                    .background(fill)
-                    .border(2.dp, outline)
-                    .padding(horizontal = 10.dp, vertical = 10.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                if (value.isEmpty() && placeholder != null) {
-                    MetroText(placeholder, textStyle, color = if (focused) FocusedPlaceholder else colors.secondary)
-                }
-                inner()
-            }
-        }
+        cursorBrush = SolidColor(look.text),
+        decorationBox = { inner -> MetroFieldBox(look, value.isEmpty(), placeholder, textStyle, inner) }
     )
+}
+
+/**
+ * The same text box over a [TextFieldState], for boxes that clear themselves after an action, like
+ * "add a task". Clearing [state] empties the field's own buffer at once, so a key the keyboard
+ * sends before the next frame lands in the empty box instead of bringing the old text back.
+ */
+@Composable
+fun MetroTextField(
+    state: TextFieldState,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    textStyle: TextStyle = MetroTheme.typography.body,
+    lineLimits: TextFieldLineLimits = TextFieldLineLimits.SingleLine,
+    enabled: Boolean = true,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    onKeyboardAction: KeyboardActionHandler? = null,
+    interactionSource: MutableInteractionSource? = null
+) {
+    val source = interactionSource ?: remember { MutableInteractionSource() }
+    val look = metroFieldLook(source, enabled)
+    BasicTextField(
+        state = state,
+        modifier = modifier,
+        enabled = enabled,
+        textStyle = textStyle.copy(color = look.text),
+        keyboardOptions = keyboardOptions,
+        onKeyboardAction = onKeyboardAction,
+        lineLimits = lineLimits,
+        interactionSource = source,
+        cursorBrush = SolidColor(look.text),
+        decorator = { inner -> MetroFieldBox(look, state.text.isEmpty(), placeholder, textStyle, inner) }
+    )
+}
+
+private class FieldLook(val focused: Boolean, val fill: Color, val text: Color, val outline: Color)
+
+@Composable
+private fun metroFieldLook(source: MutableInteractionSource, enabled: Boolean): FieldLook {
+    val colors = MetroTheme.colors
+    val focused by source.collectIsFocusedAsState()
+    val outline = when {
+        !enabled -> colors.outline
+        focused -> MetroTheme.accent.fill
+        else -> colors.outline
+    }
+    return FieldLook(
+        focused = focused,
+        fill = if (focused) Color.White else Color.Transparent,
+        text = if (focused) FocusedText else colors.foreground,
+        outline = outline
+    )
+}
+
+@Composable
+private fun MetroFieldBox(
+    look: FieldLook,
+    empty: Boolean,
+    placeholder: String?,
+    textStyle: TextStyle,
+    inner: @Composable () -> Unit
+) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = MetroDimens.TouchTarget)
+            .background(look.fill)
+            .border(2.dp, look.outline)
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        if (empty && placeholder != null) {
+            MetroText(
+                placeholder,
+                textStyle,
+                color = if (look.focused) FocusedPlaceholder else MetroTheme.colors.secondary
+            )
+        }
+        inner()
+    }
 }
 
 private val FocusedText = Color(0xFF111111)
