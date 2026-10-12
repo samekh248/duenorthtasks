@@ -8,8 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +53,8 @@ fun AddTaskBox(
     templates: List<TaskTemplatePick> = emptyList(),
     onUseTemplate: (TaskTemplatePick) -> Unit = {}
 ) {
-    var title by rememberSaveable { mutableStateOf("") }
+    val titleState = rememberTextFieldState()
+    val title = titleState.text.toString()
     var expanded by rememberSaveable { mutableStateOf(false) }
     var details by rememberSaveable { mutableStateOf("") }
     var due by rememberSaveable { mutableStateOf<LocalDate?>(null) }
@@ -65,9 +67,10 @@ fun AddTaskBox(
     val list = lists.firstOrNull { it.id == listId } ?: lists.firstOrNull()
 
     fun submit() {
-        if (title.isBlank()) return
-        onAdd(title.trim(), details.takeIf { expanded && it.isNotBlank() }, effectiveDue, list?.id)
-        title = ""
+        val typed = titleState.text.toString()
+        if (typed.isBlank()) return
+        onAdd(typed.trim(), details.takeIf { expanded && it.isNotBlank() }, effectiveDue, list?.id)
+        titleState.clearText()
         details = ""
         expanded = false
         dueTouched = false
@@ -77,15 +80,14 @@ fun AddTaskBox(
 
     val titleField: @Composable () -> Unit = {
         MetroTextField(
-            value = title,
-            onValueChange = { title = it },
+            state = titleState,
             placeholder = "add a task",
             modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
                 imeAction = ImeAction.Done
             ),
-            keyboardActions = KeyboardActions(onDone = { submit() })
+            onKeyboardAction = { submit() }
         )
     }
 

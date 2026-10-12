@@ -18,8 +18,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -466,7 +467,7 @@ private fun PinnedSection(
     val list = rememberLazyListState()
     val hold = rememberTouchHold(list, viewModel::holdSync)
     val open = hold.frozen(pinned.open)
-    var draft by rememberSaveable(pinned.list.id) { mutableStateOf("") }
+    val draft = rememberSaveable(pinned.list.id, saver = TextFieldState.Saver) { TextFieldState() }
     ListAccent(pinned.list.id) {
         LazyColumn(
             Modifier.fillMaxSize().touchHold(hold).testTag("pinned:${pinned.list.title}"),
@@ -475,18 +476,17 @@ private fun PinnedSection(
         ) {
             item(key = "add", contentType = "add") {
                 MetroTextField(
-                    value = draft,
-                    onValueChange = { draft = it },
+                    state = draft,
                     placeholder = "add a task",
                     modifier = Modifier.padding(end = MetroDimens.Gutter, bottom = 4.dp).focusRequester(addFocus),
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
                         imeAction = ImeAction.Done
                     ),
-                    keyboardActions = KeyboardActions(onDone = {
-                        viewModel.addTask(draft.trim(), due = null, listId = pinned.list.id)
-                        draft = ""
-                    })
+                    onKeyboardAction = {
+                        viewModel.addTask(draft.text.trim().toString(), due = null, listId = pinned.list.id)
+                        draft.clearText()
+                    }
                 )
             }
             if (state.loading) {
