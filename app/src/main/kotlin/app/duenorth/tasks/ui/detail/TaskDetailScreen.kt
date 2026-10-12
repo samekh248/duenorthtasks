@@ -21,8 +21,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -351,20 +352,19 @@ private fun StepRow(step: StepUi, onDone: (Boolean) -> Unit, onRemove: () -> Uni
 
 @Composable
 private fun AddStepField(onAdd: (String) -> Unit) {
-    var draft by rememberSaveable { mutableStateOf("") }
+    val draft = rememberTextFieldState()
     MetroTextField(
-        value = draft,
-        onValueChange = { draft = it },
+        state = draft,
         placeholder = "add a step",
         modifier = Modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Sentences,
             imeAction = ImeAction.Done
         ),
-        keyboardActions = KeyboardActions(onDone = {
-            onAdd(draft.trim())
-            draft = ""
-        })
+        onKeyboardAction = {
+            onAdd(draft.text.trim().toString())
+            draft.clearText()
+        }
     )
 }
 
