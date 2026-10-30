@@ -23,7 +23,7 @@ Play App Signing means two keys are involved:
 |---|---|---|---|
 | **Upload key** (`due-north-release.keystore`) | You (project files + GitHub secret) | The bundle you upload, and any release APK you sideload | Yes, if you ever sideload a release build |
 | **App signing key** | Google (made when you create the first release) | Every install from Play | **Yes**: Play Console > Test and release > App integrity shows its SHA-1 and SHA-256 |
-| Debug key (`due-north-debug.keystore`) | Project files | Debug and "optimized" (benchmark) builds | Already registered |
+| Debug key (`due-north-debug.keystore`) | You (offline copy + GitHub secret) | Debug and "optimized" (benchmark) builds | Already registered |
 
 Google sign-in checks the SHA-1 of the key that signed the installed app, and Microsoft sign-in
 checks a base64 hash of it. So each key that signs something people install needs:
@@ -63,6 +63,19 @@ benchmarks still work.
 
 `RELEASE_KEYSTORE_BASE64` is the keystore file base64-encoded (`base64 -w0 due-north-release.keystore`).
 Keep an offline copy of the keystore and its passwords; the keystore must never be committed.
+
+## Optimized APK for sideloading
+
+The Optimized APK workflow (Actions > Optimized APK > Run workflow) builds the benchmarkRelease
+APK, signed with the debug key so it installs over earlier optimized APKs and sign-in keeps
+working. It needs these secrets, and attaches `due-north-optimized-<version>-<date>.apk` to the run:
+
+| Secret | Value |
+|---|---|
+| `DEBUG_KEYSTORE_BASE64` | `base64 -w0 due-north-debug.keystore` |
+| `GOOGLE_WEBCLIENTID` | Google web client ID (shared with the Release workflow) |
+| `MSAL_CLIENTID` | Entra app client ID (shared with the Release workflow) |
+| `MSAL_SIGNATUREHASH` | the debug key's Microsoft signature hash (`msal.signatureHash`) |
 
 ## Play Console internal testing (T068)
 
