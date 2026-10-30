@@ -1,4 +1,4 @@
-package app.duenorth.tasks.provider.google
+package app.duenorth.tasks.provider.google.api
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject

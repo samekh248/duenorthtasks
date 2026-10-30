@@ -7,6 +7,9 @@ import app.duenorth.tasks.provider.api.ProviderError
 import app.duenorth.tasks.provider.api.StepDraft
 import app.duenorth.tasks.provider.api.TaskDraft
 import app.duenorth.tasks.provider.api.TaskPatch
+import app.duenorth.tasks.provider.google.api.BearerToken
+import app.duenorth.tasks.provider.google.api.GoogleStatus
+import app.duenorth.tasks.provider.google.api.GoogleTasksClient
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.time.Duration.Companion.seconds

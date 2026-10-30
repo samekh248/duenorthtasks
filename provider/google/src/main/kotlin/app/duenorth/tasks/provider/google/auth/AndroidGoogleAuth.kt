@@ -1,4 +1,4 @@
-package app.duenorth.tasks.provider.google
+package app.duenorth.tasks.provider.google.auth
 
 import android.accounts.Account
 import android.app.Activity

@@ -212,7 +212,7 @@ class HomeViewModel @Inject constructor(
     }
 
     /** Saves task [id] as a task template and hands the template's id to [then] (spec 004 US3). */
-    fun saveAsTemplate(id: String, then: (String) -> Unit) {
+    fun saveTaskAsTemplate(id: String, then: (String) -> Unit) {
         viewModelScope.launch { runCatching { templates.saveTaskAsTemplate(id) }.onSuccess(then) }
     }
 
@@ -262,11 +262,11 @@ class HomeViewModel @Inject constructor(
 
     fun deleteTask(id: String) {
         adds.clear(id)
-        viewModelScope.launch { tasks.deleteTask(id) }
+        viewModelScope.launch { runCatching { tasks.deleteTask(id) } }
     }
 
     fun moveTask(id: String, listId: String) {
-        viewModelScope.launch { tasks.editTask(id, TaskEdit(listId = listId)) }
+        viewModelScope.launch { runCatching { tasks.editTask(id, TaskEdit(listId = listId)) } }
     }
 
     fun createList(title: String) {
@@ -280,7 +280,7 @@ class HomeViewModel @Inject constructor(
     fun deleteList(id: String) {
         viewModelScope.launch {
             runCatching { pins.unpin(id) }
-            tasks.deleteList(id)
+            runCatching { tasks.deleteList(id) }
         }
     }
 

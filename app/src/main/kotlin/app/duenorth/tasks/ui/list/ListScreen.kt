@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,8 +31,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,10 +43,10 @@ import app.duenorth.tasks.design.components.MetroIcon
 import app.duenorth.tasks.design.components.MetroIconGlyph
 import app.duenorth.tasks.design.components.MetroInputDialog
 import app.duenorth.tasks.design.components.MetroPickerDialog
+import app.duenorth.tasks.design.components.MetroQuickAddField
 import app.duenorth.tasks.design.components.MetroReorderList
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
-import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.motion.rememberContinuumState
 import app.duenorth.tasks.design.theme.ListAccent
@@ -211,18 +207,11 @@ private fun ListPage(
                 contentPadding = PaddingValues(start = MetroDimens.Gutter, top = 8.dp, bottom = 24.dp)
             ) {
                 item(key = "add", contentType = "add") {
-                    MetroTextField(
-                        state = draft,
+                    MetroQuickAddField(
                         placeholder = "add a task",
+                        onAdd = viewModel::addTask,
                         modifier = Modifier.padding(end = MetroDimens.Gutter, bottom = 4.dp).focusRequester(addFocus),
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Sentences,
-                            imeAction = ImeAction.Done
-                        ),
-                        onKeyboardAction = {
-                            viewModel.addTask(draft.text.trim().toString())
-                            draft.clearText()
-                        }
+                        state = draft
                     )
                     if (draft.text.isEmpty()) {
                         Column(Modifier.padding(end = MetroDimens.Gutter)) {

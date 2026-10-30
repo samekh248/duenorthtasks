@@ -1,4 +1,4 @@
-package app.duenorth.tasks.provider.google
+package app.duenorth.tasks.provider.google.api
 
 import app.duenorth.tasks.provider.api.ProviderError
 import java.io.IOException

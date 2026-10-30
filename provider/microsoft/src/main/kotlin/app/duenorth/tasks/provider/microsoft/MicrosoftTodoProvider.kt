@@ -247,42 +247,27 @@ class MicrosoftTodoProvider internal constructor(
     override suspend fun deleteTasks(listId: String, ids: List<String>): BulkDelete {
         val deleted = mutableSetOf<String>()
         val refused = mutableSetOf<String>()
+        val url = { id: String -> "/me/todo/lists/${listId.urlSegment()}/tasks/${id.urlSegment()}" }
         for (chunk in ids.chunked(MAX_BATCH)) {
-            var pending = chunk
-            var attempt = 0
-            while (pending.isNotEmpty()) {
-                val requests = pending.mapIndexed { i, id ->
-                    BatchRequestItem(
-                        id = "${i + 1}",
-                        method = "DELETE",
-                        url = "/me/todo/lists/${listId.urlSegment()}/tasks/${id.urlSegment()}"
-                    )
-                }
-                val response = try {
-                    graphCall(listId) { api.batch(BatchRequestDto(requests)) }
-                } catch (e: ProviderError) {
-                    return BulkDelete(deleted, refused, e)
-                }
-                val byId = response.responses.associateBy { it.id }
-                val throttled = mutableListOf<Pair<String, BatchResponseItem>>()
-                pending.forEachIndexed { i, id ->
-                    val item = byId["${i + 1}"]
+            try {
+                batchRounds(listId, chunk, { id -> "DELETE" to url(id) }) { id, item ->
                     when {
-                        // Missing from the answer: ask again with the throttled ones.
-                        item == null -> throttled += id to BatchResponseItem("${i + 1}", 503)
-                        item.status in 200..299 || item.status == 404 -> deleted += id
-                        item.status == 403 -> refused += id
-                        item.status == 429 || item.status == 503 -> throttled += id to item
-                        else -> return BulkDelete(deleted, refused, item.toError(id))
+                        // Missing from the answer: ask again with the busy ones.
+                        item == null -> false
+                        item.status in 200..299 || item.status == 404 -> {
+                            deleted += id
+                            true
+                        }
+                        item.status == 403 -> {
+                            refused += id
+                            true
+                        }
+                        item.isBusy() -> false
+                        else -> throw item.toError(id)
                     }
                 }
-                if (throttled.isEmpty()) break
-                if (++attempt > BATCH_RETRIES) {
-                    return BulkDelete(deleted, refused, throttled.first().let { (id, item) -> item.toError(id) })
-                }
-                val wait = throttled.maxOf { (_, item) -> parseRetryAfter(item.retryAfter()) }
-                delay(wait.coerceIn(MIN_BATCH_PAUSE, MAX_BATCH_PAUSE))
-                pending = throttled.map { it.first }
+            } catch (e: ProviderError) {
+                return BulkDelete(deleted, refused, e)
             }
         }
         return BulkDelete(deleted, refused)
@@ -314,47 +299,64 @@ class MicrosoftTodoProvider internal constructor(
 
     private suspend fun checklistBatch(listId: String, taskIds: List<String>): Map<String, List<ChecklistItemDto>> {
         val result = mutableMapOf<String, List<ChecklistItemDto>>()
-        var pending = taskIds
+        val url = { taskId: String ->
+            "/me/todo/lists/${listId.urlSegment()}/tasks/${taskId.urlSegment()}/checklistItems"
+        }
+        batchRounds(listId, taskIds, { taskId -> "GET" to url(taskId) }) { taskId, item ->
+            val page = item?.takeIf { it.status in 200..299 }?.body?.let {
+                runCatching {
+                    graphJson.decodeFromJsonElement(GraphPage.serializer(ChecklistItemDto.serializer()), it)
+                }.getOrNull()
+            }
+            when {
+                // A task deleted since the delta page was read has no steps to show.
+                item?.status == 404 -> result[taskId] = emptyList()
+                // To Do runs only a few requests per mailbox at once and turns the rest of a batch
+                // away; those are asked again after a pause rather than failing the whole sync.
+                item != null && item.isBusy() -> return@batchRounds false
+                item != null && item.status !in 200..299 -> throw item.toError(taskId)
+                // Missing or paged answers: ask for that one task directly.
+                page == null || page.nextLink != null ->
+                    result[taskId] = graphCall(taskId) { api.checklistItems(listId, taskId).value }
+                else -> result[taskId] = page.value
+            }
+            true
+        }
+        return result
+    }
+
+    /**
+     * Sends [ids] (at most [MAX_BATCH]) in one `$batch` call, one [request] (method to url) each,
+     * and hands each answer to [settle], null when Graph left it out. Ids [settle] turns back
+     * (To Do was busy) are asked again after the pause To Do names; past [BATCH_RETRIES] rounds the
+     * first of them is thrown, so the sync backs off as a whole.
+     */
+    private suspend fun batchRounds(
+        listId: String,
+        ids: List<String>,
+        request: (id: String) -> Pair<String, String>,
+        settle: suspend (id: String, item: BatchResponseItem?) -> Boolean
+    ) {
+        var pending = ids
         var attempt = 0
-        while (true) {
-            val requests = pending.mapIndexed { i, taskId ->
-                BatchRequestItem(
-                    id = "${i + 1}",
-                    method = "GET",
-                    url = "/me/todo/lists/${listId.urlSegment()}/tasks/${taskId.urlSegment()}/checklistItems"
-                )
+        while (pending.isNotEmpty()) {
+            val requests = pending.mapIndexed { i, id ->
+                val (method, url) = request(id)
+                BatchRequestItem(id = "${i + 1}", method = method, url = url)
             }
-            val response = graphCall(listId) { api.batch(BatchRequestDto(requests)) }
-            val byId = response.responses.associateBy { it.id }
-            val throttled = mutableListOf<Pair<String, BatchResponseItem>>()
-            pending.forEachIndexed { i, taskId ->
-                val item = byId["${i + 1}"]
-                val page = item?.takeIf { it.status in 200..299 }?.body?.let {
-                    runCatching {
-                        graphJson.decodeFromJsonElement(GraphPage.serializer(ChecklistItemDto.serializer()), it)
-                    }.getOrNull()
-                }
-                when {
-                    // A task deleted since the delta page was read has no steps to show.
-                    item?.status == 404 -> result[taskId] = emptyList()
-                    // To Do runs only a few requests per mailbox at once and turns the rest of a batch
-                    // away; those are asked again after a pause rather than failing the whole sync.
-                    item != null && (item.status == 429 || item.status == 503) -> throttled += taskId to item
-                    item != null && item.status !in 200..299 -> throw item.toError(taskId)
-                    // Missing or paged answers: ask for that one task directly.
-                    page == null || page.nextLink != null ->
-                        result[taskId] = graphCall(taskId) { api.checklistItems(listId, taskId).value }
-                    else -> result[taskId] = page.value
-                }
-            }
-            if (throttled.isEmpty()) return result
-            // Past a few rounds, stop so the sync backs off as a whole.
-            if (++attempt > BATCH_RETRIES) throttled.first().let { (taskId, item) -> throw item.toError(taskId) }
-            val wait = throttled.maxOf { (_, item) -> parseRetryAfter(item.retryAfter()) }
+            val byId = graphCall(listId) { api.batch(BatchRequestDto(requests)) }.responses.associateBy { it.id }
+            val busy = pending.withIndex()
+                .filterNot { (i, id) -> settle(id, byId["${i + 1}"]) }
+                .map { (i, id) -> id to (byId["${i + 1}"] ?: BatchResponseItem("${i + 1}", 503)) }
+            if (busy.isEmpty()) return
+            if (++attempt > BATCH_RETRIES) busy.first().let { (id, item) -> throw item.toError(id) }
+            val wait = busy.maxOf { (_, item) -> parseRetryAfter(item.retryAfter()) }
             delay(wait.coerceIn(MIN_BATCH_PAUSE, MAX_BATCH_PAUSE))
-            pending = throttled.map { it.first }
+            pending = busy.map { it.first }
         }
     }
+
+    private fun BatchResponseItem.isBusy() = status == 429 || status == 503
 
     private fun BatchResponseItem.retryAfter(): String? =
         headers?.entries?.firstOrNull { it.key.equals("Retry-After", true) }?.value

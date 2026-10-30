@@ -6,7 +6,7 @@ Microsoft To Do**, one at a time.
 ![Metro mockups](docs/design/metro-mockups.svg)
 
 The chosen look is **Light Panorama**: a white home screen with a huge "tasks" title (with "due north" under it) you
-swipe across (today, lists, stats), one magenta accent, and light and dark modes that follow your phone. The full set of design
+swipe across (today, any pinned lists, lists, stats), one magenta accent, and light and dark modes that follow your phone. The full set of design
 options is on the [design canvas](https://claude.ai/artifact/UchFxrZaZuaB9Aq82iuQDE).
 
 ```mermaid
@@ -18,20 +18,23 @@ flowchart LR
 
 ## Status
 
-Planning. The app is specified with [GitHub Spec Kit](https://github.com/github/spec-kit):
+Built, at version 0.1.2: Google Tasks and Microsoft To Do sync, shared
+lists, reordering, templates, stats, pinned lists and the about page. Each feature was specified
+with [GitHub Spec Kit](https://github.com/github/spec-kit) before it was built:
 
 | Read this | For |
 |---|---|
 | [constitution](.specify/memory/constitution.md) | The non-negotiables: Metro design rules, fast and fluid UX, one provider at a time, offline first |
-| [spec](specs/001-metro-todo-app/spec.md) | What the app does, as user stories with acceptance tests |
-| [plan](specs/001-metro-todo-app/plan.md) | Architecture, sync flow, modules and milestone roadmap (diagrams) |
-| [research](specs/001-metro-todo-app/research.md) | Decisions: fonts, Metro components, Google/Microsoft API facts |
-| [data model](specs/001-metro-todo-app/data-model.md) | Local database, task states, provider field mapping |
-| [contracts](specs/001-metro-todo-app/contracts/) | The `TaskProvider` seam and the screen map |
-| [tasks](specs/001-metro-todo-app/tasks.md) | 69 ordered build tasks, grouped by milestone |
+| [spec 001](specs/001-metro-todo-app/) | The app itself: spec, plan, research, data model, contracts and the original 69 build tasks |
+| [screen map](specs/001-metro-todo-app/contracts/ui-screens.md) | Every screen, its app bar and menus |
+| [spec 002](specs/002-shared-lists/) | Shared lists (To Do) and assigned tasks (Google) |
+| [spec 003](specs/003-reordering/) | Reordering tasks, steps and lists |
+| [spec 004](specs/004-templates/) | Task and list templates |
+| [spec 005](specs/005-stats/) | The stats section |
+| [release notes](docs/release/README.md) | Signing, Play Console and the Google verification steps |
 
-## Building it with Spec Kit
+## Building it
 
-The Spec Kit skills are installed for Claude Code in `.claude/skills/`. The next step is
-`/speckit-implement`, which works through `tasks.md` phase by phase. Change the plan first with
-`/speckit-clarify` (spec questions) or by editing the files above.
+Open the project in Android Studio, or run `./gradlew assembleDebug`. Client IDs go in
+`local.properties` (see [docs/release/README.md](docs/release/README.md)); never commit them.
+New features start with `/speckit-specify` (the Spec Kit skills are in `.claude/skills/`).

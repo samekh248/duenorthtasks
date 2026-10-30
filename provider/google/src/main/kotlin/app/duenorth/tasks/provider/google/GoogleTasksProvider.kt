@@ -1,15 +1,12 @@
 package app.duenorth.tasks.provider.google
 
 import app.duenorth.tasks.provider.api.AccountInfo
-import app.duenorth.tasks.provider.api.Assignment
-import app.duenorth.tasks.provider.api.AssignmentSource
 import app.duenorth.tasks.provider.api.ListPatch
 import app.duenorth.tasks.provider.api.Patch
 import app.duenorth.tasks.provider.api.ProviderCapabilities
 import app.duenorth.tasks.provider.api.ProviderError
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.api.RemoteList
-import app.duenorth.tasks.provider.api.RemoteStep
 import app.duenorth.tasks.provider.api.RemoteTask
 import app.duenorth.tasks.provider.api.SignInHost
 import app.duenorth.tasks.provider.api.StepPatch
@@ -17,11 +14,18 @@ import app.duenorth.tasks.provider.api.TaskChangePage
 import app.duenorth.tasks.provider.api.TaskDraft
 import app.duenorth.tasks.provider.api.TaskPatch
 import app.duenorth.tasks.provider.api.TaskProvider
+import app.duenorth.tasks.provider.google.api.BearerToken
+import app.duenorth.tasks.provider.google.api.GoogleErrors
+import app.duenorth.tasks.provider.google.api.GoogleStatus
+import app.duenorth.tasks.provider.google.api.GoogleTasksApi
+import app.duenorth.tasks.provider.google.api.GoogleTasksClient
+import app.duenorth.tasks.provider.google.api.TaskDto
+import app.duenorth.tasks.provider.google.api.TaskListDto
+import app.duenorth.tasks.provider.google.api.TasksDto
+import app.duenorth.tasks.provider.google.auth.AndroidGoogleAuth
+import app.duenorth.tasks.provider.google.auth.GoogleAuth
 import java.time.Clock
 import java.time.Instant
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.time.format.DateTimeParseException
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -292,40 +296,6 @@ class GoogleTasksProvider internal constructor(
         }
     }
 
-    private fun TaskListDto.toRemote(isDefault: Boolean) = RemoteList(
-        id = id,
-        title = title,
-        isDefault = isDefault,
-        etag = etag,
-        updatedAt = parseTimestamp(updated)
-    )
-
-    private fun TaskDto.toRemote(listId: String, children: List<TaskDto>) = RemoteTask(
-        id = id,
-        listId = listId,
-        title = title.orEmpty(),
-        notes = notes,
-        dueDate = parseDue(due),
-        completed = status == GoogleStatus.COMPLETED,
-        completedAt = completed?.let(::parseTimestamp),
-        important = false,
-        position = position,
-        rawStatus = status,
-        steps = children.map { RemoteStep(it.id, it.title.orEmpty(), it.status == GoogleStatus.COMPLETED) },
-        etag = etag,
-        updatedAt = parseTimestamp(updated),
-        assignment = assignmentInfo?.let { info ->
-            Assignment(
-                source = when (info.surfaceType) {
-                    "DOCUMENT" -> AssignmentSource.DOCUMENT
-                    "SPACE" -> AssignmentSource.SPACE
-                    else -> AssignmentSource.OTHER
-                },
-                link = info.linkToTask?.takeIf { it.startsWith("https://") }
-            )
-        }
-    )
-
     companion object {
         const val BASE_URL = "https://tasks.googleapis.com/tasks/v1/"
         private const val CURSOR_PREFIX = "u:"
@@ -339,16 +309,5 @@ class GoogleTasksProvider internal constructor(
             val bearer = BearerToken()
             return GoogleTasksProvider(GoogleTasksClient.api(BASE_URL, bearer), auth, bearer)
         }
-
-        /** Google stores only the date; it sends and expects midnight UTC. */
-        internal fun formatDue(date: LocalDate): String = "${date}T00:00:00.000Z"
-
-        internal fun parseDue(value: String?): LocalDate? =
-            value?.takeIf { it.length >= 10 }?.let { LocalDate.parse(it.substring(0, 10)) }
-
-        internal fun formatTimestamp(instant: Instant): String = instant.atOffset(ZoneOffset.UTC).toString()
-
-        internal fun parseTimestamp(value: String?): Instant =
-            value?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() } ?: Instant.EPOCH
     }
 }

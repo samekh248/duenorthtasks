@@ -12,11 +12,11 @@ next section always peeks in from the right.
 ```mermaid
 flowchart LR
     subgraph Title["title layer (moves at ~1/3 speed)"]
-        T["due north"]
+        T["tasks<br/>due north"]
     end
     subgraph Sections["sections (move with your finger, snap per section)"]
         direction LR
-        S1["today<br/>overdue (red)<br/>due today<br/>tomorrow"] --> S2["lists<br/>accent tile + count<br/>name + next task<br/>+ new list"] --> S3["done<br/>recently completed"]
+        S1["today<br/>overdue (red)<br/>due today<br/>tomorrow"] --> SP["pinned lists<br/>one section each<br/>add box + open tasks"] --> S2["lists<br/>accent tile + count<br/>name + next task<br/>+ new list"] --> S3["stats<br/>done this week<br/>(spec 005)"]
     end
     Title ~~~ Sections
 ```
@@ -30,7 +30,7 @@ flowchart TD
     Pick --> SignIn[provider sign-in]
     SignIn --> FirstSync["first sync<br/>progress dots"]
     FirstSync --> Home
-    HasAcct -- yes --> Home["home panorama<br/>today · lists · done"]
+    HasAcct -- yes --> Home["home panorama<br/>today · pinned lists · lists · stats"]
 
     Home -- "tap list tile" --> List["list page<br/>tasks + completed group"]
     Home -- "tap task (continuum)" --> Detail["task detail<br/>title, details, due, list, steps"]
@@ -52,9 +52,10 @@ flowchart TD
 
 | Screen | Layout | App bar buttons (labels on `•••`) | Overflow menu |
 |---|---|---|---|
-| Home panorama, "today" | "due north" title; "today" header, date caption, "add a task" box (with "add details" link once typing); task rows (square checkbox, 20sp title, up to two grey 14sp lines of details, 13sp caption "List · when", red if overdue); "tomorrow" group | new task, sync, search | settings, sync log |
+| Home panorama, "today" | "tasks" title with "due north" under it; "today" header, date caption, "add a task" box (with "add details" link once typing); task rows (square checkbox, 20sp title, up to two grey 14sp lines of details, 13sp caption "List · when", red if overdue); "tomorrow" group | new task, sync, search | settings, sync log |
 | Home panorama, "lists" | One row per list: 64dp tile in the list's shade of the app accent (the accent itself by default) with count, 24sp name, "next: ..." caption; "new list" row with outlined + tile. Shared lists (spec 002) add a two-people glyph top-left on the tile and start the caption with "shared" or "shared with you". Long-press a tile: rename, list shade, list info, delete (rename and delete only for lists the user owns) | new list, sync, settings | rename/reorder lists |
-| Home panorama, "done" | Completed tasks, newest first, struck through, with "undo" on tap | sync, search | clear done |
+| Home panorama, pinned list | One section per list pinned from the lists section or the list page, between "today" and "lists", in pin order: the list name as header, an "add a task" box for that list and its open tasks, all in the list's shade | new task, sync, search | unpin from home, templates, settings |
+| Home panorama, "stats" | Tasks done this week against last week, by day (spec 005) | sync, search | templates, settings, sync log |
 | List page | "DUE NORTH" small caps, list name as 52sp header, for shared lists a "shared · details" / "shared with you · details" line in the list's shade (spec 002), open tasks with due captions in the list's shade, collapsible "completed" group | new task, sharing (shared lists only), sort | rename list, list shade, list info, delete list (rename and delete only for lists the user owns) |
 | Sharing (spec 002) | Overline = list name, header "sharing"; "status" (shared by you / shared with you / only you), "who's in it" (the service doesn't tell other apps; link to Microsoft To Do), "what you can do here", "list shade" link. Never shows member names | none | none |
 | List shade | Header "list shade", a row of seven flat swatches from lightest to darkest shade of the app accent (middle one = the accent, default), with a live preview of the list's tile and a task caption | none | none |

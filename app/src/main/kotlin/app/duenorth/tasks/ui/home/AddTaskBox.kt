@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.components.MetroButton
@@ -28,6 +27,7 @@ import app.duenorth.tasks.design.components.MetroDatePicker
 import app.duenorth.tasks.design.components.MetroLink
 import app.duenorth.tasks.design.components.MetroListItem
 import app.duenorth.tasks.design.components.MetroPickerDialog
+import app.duenorth.tasks.design.components.MetroQuickAddField
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.theme.MetroDimens
@@ -66,11 +66,9 @@ fun AddTaskBox(
     val effectiveDue = if (dueTouched) due else today
     val list = lists.firstOrNull { it.id == listId } ?: lists.firstOrNull()
 
-    fun submit() {
-        val typed = titleState.text.toString()
-        if (typed.isBlank()) return
-        onAdd(typed.trim(), details.takeIf { expanded && it.isNotBlank() }, effectiveDue, list?.id)
-        titleState.clearText()
+    /** Adds [typed], already trimmed, with the details shown; the box empties its own title. */
+    fun submit(typed: String) {
+        onAdd(typed, details.takeIf { expanded && it.isNotBlank() }, effectiveDue, list?.id)
         details = ""
         expanded = false
         dueTouched = false
@@ -79,15 +77,11 @@ fun AddTaskBox(
     }
 
     val titleField: @Composable () -> Unit = {
-        MetroTextField(
-            state = titleState,
+        MetroQuickAddField(
             placeholder = "add a task",
+            onAdd = ::submit,
             modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-                imeAction = ImeAction.Done
-            ),
-            onKeyboardAction = { submit() }
+            state = titleState
         )
     }
 
@@ -141,7 +135,10 @@ fun AddTaskBox(
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 MetroLink("hide details", { expanded = false })
                 Spacer(Modifier.weight(1f))
-                MetroButton("add", { submit() }, enabled = title.isNotBlank())
+                MetroButton("add", {
+                    submit(title.trim())
+                    titleState.clearText()
+                }, enabled = title.isNotBlank())
             }
             if (serviceName.isNotEmpty()) {
                 MetroText(
