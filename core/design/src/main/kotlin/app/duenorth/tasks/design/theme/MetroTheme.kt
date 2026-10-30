@@ -29,9 +29,13 @@ val LocalListShades = compositionLocalOf { emptyMap<String, Int>() }
 
 val LocalMetroTypography = staticCompositionLocalOf { MetroTypography.Default }
 
+/** The chosen style's light and shade; [MetroSurface.Flat] under the Metro style. */
+val LocalMetroSurface = staticCompositionLocalOf { MetroSurface.Flat }
+
 /**
  * Root of every screen. Follows the phone's light/dark setting unless [darkTheme] is given
- * (the manual override from settings). [listShades] maps list ids to their shade steps.
+ * (the manual override from settings). [listShades] maps list ids to their shade steps. [style]
+ * is the look picked in settings; Metro by default.
  */
 @Composable
 fun MetroTheme(
@@ -39,10 +43,14 @@ fun MetroTheme(
     accent: Accent = Accent.Default,
     typography: MetroTypography = MetroTypography.Default,
     listShades: Map<String, Int> = emptyMap(),
+    style: MetroStyle = MetroStyle.Default,
     content: @Composable () -> Unit
 ) {
-    val colors = if (darkTheme) MetroColors.Dark else MetroColors.Light
-    val accentColors = remember(accent, darkTheme) { accent.colors(darkTheme) }
+    val colors = remember(style, darkTheme) { StylePalettes.colors(style, darkTheme) }
+    val accentColors = remember(accent, colors) {
+        // A tinted page can pull an accent's text under 4.5:1, so it moves just far enough to read again.
+        accent.colors(darkTheme).let { it.copy(text = Contrast.ensure(it.text, colors.background)) }
+    }
     val selection = remember(accentColors) {
         TextSelectionColors(handleColor = accentColors.fill, backgroundColor = accentColors.fill.copy(alpha = 0.4f))
     }
@@ -52,6 +60,7 @@ fun MetroTheme(
         LocalAppAccent provides accent,
         LocalListShades provides listShades,
         LocalMetroTypography provides typography,
+        LocalMetroSurface provides remember(style, darkTheme) { MetroSurface.of(style, darkTheme) },
         LocalTextSelectionColors provides selection,
         LocalAnimationsEnabled provides rememberAnimationsEnabled(),
         content = content
@@ -91,6 +100,17 @@ object MetroTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalMetroTypography.current
+
+    /** The chosen style's light and shade; [MetroSurface.Flat] under the Metro style. */
+    val surface: MetroSurface
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalMetroSurface.current
+
+    val style: MetroStyle
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalMetroSurface.current.style
 }
 
 /** Layout constants from constitution Principle I. */

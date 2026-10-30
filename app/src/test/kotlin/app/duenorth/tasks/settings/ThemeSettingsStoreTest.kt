@@ -3,6 +3,7 @@ package app.duenorth.tasks.settings
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import app.duenorth.tasks.data.db.ListKey
 import app.duenorth.tasks.design.theme.Accent
+import app.duenorth.tasks.design.theme.MetroStyle
 import app.duenorth.tasks.provider.api.ProviderKind
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +39,7 @@ class ThemeSettingsStoreTest {
         val settings = ThemeSettingsStore(dataStore("theme")).settings.first()
         assertEquals(ThemeMode.SYSTEM, settings.mode)
         assertEquals(Accent.Magenta, settings.accent)
+        assertEquals(MetroStyle.Metro, settings.style)
     }
 
     @Test
@@ -46,6 +48,8 @@ class ThemeSettingsStoreTest {
         store.setMode(ThemeMode.DARK)
         store.setAccent(Accent.Cobalt)
         assertEquals(ThemeSettings(ThemeMode.DARK, Accent.Cobalt), store.settings.first())
+        store.setStyle(MetroStyle.Mica)
+        assertEquals(ThemeSettings(ThemeMode.DARK, Accent.Cobalt, MetroStyle.Mica), store.settings.first())
     }
 
     @Test

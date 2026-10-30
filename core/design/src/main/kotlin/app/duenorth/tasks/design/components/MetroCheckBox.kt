@@ -23,13 +23,15 @@ import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.design.theme.Relief
 
 private const val FILL_MS = 100
 
 /**
  * WP8.1 check box: a flat square with a 2dp border that fills with the accent when checked.
  * The touch target is 48dp around a 24dp box. [label] names what it checks off for TalkBack
- * (the task title), since the box itself has no text.
+ * (the task title), since the box itself has no text. Tile relief raises the box off the page, mica
+ * draws a Windows 11 check box, and Windows 10 Mobile edges it in grey.
  */
 @Composable
 fun MetroCheckBox(
@@ -41,8 +43,15 @@ fun MetroCheckBox(
 ) {
     val colors = MetroTheme.colors
     val accent = MetroTheme.accent
-    val fill by animateColorAsState(if (checked) accent.fill else Color.Transparent, tween(FILL_MS), label = "fill")
-    val border = if (checked) accent.fill else colors.foreground
+    val style = MetroTheme.style
+    // A raised box needs a face of its own, so it never fills with clear.
+    val clear = if (style.relief) colors.background else Color.Transparent
+    val fill by animateColorAsState(if (checked) accent.fill else clear, tween(FILL_MS), label = "fill")
+    val border = when {
+        checked -> accent.fill
+        style.mobile10 -> colors.outline
+        else -> colors.foreground
+    }
     val tick = remember { TickTrace() }
     val toggle = if (onCheckedChange != null) {
         Modifier.toggleable(
@@ -74,11 +83,20 @@ fun MetroCheckBox(
             .size(MetroDimens.TouchTarget),
         contentAlignment = Alignment.Center
     ) {
+        if (style.layers) {
+            LayerCheckBox(checked, enabled, Modifier.size(22.dp))
+            return@Box
+        }
         Box(
             Modifier
                 .size(24.dp)
-                .background(fill)
-                .border(2.dp, if (enabled) border else colors.outline),
+                .then(
+                    if (style.relief) {
+                        Modifier.relief(Relief.Raised, small = true, fill = fill)
+                    } else {
+                        Modifier.background(fill).border(2.dp, if (enabled) border else colors.outline)
+                    }
+                ),
             contentAlignment = Alignment.Center
         ) {
             if (checked) MetroIconGlyph(MetroIcon.Check, color = accent.onFill, size = 20.dp)

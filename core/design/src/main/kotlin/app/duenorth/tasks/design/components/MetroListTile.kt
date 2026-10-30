@@ -14,11 +14,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.MetroWeights
+import app.duenorth.tasks.design.theme.Relief
+import app.duenorth.tasks.design.theme.mobile10Card
 
 /**
  * A list's tile: a flat square in the list's shade of the accent with its open-task count in the
  * bottom-right corner (research R3). Pass [count] = null for the outlined "new list" tile, and
- * [shared] = true to put the two-people glyph in the top-left corner (spec 002).
+ * [shared] = true to put the two-people glyph in the top-left corner (spec 002). Tile relief lifts the tile off
+ * the page and mica rounds it; the "new list" tile is a raised blank, a layer card, or a faint wash under Windows
+ * 10 Mobile.
  */
 @Composable
 fun MetroListTile(
@@ -29,16 +33,24 @@ fun MetroListTile(
     size: Dp = 64.dp,
     shared: Boolean = false
 ) {
+    val style = MetroTheme.style
     if (count == null) {
         Box(
-            modifier.size(size).border(2.dp, MetroTheme.colors.foreground),
+            modifier.size(size).then(
+                when {
+                    style.relief -> Modifier.relief(Relief.Raised)
+                    style.mobile10 -> Modifier.background(MetroTheme.colors.mobile10Card)
+                    else -> Modifier.border(2.dp, MetroTheme.colors.foreground)
+                }
+            ),
             contentAlignment = Alignment.Center
         ) {
             MetroIconGlyph(MetroIcon.Add, size = size / 2)
         }
         return
     }
-    Box(modifier.size(size).background(fill), contentAlignment = Alignment.BottomEnd) {
+    val face = if (style.relief) Modifier.relief(Relief.Raised, fill = fill) else Modifier.background(fill)
+    Box(modifier.size(size).then(face), contentAlignment = Alignment.BottomEnd) {
         if (shared) {
             MetroIconGlyph(
                 MetroIcon.People,
