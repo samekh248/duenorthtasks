@@ -44,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.data.db.AssignmentSource
 import app.duenorth.tasks.design.components.AppBarButton
@@ -92,6 +93,10 @@ fun TaskDetailScreen(
 @Composable
 private fun ReorderStepsPage(state: TaskDetailUiState, viewModel: TaskDetailViewModel) {
     BackHandler(onBack = viewModel::endReorder)
+    LifecycleStartEffect(viewModel) {
+        viewModel.holdForReorder(true)
+        onStopOrDispose { viewModel.holdForReorder(false) }
+    }
     Column(Modifier.fillMaxSize().background(MetroTheme.colors.background)) {
         Column(Modifier.weight(1f).statusBarsPadding()) {
             MetroText(
