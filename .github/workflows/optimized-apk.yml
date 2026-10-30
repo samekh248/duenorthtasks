@@ -40,9 +40,18 @@ jobs:
               exit 1
             fi
           done
-          # AGP signs debug and benchmark builds with ~/.android/debug.keystore.
-          mkdir -p ~/.android
-          echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > ~/.android/debug.keystore
+          keystore="$RUNNER_TEMP/debug.keystore"
+          echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > "$keystore"
+          echo "DEBUG_STOREFILE=$keystore" >> "$GITHUB_ENV"
+          # The SHA-1 the APK must be signed with, checked after the build.
+          sha1=$(keytool -list -v -alias androiddebugkey -keystore "$keystore" -storepass android \
+            | sed -n 's/^[[:space:]]*SHA1: //p' | tr -d ':' | tr 'A-F' 'a-f')
+          if [ -z "$sha1" ]; then
+            echo "::error::DEBUG_KEYSTORE_BASE64 is not a readable debug keystore (alias androiddebugkey, password android)"
+            exit 1
+          fi
+          echo "Debug key SHA-1: $sha1"
+          echo "DEBUG_SHA1=$sha1" >> "$GITHUB_ENV"
       - name: Build the APK
         run: ./gradlew :app:assembleBenchmarkRelease
       - name: Name the APK and show its signer
@@ -51,7 +60,11 @@ jobs:
           apk="due-north-optimized-$version-$(date -u +%Y%m%d).apk"
           cp app/build/outputs/apk/benchmarkRelease/app-benchmarkRelease.apk "$apk"
           apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
-          "$apksigner" verify --print-certs "$apk" | grep -E "SHA-1|SHA-256"
+          "$apksigner" verify --print-certs "$apk" | tee signer.txt | grep -E "SHA-1|SHA-256"
+          if ! grep -q "SHA-1 digest: $DEBUG_SHA1" signer.txt; then
+            echo "::error::The APK is not signed with the key in DEBUG_KEYSTORE_BASE64 ($DEBUG_SHA1)"
+            exit 1
+          fi
           echo "APK=$apk" >> "$GITHUB_ENV"
       - name: Upload the APK
         uses: actions/upload-artifact@v4
