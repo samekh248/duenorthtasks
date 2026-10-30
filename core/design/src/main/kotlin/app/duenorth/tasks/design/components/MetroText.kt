@@ -41,7 +41,11 @@ fun MetroText(
 
 /**
  * Windows 10 Mobile writes labels in sentence case where Metro writes them in lowercase: the first letter is raised
- * when the text starts in lowercase, so names, figures and all-caps titles are left as they are.
+ * when the text starts in lowercase, so names, figures, links and all-caps titles are left as they are.
  */
-fun sentenceCase(text: String): String =
-    if (text.firstOrNull()?.isLowerCase() == true) text.replaceFirstChar { it.titlecaseChar() } else text
+fun sentenceCase(text: String): String = when {
+    text.firstOrNull()?.isLowerCase() != true -> text
+    // A link is left as it is typed.
+    text.startsWith("http://") || text.startsWith("https://") || text.startsWith("www.") -> text
+    else -> text.replaceFirstChar { it.titlecaseChar() }
+}

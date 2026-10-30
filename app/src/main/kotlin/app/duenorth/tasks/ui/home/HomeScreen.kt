@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
@@ -49,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.design.components.AppBarButton
 import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.components.ContextMenuItem
+import app.duenorth.tasks.design.components.GroupPosition
 import app.duenorth.tasks.design.components.MetroAppBar
 import app.duenorth.tasks.design.components.MetroContextMenu
 import app.duenorth.tasks.design.components.MetroDialog
@@ -70,6 +72,7 @@ import app.duenorth.tasks.design.theme.ListAccent
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.listAccent
+import app.duenorth.tasks.ui.common.GroupHeader
 import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.deleteListMessage
@@ -194,9 +197,9 @@ fun HomeContent(
     }
     val taskMenu: (TaskRowUi) -> List<ContextMenuItem> = { row ->
         listOfNotNull(
-            ContextMenuItem("edit") { actions.openTask(row.id) },
-            ContextMenuItem("delete") { viewModel.deleteTask(row.id) },
-            ContextMenuItem("move to") { moving = row },
+            ContextMenuItem("edit", MetroIcon.Edit) { actions.openTask(row.id) },
+            ContextMenuItem("delete", MetroIcon.Delete) { viewModel.deleteTask(row.id) },
+            ContextMenuItem("move to", MetroIcon.Move) { moving = row },
             importanceItem(state.importance, row) { viewModel.setImportant(row.id, it) },
             ContextMenuItem("save as template") { viewModel.saveAsTemplate(row.id, actions.openTemplateTask) }
         )
@@ -411,33 +414,30 @@ private fun TodaySection(
                 item(key = "loading", contentType = "loading") { MetroTaskPlaceholders() }
                 return@LazyColumn
             }
-            items(dueToday, key = { it.id }, contentType = { "task" }) { row ->
+            itemsIndexed(dueToday, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
                 TaskRow(
                     row = row,
                     onToggle = { viewModel.setCompleted(row.id, it) },
                     onOpen = { openTask(row.id) },
                     menuItems = taskMenu(row),
                     continuum = continuum,
-                    modifier = Modifier.animateItem()
+                    modifier = Modifier.animateItem(),
+                    position = GroupPosition.of(index, dueToday.size)
                 )
             }
             if (tomorrow.isNotEmpty()) {
                 item(key = "tomorrow", contentType = "header") {
-                    MetroText(
-                        "tomorrow",
-                        MetroTheme.typography.subheader,
-                        Modifier.padding(top = 16.dp, bottom = 4.dp).animateItem(),
-                        color = MetroTheme.colors.secondary
-                    )
+                    GroupHeader("tomorrow", Modifier.animateItem(), count = tomorrow.size)
                 }
-                items(tomorrow, key = { it.id }, contentType = { "task" }) { row ->
+                itemsIndexed(tomorrow, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
                     TaskRow(
                         row = row,
                         onToggle = { viewModel.setCompleted(row.id, it) },
                         onOpen = { openTask(row.id) },
                         menuItems = taskMenu(row),
                         continuum = continuum,
-                        modifier = Modifier.animateItem()
+                        modifier = Modifier.animateItem(),
+                        position = GroupPosition.of(index, tomorrow.size)
                     )
                 }
             }
@@ -496,14 +496,15 @@ private fun PinnedSection(
             if (open.isEmpty()) {
                 item(key = "empty", contentType = "empty") { EmptyNote("nothing to do here") }
             }
-            items(open, key = { it.id }, contentType = { "task" }) { row ->
+            itemsIndexed(open, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
                 TaskRow(
                     row = row,
                     onToggle = { viewModel.setCompleted(row.id, it) },
                     onOpen = { openTask(row.id) },
                     menuItems = taskMenu(row),
                     continuum = continuum,
-                    modifier = Modifier.animateItem()
+                    modifier = Modifier.animateItem(),
+                    position = GroupPosition.of(index, open.size)
                 )
             }
         }
@@ -619,12 +620,12 @@ private fun ListRow(
             onDismiss = { menu = false },
             // Only the owner can rename or delete a shared list; "list info" says so (spec 002 FR-120).
             items = listOfNotNull(
-                onReorder?.let { ContextMenuItem("reorder", it) },
+                onReorder?.let { ContextMenuItem("reorder", MetroIcon.Reorder, it) },
                 ContextMenuItem(if (list.pinned) "unpin from home" else "pin to home", onPin),
-                ContextMenuItem("rename", onRename).takeIf { list.sharing.canManage },
+                ContextMenuItem("rename", MetroIcon.Edit, onRename).takeIf { list.sharing.canManage },
                 ContextMenuItem("list shade", onShade),
                 ContextMenuItem("list info", onInfo),
-                ContextMenuItem("delete", onDelete).takeIf { list.sharing.canManage }
+                ContextMenuItem("delete", MetroIcon.Delete, onDelete).takeIf { list.sharing.canManage }
             )
         )
     }

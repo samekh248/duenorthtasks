@@ -31,6 +31,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.design.theme.Relief
 
 /** A top band dialog over a dimmed page; back or a tap outside dismisses it. */
 @Composable
@@ -52,6 +53,8 @@ private fun MetroBandDialog(onDismiss: () -> Unit, content: @Composable () -> Un
                     .then(
                         if (MetroTheme.style.layers) {
                             Modifier.statusBarsPadding().padding(MetroDimens.Gutter).acrylicSheet(MetroTheme.surface)
+                        } else if (MetroTheme.style.relief) {
+                            Modifier.statusBarsPadding().padding(MetroDimens.Gutter).relief(Relief.Raised)
                         } else {
                             Modifier.background(MetroTheme.colors.chrome).statusBarsPadding()
                         }
@@ -90,7 +93,7 @@ fun MetroInputDialog(
             keyboardActions = KeyboardActions(onDone = { confirm() })
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)) {
-            MetroButton(confirmLabel, { confirm() }, Modifier.weight(1f), enabled = value.isNotBlank())
+            MetroButton(confirmLabel, { confirm() }, Modifier.weight(1f), enabled = value.isNotBlank(), primary = true)
             MetroButton(dismissLabel, onDismiss, Modifier.weight(1f))
         }
         // Runs inside the dialog's own window, after its first frame, so the text box is
