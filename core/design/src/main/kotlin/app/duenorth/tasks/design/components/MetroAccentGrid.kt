@@ -62,6 +62,8 @@ private class Swatch(val name: String, val color: Color, val selected: Boolean, 
 @Composable
 private fun SwatchGrid(swatches: List<Swatch>, columns: Int, modifier: Modifier, spacing: Dp = MetroDimens.Gutter) {
     val outline = MetroTheme.colors.foreground
+    // Mica rounds the swatches a little; every other style keeps them square.
+    val shape = layerShape(LayerCorner.Control)
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing)) {
         swatches.chunked(columns).forEach { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing)) {
@@ -80,8 +82,10 @@ private fun SwatchGrid(swatches: List<Swatch>, columns: Int, modifier: Modifier,
                             )
                             .semantics { contentDescription = swatch.name }
                             // The chosen swatch gets an outline with a gap, like WP8.1's accent picker.
-                            .then(if (swatch.selected) Modifier.border(3.dp, outline).padding(6.dp) else Modifier)
-                            .background(swatch.color)
+                            .then(
+                                if (swatch.selected) Modifier.border(3.dp, outline, shape).padding(6.dp) else Modifier
+                            )
+                            .background(swatch.color, shape)
                     )
                 }
                 // Keep the last row's squares the same size as the others.

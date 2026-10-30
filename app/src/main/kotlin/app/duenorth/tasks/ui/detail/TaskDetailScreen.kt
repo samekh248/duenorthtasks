@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.data.db.AssignmentSource
 import app.duenorth.tasks.design.components.AppBarButton
@@ -90,6 +91,10 @@ fun TaskDetailContent(
 
     if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
     if (state.reordering) {
+        LifecycleStartEffect(viewModel) {
+            viewModel.holdForReorder(true)
+            onStopOrDispose { viewModel.holdForReorder(false) }
+        }
         ReorderStepsPage(
             overline = "DUE NORTH · ${state.listTitle.uppercase()}",
             title = state.title,

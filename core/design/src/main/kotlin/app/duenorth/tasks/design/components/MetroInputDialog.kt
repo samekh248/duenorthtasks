@@ -49,8 +49,13 @@ private fun MetroBandDialog(onDismiss: () -> Unit, content: @Composable () -> Un
                 Modifier
                     .fillMaxWidth()
                     .clickable(interactionSource = null, indication = null) {}
-                    .background(MetroTheme.colors.chrome)
-                    .statusBarsPadding()
+                    .then(
+                        if (MetroTheme.style.layers) {
+                            Modifier.statusBarsPadding().padding(MetroDimens.Gutter).acrylicSheet(MetroTheme.surface)
+                        } else {
+                            Modifier.background(MetroTheme.colors.chrome).statusBarsPadding()
+                        }
+                    )
                     .padding(horizontal = MetroDimens.Gutter * 2, vertical = MetroDimens.Grid),
                 verticalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
             ) {

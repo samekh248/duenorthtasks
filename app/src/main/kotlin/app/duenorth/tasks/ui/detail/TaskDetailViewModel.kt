@@ -172,20 +172,30 @@ class TaskDetailViewModel @Inject constructor(
         viewModelScope.launch { runCatching { tasks.removeStep(id) } }
     }
 
-    /** Opens reorder steps mode, holding sync for the task's list until it ends (FR-228). */
+    /** Opens reorder steps mode. */
     fun startReorder(from: String? = null) {
-        val listId = state.value.listId
-        if (pinnedList == null && listId.isNotEmpty()) {
-            holds.pin(listId)
-            pinnedList = listId
-        }
         reorder.update { StepReorder(active = true, from = from) }
     }
 
     fun endReorder() {
-        pinnedList?.let(holds::unpin)
-        pinnedList = null
+        holdForReorder(false)
         reorder.update { StepReorder() }
+    }
+
+    /**
+     * Holds sync for the task's list while reorder steps mode is on screen (FR-228). The page lets
+     * go when the app goes to the background, so a reorder mode left open never stalls sync.
+     */
+    fun holdForReorder(active: Boolean) {
+        if (active) {
+            val listId = state.value.listId
+            if (pinnedList != null || listId.isEmpty()) return
+            holds.pin(listId)
+            pinnedList = listId
+        } else {
+            pinnedList?.let(holds::unpin)
+            pinnedList = null
+        }
     }
 
     fun dismissOrderNote() {

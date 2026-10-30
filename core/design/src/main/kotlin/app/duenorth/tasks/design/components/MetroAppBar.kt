@@ -48,6 +48,7 @@ import app.duenorth.tasks.design.motion.MetroEasing
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.design.theme.Relief
 
 @Immutable
 data class AppBarButton(
@@ -70,7 +71,9 @@ private const val SPIN_MS = 1200
 /**
  * The WP8.1 Application Bar: up to four round outlined buttons along the bottom and an ellipsis
  * that expands the bar to show their labels and the overflow menu (research R3). Back closes an
- * expanded bar, and so does touching anything outside it inside a [MetroAppBarHost].
+ * expanded bar, and so does touching anything outside it inside a [MetroAppBarHost]. Tile relief raises
+ * the buttons and fills add with the accent; mica floats the bar as an acrylic sheet of bare glyphs;
+ * Windows 10 Mobile draws its own flat command bar ([Mobile10CommandBar]).
  */
 @Composable
 fun MetroAppBar(
@@ -92,18 +95,31 @@ fun MetroAppBar(
             onDispose { if (host.expanded === registration) host.expanded = null }
         }
     }
+    val style = MetroTheme.style
+    val tracked = if (host != null) {
+        Modifier.onGloballyPositioned { registration.boundsInWindow = it.boundsInWindow() }
+    } else {
+        Modifier
+    }
+    if (style.mobile10) {
+        Mobile10CommandBar(buttons, menuItems, expanded, { expanded = it }, modifier.then(tracked))
+        return
+    }
+    val chrome = if (style.layers) {
+        // Mica: an acrylic sheet floating a gutter in from the screen's edges, over the page.
+        Modifier
+            .background(colors.background)
+            .navigationBarsPadding()
+            .padding(start = MetroDimens.Gutter, end = MetroDimens.Gutter, bottom = MetroDimens.Gutter)
+            .acrylicSheet(MetroTheme.surface)
+    } else {
+        Modifier.background(colors.chrome).navigationBarsPadding()
+    }
     Column(
         modifier
             .fillMaxWidth()
-            .then(
-                if (host != null) {
-                    Modifier.onGloballyPositioned { registration.boundsInWindow = it.boundsInWindow() }
-                } else {
-                    Modifier
-                }
-            )
-            .background(colors.chrome)
-            .navigationBarsPadding()
+            .then(tracked)
+            .then(chrome)
             .animateContentSize(tween(EXPAND_MS, easing = MetroEasing))
     ) {
         Box(Modifier.fillMaxWidth().heightIn(min = 72.dp)) {
@@ -177,11 +193,29 @@ private fun AppBarIconButton(button: AppBarButton, showLabel: Boolean, onClick: 
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val style = MetroTheme.style
+        val accent = MetroTheme.accent
+        // Tile relief and mica fill add with the accent, so the page's main action leads the bar.
+        val filled = style.filledAdd && button.icon == MetroIcon.Add && button.enabled
         Box(
-            Modifier.size(MetroDimens.TouchTarget).border(2.dp, color, CircleShape),
+            Modifier.size(MetroDimens.TouchTarget).then(
+                when {
+                    filled -> Modifier.relief(Relief.Raised, small = true, corner = PillCorner, fill = accent.fill)
+                    // Mica's other buttons are bare glyphs on the acrylic.
+                    style.layers -> Modifier
+                    // The button's own face is the ground it stands on: the bar's chrome.
+                    style.relief -> Modifier.relief(
+                        Relief.Raised,
+                        small = true,
+                        corner = PillCorner,
+                        fill = colors.chrome
+                    )
+                    else -> Modifier.border(2.dp, color, CircleShape)
+                }
+            ),
             contentAlignment = Alignment.Center
         ) {
-            MetroIconGlyph(button.icon, Modifier.spin(button.spinning), color = color)
+            MetroIconGlyph(button.icon, Modifier.spin(button.spinning), color = if (filled) accent.onFill else color)
         }
         if (showLabel) {
             MetroText(
@@ -196,6 +230,98 @@ private fun AppBarIconButton(button: AppBarButton, showLabel: Boolean, onClick: 
         }
     }
 }
+
+/**
+ * The Windows 10 Mobile command bar: bare glyphs right-aligned on a flat 48dp bar, the ellipsis last. Opened, it
+ * shows each glyph's label under it and the menu below as a plain list in body type.
+ */
+@Composable
+private fun Mobile10CommandBar(
+    buttons: List<AppBarButton>,
+    menuItems: List<AppBarMenuItem>,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier
+) {
+    val colors = MetroTheme.colors
+    Column(
+        modifier
+            .fillMaxWidth()
+            .background(colors.chrome)
+            .navigationBarsPadding()
+            .animateContentSize(tween(EXPAND_MS, easing = MetroEasing))
+    ) {
+        Row(Modifier.fillMaxWidth().heightIn(min = Mobile10CommandBarHeight), horizontalArrangement = Arrangement.End) {
+            buttons.forEach { button ->
+                val color = if (button.enabled) colors.foreground else colors.outline
+                Column(
+                    Modifier
+                        .width(68.dp)
+                        .metroTilt(button.enabled)
+                        .clickable(
+                            interactionSource = null,
+                            indication = null,
+                            enabled = button.enabled,
+                            onClickLabel = button.label,
+                            role = Role.Button
+                        ) {
+                            onExpandedChange(false)
+                            button.onClick()
+                        }
+                        .semantics {
+                            contentDescription = button.label
+                            if (button.spinning) stateDescription = "syncing"
+                        }
+                        .padding(top = 12.dp, bottom = if (expanded) 8.dp else 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    MetroIconGlyph(button.icon, Modifier.spin(button.spinning), color = color, size = 24.dp)
+                    if (expanded) {
+                        MetroText(
+                            button.label,
+                            MetroTheme.typography.caption,
+                            Modifier.padding(top = 4.dp),
+                            color = color,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+            Box(
+                Modifier
+                    .size(width = MetroDimens.TouchTarget, height = Mobile10CommandBarHeight)
+                    .clickable(interactionSource = null, indication = null, role = Role.Button) {
+                        onExpandedChange(!expanded)
+                    }
+                    .semantics { contentDescription = if (expanded) "less" else "more" }
+                    .padding(top = 4.dp),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                MetroIconGlyph(MetroIcon.More, size = 20.dp)
+            }
+        }
+        if (expanded && menuItems.isNotEmpty()) {
+            Column(Modifier.padding(bottom = 8.dp)) {
+                menuItems.forEach { item ->
+                    MetroText(
+                        item.label,
+                        MetroTheme.typography.body,
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(interactionSource = null, indication = null, role = Role.Button) {
+                                onExpandedChange(false)
+                                item.onClick()
+                            }
+                            .heightIn(min = MetroDimens.TouchTarget)
+                            .padding(horizontal = MetroDimens.Gutter, vertical = 13.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val Mobile10CommandBarHeight = 48.dp
 
 /**
  * A steady turn while [spinning], drawn in the layer only so nothing recomposes per frame. When it

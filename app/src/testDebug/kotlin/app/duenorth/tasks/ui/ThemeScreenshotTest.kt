@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.lifecycle.SavedStateHandle
@@ -20,6 +21,7 @@ import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.demo.DemoSeeder
 import app.duenorth.tasks.design.theme.Accent
+import app.duenorth.tasks.design.theme.MetroStyle
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.ThemeMode
@@ -99,6 +101,48 @@ class ThemeScreenshotTest {
     fun settingsCoralDark() = settings(Accent.Coral, dark = true)
 
     @Test
+    fun stylePickerLight() = stylePicker(dark = false)
+
+    @Test
+    fun stylePickerDark() = stylePicker(dark = true)
+
+    @Test
+    fun styleTileReliefSettingsLight() = styledSettings(MetroStyle.TileRelief, dark = false)
+
+    @Test
+    fun styleTileReliefListsLight() = shadedLists(Accent.Magenta, dark = false, style = MetroStyle.TileRelief)
+
+    @Test
+    fun styleTileReliefSettingsDark() = styledSettings(MetroStyle.TileRelief, dark = true)
+
+    @Test
+    fun styleTileReliefListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.TileRelief)
+
+    @Test
+    fun styleMicaSettingsLight() = styledSettings(MetroStyle.Mica, dark = false)
+
+    @Test
+    fun styleMicaListsLight() = shadedLists(Accent.Magenta, dark = false, style = MetroStyle.Mica)
+
+    @Test
+    fun styleMicaSettingsDark() = styledSettings(MetroStyle.Mica, dark = true)
+
+    @Test
+    fun styleMicaListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Mica)
+
+    @Test
+    fun styleMobile10SettingsLight() = styledSettings(MetroStyle.Mobile10, dark = false)
+
+    @Test
+    fun styleMobile10ListsLight() = shadedLists(Accent.Magenta, dark = false, style = MetroStyle.Mobile10)
+
+    @Test
+    fun styleMobile10SettingsDark() = styledSettings(MetroStyle.Mobile10, dark = true)
+
+    @Test
+    fun styleMobile10ListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Mobile10)
+
+    @Test
     fun listShadeLight() = listShade(dark = false)
 
     @Test
@@ -126,6 +170,23 @@ class ThemeScreenshotTest {
         snap("settings_theme_${accent.name.lowercase()}", dark)
     }
 
+    /** The theme page scrolled down to the style radios. */
+    private fun stylePicker(dark: Boolean) {
+        show(dark, Accent.Magenta) {
+            SettingsContent(ThemeSettings(ThemeMode.SYSTEM, Accent.Magenta), onMode = {}, onAccent = {})
+        }
+        compose.onNode(hasTestTag("style-Mobile10")).performScrollTo()
+        snap("style_picker", dark)
+    }
+
+    /** The theme page drawn in [style]. */
+    private fun styledSettings(style: MetroStyle, dark: Boolean) {
+        show(dark, Accent.Magenta, style = style) {
+            SettingsContent(ThemeSettings(ThemeMode.SYSTEM, Accent.Magenta, style), onMode = {}, onAccent = {})
+        }
+        snap("style_${style.name.lowercase()}_settings", dark)
+    }
+
     private fun listShade(dark: Boolean) {
         val state = ListShadeUiState(loading = false, listId = "errands", title = "Errands", openCount = 3, step = -2)
         show(dark, Accent.Magenta) { ListShadeContent(state, onPick = {}) }
@@ -133,7 +194,7 @@ class ThemeScreenshotTest {
     }
 
     /** The lists section with Errands two shades lighter and Work two darker. */
-    private fun shadedLists(accent: Accent, dark: Boolean) {
+    private fun shadedLists(accent: Accent, dark: Boolean, style: MetroStyle? = null) {
         val viewModel = HomeViewModel(
             tasks,
             TemplateRepository(db, tasks, clock),
@@ -145,15 +206,25 @@ class ThemeScreenshotTest {
             clock
         )
         val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
-        show(dark, accent, demoShades()) {
+        show(dark, accent, demoShades(), style ?: MetroStyle.Default) {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, actions)
         }
         compose.waitUntilAtLeastOneExists(hasText("Pay water bill"), TIMEOUT)
         compose.onNode(hasTestTag("today")).performTouchInput { swipeLeft() }
-        compose.waitUntilAtLeastOneExists(hasText("next: Call the vet"), TIMEOUT)
+        // Windows 10 Mobile writes it in sentence case.
+        compose.waitUntilAtLeastOneExists(hasText("next: Call the vet", ignoreCase = true), TIMEOUT)
         compose.mainClock.advanceTimeBy(2_000)
-        snap("lists_shaded_${accent.name.lowercase()}", dark)
+        snap(
+            if (style ==
+                null
+            ) {
+                "lists_shaded_${accent.name.lowercase()}"
+            } else {
+                "style_${style.name.lowercase()}_lists"
+            },
+            dark
+        )
     }
 
     private fun shadedListPage(dark: Boolean) {
@@ -192,9 +263,12 @@ class ThemeScreenshotTest {
         dark: Boolean,
         accent: Accent,
         shades: Map<String, Int> = emptyMap(),
+        style: MetroStyle = MetroStyle.Default,
         content: @Composable () -> Unit
     ) {
-        compose.setContent { MetroTheme(darkTheme = dark, accent = accent, listShades = shades) { content() } }
+        compose.setContent {
+            MetroTheme(darkTheme = dark, accent = accent, listShades = shades, style = style) { content() }
+        }
     }
 
     private fun snap(name: String, dark: Boolean) {

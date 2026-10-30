@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.design.components.AppBarButton
 import app.duenorth.tasks.design.components.AppBarMenuItem
@@ -117,6 +118,10 @@ fun ListContent(
 @Composable
 private fun ReorderTasksPage(state: ListUiState, viewModel: ListViewModel) {
     BackHandler(onBack = viewModel::endReorder)
+    LifecycleStartEffect(viewModel) {
+        viewModel.holdForReorder(true)
+        onStopOrDispose { viewModel.holdForReorder(false) }
+    }
     Column(Modifier.fillMaxSize().background(MetroTheme.colors.background)) {
         Column(Modifier.weight(1f).statusBarsPadding()) {
             PageHeader(state.title)
