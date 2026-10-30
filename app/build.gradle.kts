@@ -49,6 +49,12 @@ android {
     // passwords come from local.properties or CI secrets. Without them, release builds fall back to
     // the debug key so local builds and benchmarks keep working.
     signingConfigs {
+        // The shared debug key (CI: DEBUG_STOREFILE), so optimized APKs keep the registered hashes.
+        if (secret("debug.storeFile").isNotEmpty()) {
+            getByName("debug") {
+                storeFile = file(secret("debug.storeFile"))
+            }
+        }
         if (secret("release.storeFile").isNotEmpty()) {
             create("release") {
                 storeFile = file(secret("release.storeFile"))
