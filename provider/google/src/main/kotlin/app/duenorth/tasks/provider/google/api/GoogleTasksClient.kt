@@ -1,4 +1,4 @@
-package app.duenorth.tasks.provider.google
+package app.duenorth.tasks.provider.google.api
 
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.Json

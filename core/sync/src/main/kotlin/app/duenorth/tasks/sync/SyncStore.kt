@@ -3,7 +3,6 @@ package app.duenorth.tasks.sync
 import androidx.room.withTransaction
 import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.db.EntityType
-import app.duenorth.tasks.data.db.Fields
 import app.duenorth.tasks.data.db.OperationKind
 import app.duenorth.tasks.data.db.PendingOperationEntity
 import app.duenorth.tasks.data.db.StepEntity
@@ -185,10 +184,6 @@ internal class SyncStore(
         /** How far behind a write a service's listing may still be; generous, since a miss is costly. */
         val LISTING_LAG: Duration = Duration.ofMinutes(2)
         private const val MAX_SQL_ARGS = 900
-
-        /** The fields a full "send everything" update covers. */
-        val ALL_TASK_FIELDS = setOf(Fields.TITLE, Fields.NOTES, Fields.DUE_DATE, Fields.COMPLETED, Fields.IMPORTANT)
-        val ALL_STEP_FIELDS = setOf(Fields.TITLE, Fields.DONE)
 
         fun TaskEntity.toJson(steps: List<StepEntity>): JsonObject = buildJsonObject {
             put("title", title)

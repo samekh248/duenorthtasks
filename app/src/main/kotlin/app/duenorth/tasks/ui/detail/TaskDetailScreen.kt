@@ -1,17 +1,13 @@
 package app.duenorth.tasks.ui.detail
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,15 +20,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.clearText
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,8 +35,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,12 +44,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.data.db.AssignmentSource
 import app.duenorth.tasks.design.components.AppBarButton
 import app.duenorth.tasks.design.components.AppBarMenuItem
-import app.duenorth.tasks.design.components.ContextMenuItem
 import app.duenorth.tasks.design.components.GroupPosition
 import app.duenorth.tasks.design.components.MetroAppBar
-import app.duenorth.tasks.design.components.MetroButton
-import app.duenorth.tasks.design.components.MetroCheckBox
-import app.duenorth.tasks.design.components.MetroContextMenu
 import app.duenorth.tasks.design.components.MetroDatePicker
 import app.duenorth.tasks.design.components.MetroDialog
 import app.duenorth.tasks.design.components.MetroIcon
@@ -68,10 +54,8 @@ import app.duenorth.tasks.design.components.MetroLink
 import app.duenorth.tasks.design.components.MetroLinkifiedText
 import app.duenorth.tasks.design.components.MetroPickerDialog
 import app.duenorth.tasks.design.components.MetroPill
-import app.duenorth.tasks.design.components.MetroReorderList
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
-import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.components.MetroToggle
 import app.duenorth.tasks.design.components.groupSurface
 import app.duenorth.tasks.design.components.relief
@@ -83,11 +67,14 @@ import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.MetroWeights
 import app.duenorth.tasks.design.theme.Relief
 import app.duenorth.tasks.design.theme.listAccent
+import app.duenorth.tasks.ui.common.AddStepField
 import app.duenorth.tasks.ui.common.Chip
 import app.duenorth.tasks.ui.common.DueText
 import app.duenorth.tasks.ui.common.OrderNoteDialog
-import app.duenorth.tasks.ui.common.ReorderHint
 import app.duenorth.tasks.ui.common.ReorderRow
+import app.duenorth.tasks.ui.common.ReorderStepsPage
+import app.duenorth.tasks.ui.common.StepRow
+import app.duenorth.tasks.ui.common.TitleDetailsForm
 import java.time.LocalDate
 import java.util.Locale
 
@@ -101,44 +88,6 @@ fun TaskDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
     TaskDetailContent(state, viewModel, animatedScope)
-}
-
-/** Reorder steps mode (specs/003-reordering US3): the steps get the page; done or back ends it. */
-@Composable
-private fun ReorderStepsPage(state: TaskDetailUiState, viewModel: TaskDetailViewModel) {
-    BackHandler(onBack = viewModel::endReorder)
-    LifecycleStartEffect(viewModel) {
-        viewModel.holdForReorder(true)
-        onStopOrDispose { viewModel.holdForReorder(false) }
-    }
-    Column(Modifier.fillMaxSize().background(MetroTheme.colors.background)) {
-        Column(Modifier.weight(1f).statusBarsPadding()) {
-            MetroText(
-                "DUE NORTH · ${state.listTitle.uppercase()}",
-                MetroTheme.typography.pageTitle,
-                Modifier.padding(start = MetroDimens.Gutter, top = 16.dp, end = MetroDimens.Gutter),
-                maxLines = 1
-            )
-            MetroText(
-                state.title,
-                MetroTheme.typography.detailTitle,
-                Modifier.padding(horizontal = MetroDimens.Gutter, vertical = 4.dp).semantics { heading() }
-            )
-            MetroReorderList(
-                items = state.steps,
-                key = { it.id },
-                onMove = viewModel::reorderSteps,
-                modifier = Modifier.fillMaxSize().testTag("reorder-steps"),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
-                initialKey = state.reorderFrom,
-                headerItems = 1,
-                header = { item(key = "hint", contentType = "hint") { ReorderHint("drag a step to move it") } }
-            ) { step ->
-                ReorderRow(title = step.title, caption = null, checked = step.done)
-            }
-        }
-        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = viewModel::endReorder)))
-    }
 }
 
 @Composable
@@ -157,7 +106,20 @@ fun TaskDetailContent(
 
     if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
     if (state.reordering) {
-        ReorderStepsPage(state, viewModel)
+        LifecycleStartEffect(viewModel) {
+            viewModel.holdForReorder(true)
+            onStopOrDispose { viewModel.holdForReorder(false) }
+        }
+        ReorderStepsPage(
+            overline = "DUE NORTH · ${state.listTitle.uppercase()}",
+            title = state.title,
+            steps = state.steps,
+            key = { it.id },
+            onMove = viewModel::reorderSteps,
+            initialKey = state.reorderFrom,
+            onDone = viewModel::endReorder,
+            testTag = "reorder-steps"
+        ) { step -> ReorderRow(title = step.title, caption = null, checked = step.done) }
         return
     }
 
@@ -179,7 +141,7 @@ fun TaskDetailContent(
                 return@Column
             }
             if (editing) {
-                EditForm(
+                TitleDetailsForm(
                     title = state.title,
                     details = state.details.orEmpty(),
                     onSave = { title, details ->
@@ -222,7 +184,8 @@ fun TaskDetailContent(
             val rows = state.steps.size + if (style.layers) 1 else 0
             state.steps.forEachIndexed { index, step ->
                 StepRow(
-                    step,
+                    title = step.title,
+                    done = step.done,
                     onDone = { viewModel.setStepDone(step.id, it) },
                     onRemove = { viewModel.removeStep(step.id) },
                     onReorder = { viewModel.startReorder(step.id) }.takeIf { state.steps.size > 1 },
@@ -493,102 +456,6 @@ private fun ComboBox(value: String, onClick: () -> Unit) {
         MetroText(value, MetroTheme.typography.body, Modifier.weight(1f), maxLines = 1)
         MetroIconGlyph(MetroIcon.ChevronDown, size = 18.dp)
     }
-}
-
-@Composable
-private fun EditForm(title: String, details: String, onSave: (String, String) -> Unit, onCancel: () -> Unit) {
-    var newTitle by rememberSaveable { mutableStateOf(title) }
-    var newDetails by rememberSaveable { mutableStateOf(details) }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        MetroTextField(
-            value = newTitle,
-            onValueChange = { newTitle = it },
-            placeholder = "title",
-            textStyle = MetroTheme.typography.subheader,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            modifier = Modifier.fillMaxWidth()
-        )
-        MetroTextField(
-            value = newDetails,
-            onValueChange = { newDetails = it },
-            placeholder = "details, links",
-            singleLine = false,
-            minLines = 3,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            MetroLink("cancel", onCancel)
-            Spacer(Modifier.weight(1f))
-            MetroButton("save", { onSave(newTitle, newDetails) }, enabled = newTitle.isNotBlank())
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun StepRow(
-    step: StepUi,
-    onDone: (Boolean) -> Unit,
-    onRemove: () -> Unit,
-    onReorder: (() -> Unit)?,
-    modifier: Modifier = Modifier
-) {
-    var menu by remember { mutableStateOf(false) }
-    Box(modifier) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = MetroDimens.TouchTarget)
-                .combinedClickable(
-                    interactionSource = null,
-                    indication = null,
-                    onLongClick = { menu = true },
-                    onClick = { onDone(!step.done) }
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
-        ) {
-            MetroCheckBox(checked = step.done, onCheckedChange = onDone, label = step.title)
-            MetroText(
-                step.title,
-                MetroTheme.typography.body.copy(
-                    textDecoration = if (step.done) TextDecoration.LineThrough else TextDecoration.None
-                ),
-                color = if (step.done) MetroTheme.colors.secondary else MetroTheme.colors.foreground
-            )
-        }
-        MetroContextMenu(
-            expanded = menu,
-            onDismiss = {
-                menu = false
-            },
-            items = listOfNotNull(
-                onReorder?.let {
-                    ContextMenuItem("reorder", MetroIcon.Reorder, it)
-                },
-                ContextMenuItem("remove", MetroIcon.Delete, onRemove)
-            )
-        )
-    }
-}
-
-@Composable
-private fun AddStepField(onAdd: (String) -> Unit, modifier: Modifier = Modifier) {
-    val draft = rememberTextFieldState()
-    MetroTextField(
-        state = draft,
-        placeholder = "add a step",
-        modifier = modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Sentences,
-            imeAction = ImeAction.Done
-        ),
-        onKeyboardAction = {
-            onAdd(draft.text.trim().toString())
-            draft.clearText()
-        }
-    )
 }
 
 /**

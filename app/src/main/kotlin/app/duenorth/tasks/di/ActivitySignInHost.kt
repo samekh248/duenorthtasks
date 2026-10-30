@@ -6,7 +6,7 @@ import android.content.IntentSender
 import androidx.activity.ComponentActivity
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import app.duenorth.tasks.provider.google.GoogleSignInHost
+import app.duenorth.tasks.provider.google.auth.GoogleSignInHost
 import app.duenorth.tasks.provider.microsoft.auth.ActivitySignInHost as MicrosoftSignInHost
 import java.util.UUID
 import kotlin.coroutines.resume

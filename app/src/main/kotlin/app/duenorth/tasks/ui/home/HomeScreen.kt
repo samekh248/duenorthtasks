@@ -1,27 +1,11 @@
 package app.duenorth.tasks.ui.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,55 +16,31 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.design.components.AppBarButton
 import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.components.ContextMenuItem
-import app.duenorth.tasks.design.components.GroupPosition
 import app.duenorth.tasks.design.components.MetroAppBar
-import app.duenorth.tasks.design.components.MetroContextMenu
 import app.duenorth.tasks.design.components.MetroDialog
 import app.duenorth.tasks.design.components.MetroIcon
 import app.duenorth.tasks.design.components.MetroInputDialog
-import app.duenorth.tasks.design.components.MetroListTile
 import app.duenorth.tasks.design.components.MetroPanorama
 import app.duenorth.tasks.design.components.MetroPickerDialog
 import app.duenorth.tasks.design.components.MetroProgressDots
-import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
-import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.components.PanoramaSection
 import app.duenorth.tasks.design.components.PanoramaState
-import app.duenorth.tasks.design.motion.ContinuumState
-import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.motion.rememberContinuumState
-import app.duenorth.tasks.design.theme.ListAccent
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
-import app.duenorth.tasks.design.theme.listAccent
-import app.duenorth.tasks.ui.common.GroupHeader
-import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.deleteListMessage
 import app.duenorth.tasks.ui.common.deleteListTitle
-import app.duenorth.tasks.ui.common.frozen
 import app.duenorth.tasks.ui.common.importanceItem
-import app.duenorth.tasks.ui.common.rememberTouchHold
-import app.duenorth.tasks.ui.common.touchHold
 import app.duenorth.tasks.ui.stats.StatsUi
 import app.duenorth.tasks.ui.stats.StatsViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -201,7 +161,7 @@ fun HomeContent(
             ContextMenuItem("delete", MetroIcon.Delete) { viewModel.deleteTask(row.id) },
             ContextMenuItem("move to", MetroIcon.Move) { moving = row },
             importanceItem(state.importance, row) { viewModel.setImportant(row.id, it) },
-            ContextMenuItem("save as template") { viewModel.saveAsTemplate(row.id, actions.openTemplateTask) }
+            ContextMenuItem("save as template") { viewModel.saveTaskAsTemplate(row.id, actions.openTemplateTask) }
         )
     }
 
@@ -375,260 +335,6 @@ private fun HomeAppBar(
         else -> null
     }
     MetroAppBar(buttons = listOfNotNull(first, sync, search), menuItems = menu)
-}
-
-@Composable
-private fun TodaySection(
-    state: HomeUiState,
-    viewModel: HomeViewModel,
-    addFocus: FocusRequester,
-    continuum: ContinuumState,
-    openTask: (String) -> Unit,
-    taskMenu: (TaskRowUi) -> List<ContextMenuItem>,
-    arrivals: () -> Int
-) {
-    val list = rememberLazyListState()
-    val hold = rememberTouchHold(list, viewModel::holdSync)
-    val dueToday = hold.frozen(state.dueToday, state.added)
-    val tomorrow = hold.frozen(state.tomorrow, state.added)
-    var addHeight by remember { mutableIntStateOf(0) }
-    Box(Modifier.fillMaxSize()) {
-        LazyColumn(
-            Modifier.fillMaxSize().touchHold(hold).testTag("today"),
-            state = list,
-            contentPadding = PaddingValues(bottom = 24.dp)
-        ) {
-            item(key = "add", contentType = "add") {
-                AddTaskBox(
-                    serviceName = state.serviceName,
-                    today = state.today,
-                    lists = state.lists,
-                    onAdd = { title, details, due, list -> viewModel.addTask(title, details, due, list) },
-                    focusRequester = addFocus,
-                    modifier = Modifier.onSizeChanged { addHeight = it.height }.padding(top = 8.dp, bottom = 4.dp),
-                    templates = state.taskTemplates,
-                    onUseTemplate = { viewModel.addFromTemplate(it) }
-                )
-            }
-            if (state.loading) {
-                item(key = "loading", contentType = "loading") { MetroTaskPlaceholders() }
-                return@LazyColumn
-            }
-            itemsIndexed(dueToday, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
-                TaskRow(
-                    row = row,
-                    onToggle = { viewModel.setCompleted(row.id, it) },
-                    onOpen = { openTask(row.id) },
-                    menuItems = taskMenu(row),
-                    continuum = continuum,
-                    modifier = Modifier.animateItem(),
-                    position = GroupPosition.of(index, dueToday.size)
-                )
-            }
-            if (tomorrow.isNotEmpty()) {
-                item(key = "tomorrow", contentType = "header") {
-                    GroupHeader("tomorrow", Modifier.animateItem(), count = tomorrow.size)
-                }
-                itemsIndexed(tomorrow, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
-                    TaskRow(
-                        row = row,
-                        onToggle = { viewModel.setCompleted(row.id, it) },
-                        onOpen = { openTask(row.id) },
-                        menuItems = taskMenu(row),
-                        continuum = continuum,
-                        modifier = Modifier.animateItem(),
-                        position = GroupPosition.of(index, tomorrow.size)
-                    )
-                }
-            }
-        }
-        val empty = !state.loading && dueToday.isEmpty() && tomorrow.isEmpty()
-        AnimatedVisibility(empty, enter = fadeIn(), exit = fadeOut()) {
-            val top = with(LocalDensity.current) { addHeight.toDp() }
-            EmptyToday(arrivals, Modifier.fillMaxSize().padding(top = top, bottom = 24.dp))
-        }
-    }
-}
-
-/**
- * A pinned list's own section: an "add a task" box for that list and its open tasks in the list's
- * own order, all in the list's shade.
- */
-@Composable
-private fun PinnedSection(
-    pinned: PinnedListUi,
-    state: HomeUiState,
-    viewModel: HomeViewModel,
-    addFocus: FocusRequester,
-    continuum: ContinuumState,
-    openTask: (String) -> Unit,
-    taskMenu: (TaskRowUi) -> List<ContextMenuItem>
-) {
-    val list = rememberLazyListState()
-    val hold = rememberTouchHold(list, viewModel::holdSync)
-    val open = hold.frozen(pinned.open)
-    val draft = rememberSaveable(pinned.list.id, saver = TextFieldState.Saver) { TextFieldState() }
-    ListAccent(pinned.list.id) {
-        LazyColumn(
-            Modifier.fillMaxSize().touchHold(hold).testTag("pinned:${pinned.list.title}"),
-            state = list,
-            contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
-        ) {
-            item(key = "add", contentType = "add") {
-                MetroTextField(
-                    state = draft,
-                    placeholder = "add a task",
-                    modifier = Modifier.padding(end = MetroDimens.Gutter, bottom = 4.dp).focusRequester(addFocus),
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Sentences,
-                        imeAction = ImeAction.Done
-                    ),
-                    onKeyboardAction = {
-                        viewModel.addTask(draft.text.trim().toString(), due = null, listId = pinned.list.id)
-                        draft.clearText()
-                    }
-                )
-            }
-            if (state.loading) {
-                item(key = "loading", contentType = "loading") { MetroTaskPlaceholders() }
-                return@LazyColumn
-            }
-            if (open.isEmpty()) {
-                item(key = "empty", contentType = "empty") { EmptyNote("nothing to do here") }
-            }
-            itemsIndexed(open, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
-                TaskRow(
-                    row = row,
-                    onToggle = { viewModel.setCompleted(row.id, it) },
-                    onOpen = { openTask(row.id) },
-                    menuItems = taskMenu(row),
-                    continuum = continuum,
-                    modifier = Modifier.animateItem(),
-                    position = GroupPosition.of(index, open.size)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ListsSection(
-    state: HomeUiState,
-    onOpen: (String) -> Unit,
-    onNew: () -> Unit,
-    onRename: (ListRowUi) -> Unit,
-    onShade: (ListRowUi) -> Unit,
-    onInfo: (ListRowUi) -> Unit,
-    onDelete: (ListRowUi) -> Unit,
-    onReorder: (ListRowUi) -> Unit,
-    onPin: (ListRowUi) -> Unit,
-    onUnpin: (ListRowUi) -> Unit
-) {
-    LazyColumn(
-        Modifier.fillMaxSize().testTag("lists"),
-        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
-    ) {
-        if (state.loading) {
-            item(key = "loading") { MetroTaskPlaceholders(count = 3) }
-            return@LazyColumn
-        }
-        items(state.lists, key = { it.id }, contentType = { "list" }) { list ->
-            ListRow(
-                list,
-                onOpen = { onOpen(list.id) },
-                onRename = { onRename(list) },
-                onShade = { onShade(list) },
-                onInfo = { onInfo(list) },
-                onDelete = { onDelete(list) },
-                onReorder = { onReorder(list) }.takeIf { state.lists.size > 1 },
-                onPin = { if (list.pinned) onUnpin(list) else onPin(list) }
-            )
-        }
-        item(key = "new", contentType = "new") {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .metroTilt()
-                    .combinedClickable(interactionSource = null, indication = null, onClick = onNew),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
-            ) {
-                MetroListTile(count = null)
-                MetroText("new list", MetroTheme.typography.listName)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun ListRow(
-    list: ListRowUi,
-    onOpen: () -> Unit,
-    onRename: () -> Unit,
-    onShade: () -> Unit,
-    onInfo: () -> Unit,
-    onDelete: () -> Unit,
-    onReorder: (() -> Unit)?,
-    onPin: () -> Unit
-) {
-    var menu by remember { mutableStateOf(false) }
-    Box {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .metroTilt()
-                .combinedClickable(
-                    interactionSource = null,
-                    indication = null,
-                    onLongClick = { menu = true },
-                    onClick = onOpen
-                )
-                // TalkBack reads the name first, then "shared with you, 3 open" instead of a bare
-                // number from the tile.
-                .semantics {
-                    stateDescription = listOf(list.sharing.spoken, "${list.openCount} open")
-                        .filter { it.isNotEmpty() }
-                        .joinToString(", ")
-                },
-            horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
-        ) {
-            val shade = listAccent(list.id)
-            MetroListTile(
-                count = list.openCount,
-                modifier = Modifier.clearAndSetSemantics {},
-                fill = shade.fill,
-                onFill = shade.onFill,
-                shared = list.sharing.isShared
-            )
-            Column(Modifier.weight(1f)) {
-                MetroText(list.title, MetroTheme.typography.listName, maxLines = 1)
-                MetroText(
-                    listOfNotNull(
-                        list.sharing.caption.ifEmpty { null },
-                        list.next?.let { "next: $it" } ?: "no open tasks"
-                    ).joinToString(" · "),
-                    MetroTheme.typography.caption,
-                    color = MetroTheme.colors.secondary,
-                    maxLines = 1
-                )
-            }
-        }
-        MetroContextMenu(
-            expanded = menu,
-            onDismiss = { menu = false },
-            // Only the owner can rename or delete a shared list; "list info" says so (spec 002 FR-120).
-            items = listOfNotNull(
-                onReorder?.let { ContextMenuItem("reorder", MetroIcon.Reorder, it) },
-                ContextMenuItem(if (list.pinned) "unpin from home" else "pin to home", onPin),
-                ContextMenuItem("rename", MetroIcon.Edit, onRename).takeIf { list.sharing.canManage },
-                ContextMenuItem("list shade", onShade),
-                ContextMenuItem("list info", onInfo),
-                ContextMenuItem("delete", MetroIcon.Delete, onDelete).takeIf { list.sharing.canManage }
-            )
-        )
-    }
 }
 
 @Composable

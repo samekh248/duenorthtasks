@@ -230,11 +230,6 @@ class TemplateRepository(
         return id
     }
 
-    suspend fun renameTemplateStep(id: String, title: String) {
-        val clean = Validation.stepTitle(title)
-        db.withTransaction { templates.getStep(id)?.let { templates.updateStep(it.copy(title = clean)) } }
-    }
-
     suspend fun removeTemplateStep(id: String) = db.withTransaction { templates.deleteStep(id) }
 
     suspend fun moveTemplateSteps(taskId: String, order: List<String>) = db.withTransaction {

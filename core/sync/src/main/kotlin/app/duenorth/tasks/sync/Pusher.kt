@@ -216,7 +216,7 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
                 store.steps.update(step.copy(remoteId = created.id))
                 val stepOps = store.opsFor(EntityType.STEP, sent.localId)
                 stepOps.filter { it.kind != OperationKind.DELETE }.forEach { store.ops.delete(it.seq) }
-                val changed = changedStepFields(sent, step)
+                val changed = Fields.changed(sent, step)
                 if (changed.isNotEmpty() && stepOps.none { it.kind == OperationKind.DELETE }) {
                     store.enqueue(EntityType.STEP, step.localId, OperationKind.UPDATE, changed)
                 }
@@ -226,7 +226,7 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
                 store.dropOps(EntityType.STEP, it.localId)
                 store.steps.delete(it.localId)
             }
-            settle(op, sent = task, now = now, sentFields = SyncStore.ALL_TASK_FIELDS + Fields.LIST)
+            settle(op, sent = task, now = now, sentFields = Fields.TASK + Fields.LIST)
         }
         store.confirmedCreate(remote.id)
         store.journal.clear(task.localId)
@@ -324,7 +324,7 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
                     recordTask(task, remote)
                     val now = store.steps.get(step.localId) ?: return@transaction
                     store.steps.update(now.copy(remoteId = created?.id))
-                    val changed = changedStepFields(step, now)
+                    val changed = Fields.changed(step, now)
                     if (changed.isEmpty()) {
                         store.ops.delete(op.seq)
                     } else {
@@ -346,7 +346,7 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
                     val current = store.sync.operation(op.seq) ?: return@transaction
                     val remaining = current.changedFields.filter {
                         it !in op.changedFields ||
-                            it in changedStepFields(step, now)
+                            it in Fields.changed(step, now)
                     }.toSet()
                     if (remaining.isEmpty()) {
                         store.ops.delete(
@@ -541,7 +541,7 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
      */
     private suspend fun settle(op: PendingOperationEntity, sent: TaskEntity, now: TaskEntity, sentFields: Set<String>) {
         val current = store.sync.operation(op.seq) ?: return
-        val changedAgain = changedTaskFields(sent, now)
+        val changedAgain = Fields.changed(sent, now)
         val remaining = when (current.kind) {
             OperationKind.CREATE -> changedAgain
             else -> current.changedFields.filter { it !in sentFields || it in changedAgain }.toSet()
@@ -551,20 +551,6 @@ internal class Pusher(private val store: SyncStore, private val provider: TaskPr
         } else {
             store.ops.update(current.copy(kind = OperationKind.UPDATE, changedFields = remaining, attempts = 0))
         }
-    }
-
-    private fun changedTaskFields(a: TaskEntity, b: TaskEntity): Set<String> = buildSet {
-        if (a.title != b.title) add(Fields.TITLE)
-        if (a.notes != b.notes) add(Fields.NOTES)
-        if (a.dueDate != b.dueDate) add(Fields.DUE_DATE)
-        if (a.completed != b.completed) add(Fields.COMPLETED)
-        if (a.important != b.important) add(Fields.IMPORTANT)
-        if (a.listId != b.listId) add(Fields.LIST)
-    }
-
-    private fun changedStepFields(a: StepEntity, b: StepEntity): Set<String> = buildSet {
-        if (a.title != b.title) add(Fields.TITLE)
-        if (a.done != b.done) add(Fields.DONE)
     }
 
     /** This operation has to wait for one before it (its list or task is not created remotely yet). */

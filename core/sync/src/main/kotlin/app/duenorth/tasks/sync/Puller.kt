@@ -342,7 +342,7 @@ internal class Puller(
         }
         val pendingFields = taskOps.flatMap { op ->
             when (op.kind) {
-                OperationKind.CREATE -> SyncStore.ALL_TASK_FIELDS
+                OperationKind.CREATE -> Fields.TASK
                 // A queued move keeps the phone's place for the task until it is sent (FR-227).
                 OperationKind.MOVE -> setOf(Fields.POSITION)
                 else -> op.changedFields
@@ -364,7 +364,7 @@ internal class Puller(
             Decision.KEEP_LOCAL -> Unit
             Decision.LOCAL_WINS -> {
                 // Fields not changed here still take the remote value; ours win where both changed.
-                val lost = differingFields(local, remote, pendingFields)
+                val lost = Fields.differing(local, remote, pendingFields, canStoreImportance)
                 if (lost.isNotEmpty() || stepsDiffer(local, remote, pendingSteps)) {
                     store.log(
                         SyncLogType.CONFLICT,
@@ -381,7 +381,7 @@ internal class Puller(
                 )
             }
             Decision.REMOTE_WINS -> {
-                val lost = differingFields(local, remote, pendingFields)
+                val lost = Fields.differing(local, remote, pendingFields, canStoreImportance)
                 if (lost.isNotEmpty() || stepsDiffer(local, remote, pendingSteps)) {
                     store.log(
                         SyncLogType.CONFLICT,
@@ -432,7 +432,7 @@ internal class Puller(
         }
         // The create is done; our copy is the newer one, so push all of its fields once.
         store.dropOps(EntityType.TASK, candidate.localId)
-        store.enqueue(EntityType.TASK, candidate.localId, OperationKind.UPDATE, SyncStore.ALL_TASK_FIELDS)
+        store.enqueue(EntityType.TASK, candidate.localId, OperationKind.UPDATE, Fields.TASK)
         return true
     }
 
@@ -595,18 +595,6 @@ internal class Puller(
         val keys = OrderKeys.keysBefore(open.getOrNull(unkeyed.size)?.position, unkeyed.size)
         unkeyed.zip(keys).forEach { (task, key) -> store.tasks.update(task.copy(position = key)) }
     }
-
-    private fun differingFields(local: TaskEntity, remote: RemoteTask, fields: Set<String>): Set<String> =
-        fields.filter { field ->
-            when (field) {
-                Fields.TITLE -> local.title != remote.title
-                Fields.NOTES -> local.notes.orEmpty() != remote.notes.orEmpty()
-                Fields.DUE_DATE -> local.dueDate != remote.dueDate
-                Fields.COMPLETED -> local.completed != remote.completed
-                Fields.IMPORTANT -> canStoreImportance && local.important != remote.important
-                else -> false
-            }
-        }.toSet()
 
     private suspend fun stepsDiffer(local: TaskEntity, remote: RemoteTask, pendingSteps: Set<String>): Boolean {
         val remoteById = remote.steps.associateBy { it.id }

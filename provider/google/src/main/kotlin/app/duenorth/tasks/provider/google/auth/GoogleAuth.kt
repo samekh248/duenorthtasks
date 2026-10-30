@@ -1,4 +1,4 @@
-package app.duenorth.tasks.provider.google
+package app.duenorth.tasks.provider.google.auth
 
 import app.duenorth.tasks.provider.api.AccountInfo
 import app.duenorth.tasks.provider.api.SignInHost

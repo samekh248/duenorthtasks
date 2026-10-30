@@ -1,5 +1,6 @@
 package app.duenorth.tasks.provider.google
 
+import app.duenorth.tasks.provider.google.api.GoogleStatus
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset

@@ -187,20 +187,6 @@ data class SyncLogEntity(
 
 enum class SyncLogType { CONFLICT, ERROR, RECOVERED }
 
-/** Field names used in [PendingOperationEntity.changedFields]. */
-object Fields {
-    const val TITLE = "title"
-    const val NOTES = "notes"
-    const val DUE_DATE = "dueDate"
-    const val COMPLETED = "completed"
-    const val IMPORTANT = "important"
-    const val LIST = "list"
-    const val DONE = "done"
-
-    /** Never sent as a field; marks a task whose queued `MOVE` keeps its place over a pull's. */
-    const val POSITION = "position"
-}
-
 /*
  * Templates (specs/004-templates/data-model.md): recipes kept on this phone only. No remote ids,
  * never in the outbox or the sync log. They hang off the account row like everything else, so

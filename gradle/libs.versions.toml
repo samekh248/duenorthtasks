@@ -16,7 +16,6 @@ work = "2.10.4"
 datastore = "1.1.7"
 coroutines = "1.10.2"
 serialization = "1.9.0"
-collectionsImmutable = "0.4.0"
 retrofit = "3.0.0"
 okhttp = "5.1.0"
 msal = "6.0.1"
@@ -27,7 +26,6 @@ profileInstaller = "1.4.1"
 benchmark = "1.4.1"
 uiautomator = "2.3.0"
 metricsPerformance = "1.0.0-beta02"
-startup = "1.2.0"
 junit4 = "4.13.2"
 junit5 = "5.13.4"
 turbine = "1.2.1"
@@ -57,14 +55,11 @@ navigation-compose = { module = "androidx.navigation:navigation-compose", versio
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltAndroidx" }
-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltAndroidx" }
-hilt-androidx-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltAndroidx" }
 
 # Data and sync
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 work-testing = { module = "androidx.work:work-testing", version.ref = "work" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
@@ -72,7 +67,6 @@ coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", ve
 coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "collectionsImmutable" }
 
 # Network and auth
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
@@ -90,14 +84,12 @@ profileinstaller = { module = "androidx.profileinstaller:profileinstaller", vers
 benchmark-macro = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 metrics-performance = { module = "androidx.metrics:metrics-performance", version.ref = "metricsPerformance" }
-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startup" }
 
 # Tests
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 junit5-bom = { module = "org.junit:junit-bom", version.ref = "junit5" }
 junit5-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit5-launcher = { module = "org.junit.platform:junit-platform-launcher" }
-junit5-vintage = { module = "org.junit.vintage:junit-vintage-engine" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }

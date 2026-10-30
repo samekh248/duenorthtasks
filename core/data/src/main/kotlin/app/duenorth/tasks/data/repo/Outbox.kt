@@ -71,9 +71,6 @@ internal class Outbox(private val dao: PendingOperationDao) {
         }
     }
 
-    suspend fun hasCreateWaiting(entity: EntityType, localId: String): Boolean =
-        dao.forEntity(entity, localId).any { it.kind == OperationKind.CREATE }
-
     suspend fun drop(entity: EntityType, localIds: List<String>) {
         localIds.chunked(MAX_SQL_ARGS).forEach { dao.deleteForEntities(entity, it) }
     }

@@ -3,6 +3,9 @@ package app.duenorth.tasks.provider.google
 import app.duenorth.tasks.provider.api.AccountInfo
 import app.duenorth.tasks.provider.api.ProviderError
 import app.duenorth.tasks.provider.api.SignInHost
+import app.duenorth.tasks.provider.google.api.BearerToken
+import app.duenorth.tasks.provider.google.api.GoogleTasksClient
+import app.duenorth.tasks.provider.google.auth.GoogleAuth
 
 /** Hands out numbered tokens; [revoked] makes every refresh fail like a revoked grant. */
 class FakeGoogleAuth : GoogleAuth {
