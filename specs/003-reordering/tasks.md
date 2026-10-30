@@ -47,5 +47,5 @@ description: "Task list for reordering tasks, lists and steps"
 ## Phase 5: Polish
 
 - [x] R022 Screen screenshots (list reorder, steps, lists page) light and dark
-- [ ] R023 Drag benchmark across a 200-task list (FR-242), follow-up: needs the benchmark seeder to fill one list
+- [x] R023 Drag benchmark across a 200-task list (FR-242): `ReorderBenchmark.reorderDrag`
 - [x] R024 Full local suite: unit tests, lint, both builds, benchmark compile

@@ -21,6 +21,8 @@ BUDGETS = {
     "scrollWhileSyncing": ("gfxFrameJankPercent", "median", 1.0),
     # The first panorama swipes right after a cold start are held to the same bar as any scroll.
     "coldStartSwipe": ("gfxFrameJankPercent", "median", 1.0),
+    # specs/003-reordering SC-204: dragging a task through 200 tasks, auto-scroll included.
+    "reorderDrag": ("gfxFrameJankPercent", "median", 1.0),
     # SC-008: a tap on a task's check box draws the tick within 100 ms (slowest tap per run).
     "tapToTick": ("MetroCheckBox tickMaxMs", "median", 100),
 }
