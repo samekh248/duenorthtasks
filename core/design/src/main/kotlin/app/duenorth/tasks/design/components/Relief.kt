@@ -23,7 +23,9 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
@@ -72,6 +74,76 @@ fun Modifier.relief(
         else -> corner ?: 0.dp
     }
     return drawBehind { drawRelief(surface, relief, size, radius.toPx(), fill, small) }
+}
+
+/** Where a row sits in a group of rows that share one surface: alone, or at its top, middle or bottom. */
+enum class GroupPosition {
+    Only,
+    First,
+    Middle,
+    Last;
+
+    val top: Boolean get() = this == Only || this == First
+    val bottom: Boolean get() = this == Only || this == Last
+
+    companion object {
+        /** The position of row [index] of [count]. */
+        fun of(index: Int, count: Int): GroupPosition = when {
+            count <= 1 -> Only
+            index == 0 -> First
+            index == count - 1 -> Last
+            else -> Middle
+        }
+    }
+}
+
+/**
+ * Draws this row's part of one surface shared by a group of rows, so a lazy list can build the group a row at a
+ * time. Tile relief draws one panel ([relief] raised, or inset for a group that is put away, such as completed
+ * tasks) split by a groove between rows; mica draws one layer card, rounded only at the group's ends and split by a
+ * hairline; Windows 10 Mobile rules a hairline under each row; Metro draws nothing.
+ */
+@Composable
+fun Modifier.groupSurface(position: GroupPosition, relief: Relief = Relief.Raised): Modifier {
+    val surface = MetroTheme.surface
+    val style = surface.style
+    val page = MetroTheme.colors.background
+    if (style.mobile10) {
+        val rule = MetroTheme.colors.foreground.copy(alpha = 0.12f)
+        return drawBehind {
+            val hair = 1.dp.toPx()
+            drawRect(rule, Offset(0f, size.height - hair), Size(size.width, hair))
+        }
+    }
+    if (!style.relief) return this
+    return drawBehind {
+        // The whole group's surface runs on past this row's top and bottom where other rows continue it; only
+        // this row's band of it is drawn, with room around for the light and shade at the group's outer edges.
+        val reach = surface.blur.toPx() * 3 + surface.depth.toPx()
+        val above = if (position.top) 0f else reach
+        val below = if (position.bottom) 0f else reach
+        val radius = if (style.layers) LayerCorner.Card.toPx() else 0f
+        clipRect(
+            -reach,
+            if (position.top) -reach else 0f,
+            size.width + reach,
+            size.height + if (position.bottom) reach else 0f
+        ) {
+            translate(top = -above) {
+                drawRelief(surface, relief, Size(size.width, size.height + above + below), radius, page, small = false)
+            }
+        }
+        if (!position.top) {
+            val hair = 1.dp.toPx()
+            if (style.layers) {
+                drawRect(surface.stroke, Offset(0f, 0f), Size(size.width, hair))
+            } else {
+                // A groove: a line of shade with a line of light under it.
+                drawRect(surface.shade, Offset(0f, 0f), Size(size.width, hair))
+                drawRect(surface.highlight, Offset(0f, hair), Size(size.width, hair))
+            }
+        }
+    }
 }
 
 private fun DrawScope.drawRelief(

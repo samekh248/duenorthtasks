@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.duenorth.tasks.design.components.GroupPosition
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
 import app.duenorth.tasks.design.theme.MetroDimens
@@ -76,12 +77,13 @@ fun SearchScreen(onOpenTask: (String) -> Unit, viewModel: SearchViewModel = hilt
                         color = MetroTheme.accent.text
                     )
                 }
-                items(group.rows, key = { it.id }, contentType = { "task" }) { row ->
+                itemsIndexed(group.rows, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
                     TaskRow(
                         row = row,
                         onToggle = { viewModel.setCompleted(row.id, it) },
                         onOpen = { onOpenTask(row.id) },
-                        modifier = Modifier.animateItem()
+                        modifier = Modifier.animateItem(),
+                        position = GroupPosition.of(index, group.rows.size)
                     )
                 }
             }

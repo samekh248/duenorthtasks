@@ -30,7 +30,8 @@ private const val FILL_MS = 100
 /**
  * WP8.1 check box: a flat square with a 2dp border that fills with the accent when checked.
  * The touch target is 48dp around a 24dp box. [label] names what it checks off for TalkBack
- * (the task title), since the box itself has no text. Tile relief raises the box off the page, mica
+ * (the task title), since the box itself has no text. Tile relief presses a clear box into the page and raises a
+ * ticked one, mica
  * draws a Windows 11 check box, and Windows 10 Mobile edges it in grey.
  */
 @Composable
@@ -92,7 +93,8 @@ fun MetroCheckBox(
                 .size(24.dp)
                 .then(
                     if (style.relief) {
-                        Modifier.relief(Relief.Raised, small = true, fill = fill)
+                        // Clear, the box is pressed into the page; ticked, it stands off it in the accent.
+                        Modifier.relief(if (checked) Relief.Raised else Relief.Inset, small = true, fill = fill)
                     } else {
                         Modifier.background(fill).border(2.dp, if (enabled) border else colors.outline)
                     }
