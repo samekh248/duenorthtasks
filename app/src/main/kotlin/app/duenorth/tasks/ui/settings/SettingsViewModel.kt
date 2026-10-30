@@ -3,6 +3,7 @@ package app.duenorth.tasks.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.duenorth.tasks.design.theme.Accent
+import app.duenorth.tasks.design.theme.MetroStyle
 import app.duenorth.tasks.settings.ThemeMode
 import app.duenorth.tasks.settings.ThemeSettings
 import app.duenorth.tasks.settings.ThemeSettingsStore
@@ -24,5 +25,9 @@ class SettingsViewModel @Inject constructor(private val store: ThemeSettingsStor
 
     fun setAccent(accent: Accent) {
         viewModelScope.launch { store.setAccent(accent) }
+    }
+
+    fun setStyle(style: MetroStyle) {
+        viewModelScope.launch { store.setStyle(style) }
     }
 }

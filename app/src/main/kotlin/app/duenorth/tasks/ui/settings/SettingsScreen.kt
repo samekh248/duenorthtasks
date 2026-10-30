@@ -46,6 +46,7 @@ import app.duenorth.tasks.design.components.rememberPivotState
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.Accent
 import app.duenorth.tasks.design.theme.MetroDimens
+import app.duenorth.tasks.design.theme.MetroStyle
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.settings.ThemeMode
 import app.duenorth.tasks.settings.ThemeSettings
@@ -64,6 +65,7 @@ fun SettingsScreen(
         theme ?: ThemeSettings(),
         onMode = viewModel::setMode,
         onAccent = viewModel::setAccent,
+        onStyle = viewModel::setStyle,
         onOpenSyncAccount = onOpenSyncAccount,
         onOpenSyncLog = onOpenSyncLog
     )
@@ -74,6 +76,7 @@ fun SettingsContent(
     theme: ThemeSettings,
     onMode: (ThemeMode) -> Unit,
     onAccent: (Accent) -> Unit,
+    onStyle: (MetroStyle) -> Unit = {},
     onOpenSyncAccount: () -> Unit = {},
     onOpenSyncLog: () -> Unit = {},
     initialPage: Int = 0
@@ -86,16 +89,24 @@ fun SettingsContent(
         state = rememberPivotState(headers.size, initialPage)
     ) { index ->
         when (index) {
-            0 -> ThemePage(theme, onMode, onAccent)
+            0 -> ThemePage(theme, onMode, onAccent, onStyle)
             1 -> SyncLinks(onOpenSyncAccount, onOpenSyncLog)
             else -> AboutPage()
         }
     }
 }
 
-/** WP8.1's "start+theme": background, then the accent grid. Every pick applies at once. */
+/**
+ * WP8.1's "start+theme": background, the accent grid, then the style (the same four looks as Due
+ * North Budget). Every pick applies at once.
+ */
 @Composable
-private fun ThemePage(theme: ThemeSettings, onMode: (ThemeMode) -> Unit, onAccent: (Accent) -> Unit) {
+private fun ThemePage(
+    theme: ThemeSettings,
+    onMode: (ThemeMode) -> Unit,
+    onAccent: (Accent) -> Unit,
+    onStyle: (MetroStyle) -> Unit
+) {
     val systemDark = isSystemInDarkTheme()
     Column(
         Modifier
@@ -132,11 +143,31 @@ private fun ThemePage(theme: ThemeSettings, onMode: (ThemeMode) -> Unit, onAccen
             "Lists use the accent, or a lighter or darker shade of it you pick for each list. " +
                 "Shades follow when the accent changes.",
             MetroTheme.typography.caption,
-            Modifier.padding(top = MetroDimens.Gutter, bottom = MetroDimens.Grid),
+            Modifier.padding(top = MetroDimens.Gutter),
             color = MetroTheme.colors.secondary
         )
+        Label("style")
+        MetroStyle.entries.forEach { style ->
+            MetroRadio(
+                selected = theme.style == style,
+                onClick = { onStyle(style) },
+                label = style.label,
+                caption = style.caption,
+                modifier = Modifier.testTag("style-${style.name}")
+            )
+        }
+        Box(Modifier.padding(bottom = MetroDimens.Grid))
     }
 }
+
+/** One line under each style's name, saying what it changes. */
+private val MetroStyle.caption: String
+    get() = when (this) {
+        MetroStyle.Metro -> "flat Windows Phone 8.1"
+        MetroStyle.TileRelief -> "Metro with soft light and shade"
+        MetroStyle.Mica -> "Windows 11: rounded layers and a floating app bar"
+        MetroStyle.Mobile10 -> "sentence case and a flat command bar"
+    }
 
 /** The sync account and sync log pages have their own routes; this pivot item leads to them. */
 @Composable

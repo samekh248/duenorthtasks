@@ -11,7 +11,15 @@ reason this app exists, so it outranks Material defaults whenever the two disagr
   licensed stand-in), oversized lowercase page titles, and a strict type ramp
   (defined in the plan's research notes, R2).
 - Content over chrome: no drop shadows, no gradients, no rounded cards, no elevation, no
-  Material ripple. Flat color fills only.
+  Material ripple. Flat color fills only. This is the **Metro** style, the default.
+- Styles: the user may pick one of the three sibling styles Due North Budget offers, so the two
+  apps can be set alike (owner, 2026-10-30). **Tile relief** keeps Metro and adds soft light and
+  shade to tiles, buttons, boxes and app-bar buttons. **Mica** (Windows 11) puts rounded layer
+  cards with a hairline edge on a tinted page and floats the app bar as an acrylic sheet.
+  **Windows 10 Mobile** writes in sentence case under a flat command bar, with grey filled
+  buttons and outlined text boxes. These relax only the "content over chrome" rule above, and only
+  while picked; type ramp, accents, motion, the grid and every other rule here still apply, and
+  accent fills stay flat in every style.
 - The chosen look is **Light Panorama** (design C, picked 2026-10-04): the home screen is a
   Panorama hub with an oversized "due north" title that scrolls sideways more slowly than the
   sections under it ("today", "lists", "stats"), like the WP8.1 Calendar and People hubs. The next
@@ -122,4 +130,7 @@ PATCH for wording) and states the reason. Plans and reviews MUST check the Const
 gates in `plan.md` against the principles above; any violation is listed in that plan's
 Complexity Tracking table with a justification.
 
-**Version**: 1.3.1 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-11
+**Version**: 2.0.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-30
+
+2.0.0: Principle I now allows the three opt-in styles from Due North Budget (tile relief, mica,
+Windows 10 Mobile) beside the default Metro style, at the owner's request.

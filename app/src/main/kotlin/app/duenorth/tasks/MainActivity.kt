@@ -39,7 +39,12 @@ class MainActivity : ComponentActivity() {
                 }
                 enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
             }
-            MetroTheme(darkTheme = dark, accent = settings.theme.accent, listShades = settings.listShades) {
+            MetroTheme(
+                darkTheme = dark,
+                accent = settings.theme.accent,
+                listShades = settings.listShades,
+                style = settings.theme.style
+            ) {
                 MetroAppBarHost { AppRoot() }
             }
         }

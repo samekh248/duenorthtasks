@@ -24,11 +24,15 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.theme.MetroDimens
+import app.duenorth.tasks.design.theme.MetroStyle
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.design.theme.Relief
 
 /**
  * WP8.1 text box: a flat rectangle with a 2dp outline and no underline. When focused it turns
- * into a white box with dark text and an accent outline, in both themes, like the phone did.
+ * into a white box with dark text and an accent outline, in both themes, like the phone did. Tile
+ * relief and mica cut the box into the page and keep the page's ink (mica adds an accent line under
+ * the box being typed in); Windows 10 Mobile keeps an outline that turns to the accent.
  */
 @Composable
 fun MetroTextField(
@@ -108,10 +112,12 @@ private fun metroFieldLook(source: MutableInteractionSource, enabled: Boolean): 
         focused -> MetroTheme.accent.fill
         else -> colors.outline
     }
+    // Only Metro turns the box white while typing; the other styles write in the page's own ink.
+    val whiteBox = focused && MetroTheme.style == MetroStyle.Metro
     return FieldLook(
         focused = focused,
-        fill = if (focused) Color.White else Color.Transparent,
-        text = if (focused) FocusedText else colors.foreground,
+        fill = if (whiteBox) Color.White else Color.Transparent,
+        text = if (whiteBox) FocusedText else colors.foreground,
         outline = outline
     )
 }
@@ -124,20 +130,26 @@ private fun MetroFieldBox(
     textStyle: TextStyle,
     inner: @Composable () -> Unit
 ) {
+    val style = MetroTheme.style
     Box(
         Modifier
             .fillMaxWidth()
             .heightIn(min = MetroDimens.TouchTarget)
-            .background(look.fill)
-            .border(2.dp, look.outline)
-            .padding(horizontal = 10.dp, vertical = 10.dp),
+            .then(
+                when {
+                    style.layers -> Modifier.relief(Relief.Inset, small = true).layerFocusLine(look.focused)
+                    style.relief -> Modifier.relief(Relief.Inset, small = true)
+                    else -> Modifier.background(look.fill).border(2.dp, look.outline)
+                }
+            )
+            .padding(horizontal = if (style.relief) 14.dp else 10.dp, vertical = 10.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         if (empty && placeholder != null) {
             MetroText(
                 placeholder,
                 textStyle,
-                color = if (look.focused) FocusedPlaceholder else MetroTheme.colors.secondary
+                color = if (look.fill == Color.White) FocusedPlaceholder else MetroTheme.colors.secondary
             )
         }
         inner()

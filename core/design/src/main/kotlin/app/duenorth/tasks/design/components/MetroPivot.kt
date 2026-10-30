@@ -20,9 +20,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import kotlinx.coroutines.launch
@@ -63,7 +68,8 @@ fun rememberPivotState(pageCount: Int, initialPage: Int = 0): PivotState {
  * The WP8.1 Pivot, for secondary pages with tabs (settings). The current header comes first and
  * the others follow it in order, at 40% opacity, running off the right edge; tapping one jumps to
  * it. Pages swipe like a pager and loop: swiping on from the last page brings the first, and
- * swiping back from the first brings the last.
+ * swiping back from the first brings the last. Mica and Windows 10 Mobile use smaller headers, and
+ * mica underlines the current one in the accent, like a Windows 11 selector bar.
  */
 @Composable
 fun MetroPivot(
@@ -76,10 +82,14 @@ fun MetroPivot(
     val colors = MetroTheme.colors
     val type = MetroTheme.typography
     val scope = rememberCoroutineScope()
+    val style = MetroTheme.style
+    val compact = style.layers || style.mobile10
+    val headerStyle = if (compact) type.header.copy(fontSize = 36.sp) else type.header
+    val selectorLine = MetroTheme.accent.fill
     Column(modifier.fillMaxSize().background(colors.background)) {
         if (pageTitle != null) {
             MetroText(
-                pageTitle.uppercase(),
+                if (style.mobile10) pageTitle else pageTitle.uppercase(),
                 type.pageTitle,
                 Modifier.padding(start = MetroDimens.Gutter, top = MetroDimens.Gutter)
             )
@@ -96,13 +106,28 @@ fun MetroPivot(
                         // Headers drift with the finger, then settle when the page changes.
                         translationX = -pager.currentPageOffsetFraction * 120.dp.toPx()
                     },
-                horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter * 2)
+                horizontalArrangement = Arrangement.spacedBy(if (compact) 20.dp else MetroDimens.Gutter * 2)
             ) {
                 ordered.forEachIndexed { position, index ->
                     MetroText(
                         headers[index],
-                        type.header,
+                        headerStyle,
                         Modifier
+                            .then(
+                                if (style.layers && position == 0) {
+                                    Modifier.drawBehind {
+                                        val line = 3.dp.toPx()
+                                        drawRoundRect(
+                                            selectorLine,
+                                            Offset(0f, size.height - line),
+                                            Size(28.dp.toPx(), line),
+                                            CornerRadius(line / 2)
+                                        )
+                                    }
+                                } else {
+                                    Modifier
+                                }
+                            )
                             .graphicsLayer { alpha = if (position == 0) 1f else INACTIVE_HEADER_ALPHA }
                             .selectable(
                                 selected = position == 0,

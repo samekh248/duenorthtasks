@@ -27,7 +27,8 @@ data class ContextMenuItem(val label: String, val onClick: () -> Unit)
 
 /**
  * WP8.1 context menu: a full-width band of lowercase commands that drops just below the
- * long-pressed item (or above it near the bottom of the screen). Place it inside the item.
+ * long-pressed item (or above it near the bottom of the screen). Place it inside the item. Mica floats
+ * it as an acrylic sheet; Windows 10 Mobile lists its commands in body type.
  */
 @Composable
 fun MetroContextMenu(expanded: Boolean, onDismiss: () -> Unit, items: List<ContextMenuItem>) {
@@ -50,16 +51,25 @@ fun MetroContextMenuContent(
     modifier: Modifier = Modifier,
     onItemClick: (ContextMenuItem) -> Unit
 ) {
+    val style = MetroTheme.style
     Column(
         modifier
             .fillMaxWidth()
-            .background(MetroTheme.colors.chrome)
+            .then(
+                if (style.layers) {
+                    // Mica: a floating acrylic sheet a gutter in from the edges.
+                    Modifier.padding(horizontal = MetroDimens.Gutter).acrylicSheet(MetroTheme.surface)
+                } else {
+                    Modifier.background(MetroTheme.colors.chrome)
+                }
+            )
             .padding(vertical = MetroDimens.Gutter)
     ) {
         items.forEach { item ->
             MetroText(
                 item.label,
-                MetroTheme.typography.subheader,
+                // Windows 10 Mobile's menu flyout lists its items in body type.
+                if (style.mobile10) MetroTheme.typography.body else MetroTheme.typography.subheader,
                 Modifier
                     .fillMaxWidth()
                     .metroTilt()

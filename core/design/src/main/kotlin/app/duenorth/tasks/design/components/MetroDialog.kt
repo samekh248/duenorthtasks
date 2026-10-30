@@ -68,11 +68,16 @@ fun MetroDialogContent(
 ) {
     val colors = MetroTheme.colors
     val type = MetroTheme.typography
+    val chrome = if (MetroTheme.style.layers) {
+        // Mica: a floating acrylic sheet under the status bar, a gutter in from the edges.
+        Modifier.statusBarsPadding().padding(MetroDimens.Gutter).acrylicSheet(MetroTheme.surface)
+    } else {
+        Modifier.background(colors.chrome).statusBarsPadding()
+    }
     Column(
         modifier
             .fillMaxWidth()
-            .background(colors.chrome)
-            .statusBarsPadding()
+            .then(chrome)
             .padding(horizontal = MetroDimens.Gutter * 2, vertical = MetroDimens.Grid),
         verticalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
     ) {

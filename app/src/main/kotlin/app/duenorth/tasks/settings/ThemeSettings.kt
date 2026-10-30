@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import app.duenorth.tasks.design.theme.Accent
+import app.duenorth.tasks.design.theme.MetroStyle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -24,15 +25,20 @@ enum class ThemeMode(val label: String) {
     }
 }
 
-/** The "theme" settings: background and app accent. Phone-only, backed up with the app. */
-data class ThemeSettings(val mode: ThemeMode = ThemeMode.SYSTEM, val accent: Accent = Accent.Default)
+/** The "theme" settings: background, app accent and style. Phone-only, backed up with the app. */
+data class ThemeSettings(
+    val mode: ThemeMode = ThemeMode.SYSTEM,
+    val accent: Accent = Accent.Default,
+    val style: MetroStyle = MetroStyle.Default
+)
 
 class ThemeSettingsStore(private val store: DataStore<Preferences>) {
     val settings: Flow<ThemeSettings> = store.data
         .map { prefs ->
             ThemeSettings(
                 mode = prefs[MODE].toEnum(ThemeMode.SYSTEM),
-                accent = prefs[ACCENT].toEnum(Accent.Default)
+                accent = prefs[ACCENT].toEnum(Accent.Default),
+                style = prefs[STYLE].toEnum(MetroStyle.Default)
             )
         }
         .distinctUntilChanged()
@@ -45,10 +51,15 @@ class ThemeSettingsStore(private val store: DataStore<Preferences>) {
         store.edit { it[ACCENT] = accent.name }
     }
 
+    suspend fun setStyle(style: MetroStyle) {
+        store.edit { it[STYLE] = style.name }
+    }
+
     companion object {
         // Stored by enum name; an unknown name (a removed choice) falls back to the default.
         private val MODE = stringPreferencesKey("theme_mode")
         private val ACCENT = stringPreferencesKey("accent")
+        private val STYLE = stringPreferencesKey("style")
         private val Context.themeDataStore by preferencesDataStore(name = "theme_settings")
 
         fun create(context: Context) = ThemeSettingsStore(context.applicationContext.themeDataStore)
