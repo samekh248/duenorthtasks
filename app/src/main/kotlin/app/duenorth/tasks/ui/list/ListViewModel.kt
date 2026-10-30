@@ -184,17 +184,24 @@ class ListViewModel @Inject constructor(
 
     fun setSort(sort: ListSort) = prefs.update { it.copy(sort = sort) }
 
-    /** Opens reorder mode in "my order" (FR-207), holding sync for this list until it ends (FR-228). */
+    /** Opens reorder mode in "my order" (FR-207). */
     fun startReorder(from: String? = null) {
-        if (!pinned) holds.pin(listId)
-        pinned = true
         prefs.update { it.copy(sort = ListSort.MY_ORDER, reordering = true, reorderFrom = from) }
     }
 
     fun endReorder() {
-        if (pinned) holds.unpin(listId)
-        pinned = false
+        holdForReorder(false)
         prefs.update { it.copy(reordering = false, reorderFrom = null) }
+    }
+
+    /**
+     * Holds sync for this list while reorder mode is on screen (FR-228). The page lets go when the
+     * app goes to the background, so a reorder mode left open never stalls sync.
+     */
+    fun holdForReorder(active: Boolean) {
+        if (active == pinned) return
+        if (active) holds.pin(listId) else holds.unpin(listId)
+        pinned = active
     }
 
     fun dismissOrderNote() {

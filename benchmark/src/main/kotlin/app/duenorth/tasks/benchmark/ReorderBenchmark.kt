@@ -5,7 +5,6 @@ import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.ExperimentalMetricApi
 import androidx.benchmark.macro.FrameTimingGfxInfoMetric
 import androidx.benchmark.macro.MacrobenchmarkScope
-import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
@@ -34,9 +33,12 @@ class ReorderBenchmark {
         packageName = TARGET_PACKAGE,
         metrics = listOf(FrameTimingGfxInfoMetric()),
         compilationMode = CompilationMode.Partial(),
-        startupMode = StartupMode.WARM,
+        // Each iteration starts from a fresh process: a warm start would land back on the last
+        // iteration's list page, still in reorder mode.
+        startupMode = null,
         iterations = 5,
         setupBlock = {
+            killProcess()
             seed(TASKS)
             pressHome()
             startActivityAndWait()
