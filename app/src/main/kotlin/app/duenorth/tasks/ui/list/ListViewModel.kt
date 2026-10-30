@@ -285,7 +285,9 @@ class ListViewModel @Inject constructor(
             } ?: state.value.title,
             overdue = due != null && due.isBefore(today),
             completed = false,
-            due = due
+            due = due,
+            listTitle = state.value.title,
+            whenText = DueText.whenText(due, today, completed = false)
         )
         adds.add(id, row)
         viewModelScope.launch {
