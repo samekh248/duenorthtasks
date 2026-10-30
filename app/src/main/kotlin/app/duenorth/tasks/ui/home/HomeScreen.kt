@@ -157,9 +157,9 @@ fun HomeContent(
     }
     val taskMenu: (TaskRowUi) -> List<ContextMenuItem> = { row ->
         listOfNotNull(
-            ContextMenuItem("edit") { actions.openTask(row.id) },
-            ContextMenuItem("delete") { viewModel.deleteTask(row.id) },
-            ContextMenuItem("move to") { moving = row },
+            ContextMenuItem("edit", MetroIcon.Edit) { actions.openTask(row.id) },
+            ContextMenuItem("delete", MetroIcon.Delete) { viewModel.deleteTask(row.id) },
+            ContextMenuItem("move to", MetroIcon.Move) { moving = row },
             importanceItem(state.importance, row) { viewModel.setImportant(row.id, it) },
             ContextMenuItem("save as template") { viewModel.saveTaskAsTemplate(row.id, actions.openTemplateTask) }
         )

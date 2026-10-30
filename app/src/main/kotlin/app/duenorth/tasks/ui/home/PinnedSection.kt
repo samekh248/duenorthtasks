@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
@@ -15,6 +15,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.components.ContextMenuItem
+import app.duenorth.tasks.design.components.GroupPosition
 import app.duenorth.tasks.design.components.MetroQuickAddField
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.motion.ContinuumState
@@ -65,14 +66,15 @@ internal fun PinnedSection(
             if (open.isEmpty()) {
                 item(key = "empty", contentType = "empty") { EmptyNote("nothing to do here") }
             }
-            items(open, key = { it.id }, contentType = { "task" }) { row ->
+            itemsIndexed(open, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
                 TaskRow(
                     row = row,
                     onToggle = { viewModel.setCompleted(row.id, it) },
                     onOpen = { openTask(row.id) },
                     menuItems = taskMenu(row),
                     continuum = continuum,
-                    modifier = Modifier.animateItem()
+                    modifier = Modifier.animateItem(),
+                    position = GroupPosition.of(index, open.size)
                 )
             }
         }

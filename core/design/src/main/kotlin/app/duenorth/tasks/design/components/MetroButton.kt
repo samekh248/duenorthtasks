@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.MetroDimens
+import app.duenorth.tasks.design.theme.MetroStyle
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.MetroWeights
 import app.duenorth.tasks.design.theme.Relief
@@ -25,22 +26,35 @@ import app.duenorth.tasks.design.theme.Relief
 /**
  * WP8.1 button: a flat rectangle with a 2dp outline that fills with the accent while pressed. Under tile relief
  * and mica it stands off the page and presses in under the finger; under Windows 10 Mobile it is a flat grey block.
+ * A [primary] button (a dialog's confirm) is filled with the accent under every style but Metro, which keeps its
+ * buttons alike.
  */
 @Composable
-fun MetroButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+fun MetroButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    primary: Boolean = false
+) {
     val colors = MetroTheme.colors
     val accent = MetroTheme.accent
     val source = remember { MutableInteractionSource() }
     val pressed by source.collectIsPressedAsState()
     val style = MetroTheme.style
+    val filled = primary && enabled && style != MetroStyle.Metro
     val foreground = when {
         !enabled -> colors.outline
+        filled -> accent.onFill
         style.relief && pressed -> accent.text
         style.mobile10 -> colors.foreground
         pressed -> accent.onFill
         else -> colors.foreground
     }
     val face = when {
+        filled && style.relief ->
+            Modifier.relief(if (pressed) Relief.Inset else Relief.Raised, small = true, fill = accent.fill)
+        filled -> Modifier.background(if (pressed) accent.fill.copy(alpha = 0.8f) else accent.fill)
         style.relief -> Modifier.relief(if (pressed && enabled) Relief.Inset else Relief.Raised, small = true)
         style.mobile10 -> Modifier.background(colors.foreground.copy(alpha = if (pressed && enabled) 0.4f else 0.2f))
         else ->

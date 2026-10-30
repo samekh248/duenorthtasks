@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.design.components.AppBarButton
 import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.components.ContextMenuItem
+import app.duenorth.tasks.design.components.GroupPosition
 import app.duenorth.tasks.design.components.MetroAppBar
 import app.duenorth.tasks.design.components.MetroDialog
 import app.duenorth.tasks.design.components.MetroIcon
@@ -54,6 +56,7 @@ import app.duenorth.tasks.design.theme.ListAccent
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.listAccent
+import app.duenorth.tasks.ui.common.GroupHeader
 import app.duenorth.tasks.ui.common.ListSharing
 import app.duenorth.tasks.ui.common.OrderNoteDialog
 import app.duenorth.tasks.ui.common.PageHeader
@@ -175,6 +178,7 @@ private fun ListPage(
     val hold = rememberTouchHold(listState, viewModel::holdSync)
     val open = hold.frozen(state.open, state.added)
     val completed = hold.frozen(state.completed)
+    val layers = MetroTheme.style.layers
 
     val openTask: (String) -> Unit = { id ->
         scope.launch {
@@ -182,23 +186,27 @@ private fun ListPage(
             onOpenTask(id)
         }
     }
-    val row: @Composable (TaskRowUi, Modifier) -> Unit = { task, modifier ->
+    val row: @Composable (TaskRowUi, GroupPosition, Boolean, Modifier) -> Unit = { task, position, putAway, modifier ->
         TaskRow(
             row = task,
             onToggle = { viewModel.setCompleted(task.id, it) },
             onOpen = { openTask(task.id) },
             menuItems = listOfNotNull(
-                ContextMenuItem("reorder") { viewModel.startReorder(task.id) }.takeIf { !task.completed },
-                ContextMenuItem("edit") { onOpenTask(task.id) },
-                ContextMenuItem("delete") { viewModel.deleteTask(task.id) },
-                ContextMenuItem("move to") { moving = task },
+                ContextMenuItem("reorder", MetroIcon.Reorder) { viewModel.startReorder(task.id) }
+                    .takeIf { !task.completed },
+                ContextMenuItem("edit", MetroIcon.Edit) { onOpenTask(task.id) },
+                ContextMenuItem("delete", MetroIcon.Delete) { viewModel.deleteTask(task.id) },
+                ContextMenuItem("move to", MetroIcon.Move) { moving = task },
                 importanceItem(state.importance, task) { viewModel.setImportant(task.id, it) },
                 ContextMenuItem("save as template") {
                     viewModel.saveTaskAsTemplate(task.id, onTemplates.openTemplateTask)
                 }
             ),
             continuum = continuum,
-            modifier = modifier
+            modifier = modifier,
+            position = position,
+            putAway = putAway,
+            showList = false
         )
     }
 
@@ -231,30 +239,31 @@ private fun ListPage(
                 if (open.isEmpty()) {
                     item(key = "empty") { EmptyNote("nothing to do here") }
                 }
-                items(open, key = { it.id }, contentType = { "task" }) { row(it, Modifier.animateItem()) }
+                itemsIndexed(open, key = { _, task -> task.id }, contentType = { _, _ -> "task" }) { index, task ->
+                    row(task, GroupPosition.of(index, open.size), false, Modifier.animateItem())
+                }
                 if (completed.isNotEmpty()) {
                     item(key = "completed", contentType = "header") {
-                        MetroText(
-                            "completed (${completed.size}) ${if (state.completedExpanded) "⌃" else "⌄"}",
-                            MetroTheme.typography.subheader,
-                            Modifier
-                                .animateItem()
-                                .fillMaxWidth()
-                                .metroTilt()
-                                .clickable(
-                                    interactionSource = null,
-                                    indication = null,
-                                    role = Role.Button,
-                                    onClick = viewModel::toggleCompletedGroup
-                                )
-                                .heightIn(min = MetroDimens.TouchTarget)
-                                .padding(top = 16.dp, bottom = 4.dp),
-                            color = MetroTheme.colors.secondary
+                        GroupHeader(
+                            "completed",
+                            Modifier.animateItem(),
+                            count = completed.size,
+                            expanded = state.completedExpanded,
+                            putAway = true,
+                            onClick = viewModel::toggleCompletedGroup
                         )
                     }
                     if (state.completedExpanded) {
-                        items(completed, key = { it.id }, contentType = { "task" }) {
-                            row(it, Modifier.animateItem())
+                        itemsIndexed(completed, key = { _, task ->
+                            task.id
+                        }, contentType = { _, _ -> "task" }) { index, task ->
+                            // Under mica the header is the top of the card the completed tasks share.
+                            val position = when {
+                                !layers -> GroupPosition.of(index, completed.size)
+                                index == completed.lastIndex -> GroupPosition.Last
+                                else -> GroupPosition.Middle
+                            }
+                            row(task, position, true, Modifier.animateItem())
                         }
                     }
                 }

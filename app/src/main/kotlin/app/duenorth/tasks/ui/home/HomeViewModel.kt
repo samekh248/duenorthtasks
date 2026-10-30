@@ -237,7 +237,9 @@ class HomeViewModel @Inject constructor(
                 caption = DueText.caption(list.title, due, today, completed = false),
                 overdue = due.isBefore(today),
                 completed = false,
-                due = due
+                due = due,
+                listTitle = list.title,
+                whenText = DueText.relative(due, today)
             )
         } else {
             null

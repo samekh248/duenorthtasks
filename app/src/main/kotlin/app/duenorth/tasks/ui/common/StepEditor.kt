@@ -102,10 +102,11 @@ fun StepRow(
     done: Boolean,
     onDone: ((Boolean) -> Unit)?,
     onRemove: () -> Unit,
-    onReorder: (() -> Unit)?
+    onReorder: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     var menu by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -136,16 +137,16 @@ fun StepRow(
             expanded = menu,
             onDismiss = { menu = false },
             items = listOfNotNull(
-                onReorder?.let { ContextMenuItem("reorder", it) },
-                ContextMenuItem("remove", onRemove)
+                onReorder?.let { ContextMenuItem("reorder", MetroIcon.Reorder, it) },
+                ContextMenuItem("remove", MetroIcon.Delete, onRemove)
             )
         )
     }
 }
 
 @Composable
-fun AddStepField(onAdd: (String) -> Unit) {
-    MetroQuickAddField(placeholder = "add a step", onAdd = onAdd, modifier = Modifier.fillMaxWidth())
+fun AddStepField(onAdd: (String) -> Unit, modifier: Modifier = Modifier) {
+    MetroQuickAddField(placeholder = "add a step", onAdd = onAdd, modifier = modifier.fillMaxWidth())
 }
 
 /** Reorder steps mode (specs/003-reordering US3): the steps get the page; done or back ends it. */

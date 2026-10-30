@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.components.ContextMenuItem
 import app.duenorth.tasks.design.components.MetroContextMenu
+import app.duenorth.tasks.design.components.MetroIcon
 import app.duenorth.tasks.design.components.MetroListTile
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
@@ -144,12 +145,12 @@ private fun ListRow(
             onDismiss = { menu = false },
             // Only the owner can rename or delete a shared list; "list info" says so (spec 002 FR-120).
             items = listOfNotNull(
-                onReorder?.let { ContextMenuItem("reorder", it) },
+                onReorder?.let { ContextMenuItem("reorder", MetroIcon.Reorder, it) },
                 ContextMenuItem(if (list.pinned) "unpin from home" else "pin to home", onPin),
-                ContextMenuItem("rename", onRename).takeIf { list.sharing.canManage },
+                ContextMenuItem("rename", MetroIcon.Edit, onRename).takeIf { list.sharing.canManage },
                 ContextMenuItem("list shade", onShade),
                 ContextMenuItem("list info", onInfo),
-                ContextMenuItem("delete", onDelete).takeIf { list.sharing.canManage }
+                ContextMenuItem("delete", MetroIcon.Delete, onDelete).takeIf { list.sharing.canManage }
             )
         )
     }

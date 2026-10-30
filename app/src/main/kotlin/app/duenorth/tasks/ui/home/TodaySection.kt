@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,10 +23,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.components.ContextMenuItem
+import app.duenorth.tasks.design.components.GroupPosition
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
-import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.motion.ContinuumState
-import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.ui.common.GroupHeader
 import app.duenorth.tasks.ui.common.TaskRow
 import app.duenorth.tasks.ui.common.TaskRowUi
 import app.duenorth.tasks.ui.common.frozen
@@ -70,33 +70,30 @@ internal fun TodaySection(
                 item(key = "loading", contentType = "loading") { MetroTaskPlaceholders() }
                 return@LazyColumn
             }
-            items(dueToday, key = { it.id }, contentType = { "task" }) { row ->
+            itemsIndexed(dueToday, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
                 TaskRow(
                     row = row,
                     onToggle = { viewModel.setCompleted(row.id, it) },
                     onOpen = { openTask(row.id) },
                     menuItems = taskMenu(row),
                     continuum = continuum,
-                    modifier = Modifier.animateItem()
+                    modifier = Modifier.animateItem(),
+                    position = GroupPosition.of(index, dueToday.size)
                 )
             }
             if (tomorrow.isNotEmpty()) {
                 item(key = "tomorrow", contentType = "header") {
-                    MetroText(
-                        "tomorrow",
-                        MetroTheme.typography.subheader,
-                        Modifier.padding(top = 16.dp, bottom = 4.dp).animateItem(),
-                        color = MetroTheme.colors.secondary
-                    )
+                    GroupHeader("tomorrow", Modifier.animateItem(), count = tomorrow.size)
                 }
-                items(tomorrow, key = { it.id }, contentType = { "task" }) { row ->
+                itemsIndexed(tomorrow, key = { _, row -> row.id }, contentType = { _, _ -> "task" }) { index, row ->
                     TaskRow(
                         row = row,
                         onToggle = { viewModel.setCompleted(row.id, it) },
                         onOpen = { openTask(row.id) },
                         menuItems = taskMenu(row),
                         continuum = continuum,
-                        modifier = Modifier.animateItem()
+                        modifier = Modifier.animateItem(),
+                        position = GroupPosition.of(index, tomorrow.size)
                     )
                 }
             }

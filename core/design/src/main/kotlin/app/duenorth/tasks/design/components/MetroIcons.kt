@@ -43,7 +43,25 @@ enum class MetroIcon {
     People,
 
     /** A box with an arrow leaving it: opens another app or the web. */
-    OpenOutside
+    OpenOutside,
+
+    /** A small chevron down: a group that opens, a combo box. */
+    ChevronDown,
+
+    /** A small chevron right: a card row that opens a picker. */
+    ChevronRight,
+
+    /** A calendar page: the due date. */
+    Calendar,
+
+    /** Bulleted lines: a list. */
+    ListLines,
+
+    /** Lines of text: a task's details. */
+    Notes,
+
+    /** An arrow into a bar: move to another list. */
+    Move
 }
 
 @Composable
@@ -93,6 +111,55 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
                 lineTo(19.5f * u, 4.5f * u)
                 lineTo(19.5f * u, 10f * u)
             }
+        }
+
+        MetroIcon.ChevronDown -> path {
+            moveTo(6f * u, 9f * u)
+            lineTo(12f * u, 15f * u)
+            lineTo(18f * u, 9f * u)
+        }
+
+        MetroIcon.ChevronRight -> path {
+            moveTo(9f * u, 6f * u)
+            lineTo(15f * u, 12f * u)
+            lineTo(9f * u, 18f * u)
+        }
+
+        MetroIcon.Calendar -> {
+            path {
+                moveTo(4f * u, 6f * u)
+                lineTo(20f * u, 6f * u)
+                lineTo(20f * u, 20f * u)
+                lineTo(4f * u, 20f * u)
+                close()
+            }
+            line(4f, 10f, 20f, 10f)
+            line(8f, 3.5f, 8f, 7f)
+            line(16f, 3.5f, 16f, 7f)
+        }
+
+        MetroIcon.ListLines -> {
+            for (y in listOf(7f, 12f, 17f)) {
+                line(9f, y, 20f, y)
+                drawCircle(color, radius = 1.1f * u, center = p(5f, y))
+            }
+        }
+
+        MetroIcon.Notes -> {
+            line(4f, 6f, 20f, 6f)
+            line(4f, 10f, 20f, 10f)
+            line(4f, 14f, 20f, 14f)
+            line(4f, 18f, 13f, 18f)
+        }
+
+        MetroIcon.Move -> {
+            line(4f, 12f, 16f, 12f)
+            path {
+                moveTo(12f * u, 8f * u)
+                lineTo(16f * u, 12f * u)
+                lineTo(12f * u, 16f * u)
+            }
+            line(20f, 5f, 20f, 19f)
         }
 
         MetroIcon.Add -> {
