@@ -74,7 +74,7 @@ import app.duenorth.tasks.ui.common.OrderNoteDialog
 import app.duenorth.tasks.ui.common.ReorderRow
 import app.duenorth.tasks.ui.common.ReorderStepsPage
 import app.duenorth.tasks.ui.common.StepRow
-import app.duenorth.tasks.ui.common.TitleDetailsForm
+import app.duenorth.tasks.ui.common.TitleDetailsFields
 import java.time.LocalDate
 import java.util.Locale
 
@@ -97,6 +97,9 @@ fun TaskDetailContent(
     animatedScope: AnimatedVisibilityScope?
 ) {
     var editing by rememberSaveable { mutableStateOf(false) }
+    // The title and details as typed: the app bar's save writes them, and complete saves them first.
+    var draftTitle by rememberSaveable { mutableStateOf("") }
+    var draftDetails by rememberSaveable { mutableStateOf("") }
     var deleting by rememberSaveable { mutableStateOf(false) }
     var moving by rememberSaveable { mutableStateOf(false) }
     var pickingDate by rememberSaveable { mutableStateOf(false) }
@@ -123,6 +126,17 @@ fun TaskDetailContent(
         return
     }
 
+    val startEditing = {
+        draftTitle = state.title
+        draftDetails = state.details.orEmpty()
+        editing = true
+    }
+    val canSave = editing && draftTitle.isNotBlank()
+    val saveEdits = {
+        if (canSave) viewModel.save(draftTitle, draftDetails)
+        editing = false
+    }
+
     Column(Modifier.fillMaxSize().background(colors.background).imePadding()) {
         Column(
             Modifier
@@ -141,16 +155,15 @@ fun TaskDetailContent(
                 return@Column
             }
             if (editing) {
-                TitleDetailsForm(
-                    title = state.title,
-                    details = state.details.orEmpty(),
-                    onSave = { title, details ->
-                        viewModel.save(title, details)
-                        editing = false
-                    },
-                    onCancel = { editing = false }
+                TitleDetailsFields(
+                    title = draftTitle,
+                    onTitleChange = { draftTitle = it },
+                    details = draftDetails,
+                    onDetailsChange = { draftDetails = it },
+                    modifier = Modifier.testTag("edit-fields")
                 )
             } else {
+                // Tapping the title or the details opens them for editing; save in the app bar writes them.
                 MetroText(
                     state.title,
                     detailTitle().copy(
@@ -159,12 +172,25 @@ fun TaskDetailContent(
                     Modifier
                         .then(if (animatedScope != null) Modifier.continuumTarget(animatedScope) else Modifier)
                         .semantics { heading() }
+                        .clickable(
+                            interactionSource = null,
+                            indication = null,
+                            onClickLabel = "edit",
+                            onClick = startEditing
+                        )
                 )
                 if (state.due != null) DueLine(DueText.dueLine(state.due, state.today), listAccent(state.listId))
                 if (state.assignedFrom != AssignmentSource.NONE) AssignedBox(state)
                 if (!state.details.isNullOrBlank()) {
                     Label("details")
-                    DetailsBox(state.details)
+                    Box(
+                        Modifier.clickable(
+                            interactionSource = null,
+                            indication = null,
+                            onClickLabel = "edit",
+                            onClick = startEditing
+                        )
+                    ) { DetailsBox(state.details) }
                 }
             }
 
@@ -254,17 +280,25 @@ fun TaskDetailContent(
                 )
             }
         }
+        // WP8.1's edit page: complete and save as round buttons, everything else behind the ellipsis.
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Check, if (state.completed) "mark not done" else "mark done") {
+                AppBarButton(MetroIcon.Check, if (state.completed) "reopen" else "complete", enabled = !state.loading) {
+                    // Completing keeps what was typed, so finishing a task never throws an edit away.
+                    if (editing) saveEdits()
                     viewModel.setCompleted(!state.completed)
                 },
-                AppBarButton(MetroIcon.Edit, "edit") { editing = true },
-                AppBarButton(MetroIcon.Delete, "delete") { deleting = true }
+                AppBarButton(MetroIcon.Save, "save", enabled = canSave) { saveEdits() }
             ),
             menuItems = listOfNotNull(
+                if (editing) {
+                    AppBarMenuItem("discard changes") { editing = false }
+                } else {
+                    AppBarMenuItem("edit") { startEditing() }.takeIf { !state.loading }
+                },
                 AppBarMenuItem("reorder steps") { viewModel.startReorder() }.takeIf { state.steps.size > 1 },
-                AppBarMenuItem("move to list") { moving = true }
+                AppBarMenuItem("move to list") { moving = true },
+                AppBarMenuItem("delete") { deleting = true }
             )
         )
     }

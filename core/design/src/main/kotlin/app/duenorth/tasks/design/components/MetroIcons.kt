@@ -61,7 +61,10 @@ enum class MetroIcon {
     Notes,
 
     /** An arrow into a bar: move to another list. */
-    Move
+    Move,
+
+    /** A floppy disk: save the edits on a page. */
+    Save
 }
 
 @Composable
@@ -160,6 +163,30 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
                 lineTo(12f * u, 16f * u)
             }
             line(20f, 5f, 20f, 19f)
+        }
+
+        // WP8.1's save: a disk with its shutter along the top and a label across the bottom.
+        MetroIcon.Save -> {
+            path {
+                moveTo(4f * u, 4f * u)
+                lineTo(17f * u, 4f * u)
+                lineTo(20f * u, 7f * u)
+                lineTo(20f * u, 20f * u)
+                lineTo(4f * u, 20f * u)
+                close()
+            }
+            path {
+                moveTo(8f * u, 4f * u)
+                lineTo(8f * u, 9f * u)
+                lineTo(15f * u, 9f * u)
+                lineTo(15f * u, 4f * u)
+            }
+            path {
+                moveTo(7f * u, 20f * u)
+                lineTo(7f * u, 13.5f * u)
+                lineTo(17f * u, 13.5f * u)
+                lineTo(17f * u, 20f * u)
+            }
         }
 
         MetroIcon.Add -> {

@@ -65,28 +65,42 @@ fun TitleDetailsForm(title: String, details: String, onSave: (String, String) ->
     var newTitle by rememberSaveable { mutableStateOf(title) }
     var newDetails by rememberSaveable { mutableStateOf(details) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        TitleDetailsFields(newTitle, { newTitle = it }, newDetails, { newDetails = it })
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            MetroLink("cancel", onCancel)
+            Spacer(Modifier.weight(1f))
+            MetroButton("save", { onSave(newTitle, newDetails) }, enabled = newTitle.isNotBlank())
+        }
+    }
+}
+
+/** The title and details boxes alone, for a page whose app bar saves them (the task page). */
+@Composable
+fun TitleDetailsFields(
+    title: String,
+    onTitleChange: (String) -> Unit,
+    details: String,
+    onDetailsChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         MetroTextField(
-            value = newTitle,
-            onValueChange = { newTitle = it },
+            value = title,
+            onValueChange = onTitleChange,
             placeholder = "title",
             textStyle = MetroTheme.typography.subheader,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.fillMaxWidth()
         )
         MetroTextField(
-            value = newDetails,
-            onValueChange = { newDetails = it },
+            value = details,
+            onValueChange = onDetailsChange,
             placeholder = "details, links",
             singleLine = false,
             minLines = 3,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.fillMaxWidth()
         )
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            MetroLink("cancel", onCancel)
-            Spacer(Modifier.weight(1f))
-            MetroButton("save", { onSave(newTitle, newDetails) }, enabled = newTitle.isNotBlank())
-        }
     }
 }
 
