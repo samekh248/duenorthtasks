@@ -5,10 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
@@ -139,6 +141,12 @@ class ScreenScreenshotTest {
 
     @Test
     fun taskDetailDark() = detail(dark = true)
+
+    @Test
+    fun taskDetailEditingLight() = detail(dark = false, editing = true)
+
+    @Test
+    fun taskDetailEditingDark() = detail(dark = true, editing = true)
 
     @Test
     fun search() {
@@ -304,7 +312,7 @@ class ScreenScreenshotTest {
         snap(if (reorder) "list_reorder" else "list", dark)
     }
 
-    private fun detail(dark: Boolean, reorder: Boolean = false) {
+    private fun detail(dark: Boolean, reorder: Boolean = false, editing: Boolean = false) {
         val id = runBlocking { tasks.tasksDueBy(clock.instant().atZone(clock.zone).toLocalDate().plusDays(1)).first() }
             .first { it.task.title == "Call the vet" }.task.localId
         val viewModel = TaskDetailViewModel(
@@ -325,7 +333,19 @@ class ScreenScreenshotTest {
             viewModel.startReorder()
             compose.waitUntilAtLeastOneExists(hasText("drag a step to move it"), TIMEOUT)
         }
-        snap(if (reorder) "steps_reorder" else "task_detail", dark)
+        if (editing) {
+            // The title open for editing, save lit, and the bar opened to show its labels and menu.
+            compose.onNode(hasText("Call the vet")).performClick()
+            compose.onNode(hasContentDescription("more")).performClick()
+        }
+        snap(
+            when {
+                reorder -> "steps_reorder"
+                editing -> "task_detail_editing"
+                else -> "task_detail"
+            },
+            dark
+        )
     }
 
     private fun show(dark: Boolean, content: @Composable () -> Unit) {
