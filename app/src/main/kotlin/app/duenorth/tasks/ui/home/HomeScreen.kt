@@ -35,6 +35,7 @@ import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.PanoramaSection
 import app.duenorth.tasks.design.components.PanoramaState
 import app.duenorth.tasks.design.motion.rememberContinuumState
+import app.duenorth.tasks.design.theme.LocalListShades
 import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.ui.common.TaskRowUi
@@ -61,19 +62,20 @@ class HomeActions(
     val openTask: (String) -> Unit,
     val openList: (String) -> Unit,
     val search: () -> Unit,
-    val openSyncAccount: () -> Unit,
+    /** "edit" on a task's menu: its page with the title and details already open for typing. */
+    val editTask: (String) -> Unit = openTask,
     /** Syncs now; null hides the sync button (no sync engine, as in tests). */
     val sync: (() -> Unit)? = null,
     val openSettings: () -> Unit = {},
     val openListShade: (String) -> Unit = {},
     /** The list's sharing page (spec 002): who owns it and what can be done where. */
     val openListInfo: (String) -> Unit = {},
-    val openSyncLog: () -> Unit = {},
     /** The reorder lists page, with the long-pressed list (or none) in view. */
     val reorderLists: (String?) -> Unit = {},
     /** The templates page and a task template's editor (spec 004). */
     val openTemplates: () -> Unit = {},
     val openTemplateTask: (String) -> Unit = {},
+    val openListTemplate: (String) -> Unit = {},
     val menuItems: List<AppBarMenuItem> = emptyList()
 )
 
@@ -148,6 +150,7 @@ fun HomeContent(
     var renaming by remember { mutableStateOf<ListRowUi?>(null) }
     var deleting by remember { mutableStateOf<ListRowUi?>(null) }
     var moving by remember { mutableStateOf<TaskRowUi?>(null) }
+    val shades = LocalListShades.current
 
     val openTask: (String) -> Unit = { id ->
         scope.launch {
@@ -156,12 +159,13 @@ fun HomeContent(
         }
     }
     val taskMenu: (TaskRowUi) -> List<ContextMenuItem> = { row ->
+        // The one task menu order (open, organize, share, delete last), the same as on a list page.
         listOfNotNull(
-            ContextMenuItem("edit", MetroIcon.Edit) { actions.openTask(row.id) },
-            ContextMenuItem("delete", MetroIcon.Delete) { viewModel.deleteTask(row.id) },
-            ContextMenuItem("move to", MetroIcon.Move) { moving = row },
+            ContextMenuItem("edit", MetroIcon.Edit) { actions.editTask(row.id) },
+            ContextMenuItem("move to list", MetroIcon.Move) { moving = row },
             importanceItem(state.importance, row) { viewModel.setImportant(row.id, it) },
-            ContextMenuItem("save as template") { viewModel.saveTaskAsTemplate(row.id, actions.openTemplateTask) }
+            ContextMenuItem("make template") { viewModel.saveTaskAsTemplate(row.id, actions.openTemplateTask) },
+            ContextMenuItem("delete", MetroIcon.Delete) { viewModel.deleteTask(row.id) }
         )
     }
 
@@ -228,7 +232,10 @@ fun HomeContent(
                             onDelete = { deleting = it },
                             onReorder = { actions.reorderLists(it.id) },
                             onPin = { viewModel.pin(it.id) },
-                            onUnpin = { viewModel.unpin(it.id) }
+                            onUnpin = { viewModel.unpin(it.id) },
+                            onMakeTemplate = {
+                                viewModel.saveListAsTemplate(it.id, shades[it.id] ?: 0, actions.openListTemplate)
+                            }
                         )
                     },
                     PanoramaSection(STATS) {
@@ -244,7 +251,14 @@ fun HomeContent(
             actions,
             syncButtonTurning,
             onNewTask = { section ->
-                if (section == TODAY) addFocus.requestFocus() else focusFor(section.removePrefix("pin:")).requestFocus()
+                when {
+                    section.startsWith("pin:") -> focusFor(section.removePrefix("pin:")).requestFocus()
+                    section == TODAY -> addFocus.requestFocus()
+                    else -> scope.launch {
+                        pager.scrollToSection(0)
+                        addFocus.requestFocus()
+                    }
+                }
             },
             onNewList = { newList = true },
             onUnpin = { viewModel.unpin(it) }
@@ -253,10 +267,10 @@ fun HomeContent(
 
     if (newList) {
         MetroInputDialog(
-            title = "new list",
+            title = "add list",
             initialValue = "",
             placeholder = "list name",
-            confirmLabel = "create",
+            confirmLabel = "add",
             onConfirm = {
                 viewModel.createList(it)
                 newList = false
@@ -290,7 +304,7 @@ fun HomeContent(
     }
     moving?.let { task ->
         MetroPickerDialog(
-            title = "move to",
+            title = "move to list",
             options = state.lists,
             selected = state.lists.firstOrNull { it.id == task.listId },
             label = { it.title },
@@ -321,18 +335,18 @@ private fun HomeAppBar(
     val pinned = section.takeIf { it.startsWith("pin:") }?.removePrefix("pin:")
     val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
     val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", spinning = syncing, onClick = it) }
+    // Section actions first, then the app's destinations; sync account and sync log live in settings.
     val menu = listOfNotNull(
         pinned?.let { AppBarMenuItem("unpin from home") { onUnpin(it) } },
         AppBarMenuItem("reorder lists") { actions.reorderLists(null) }.takeIf { section == LISTS },
         AppBarMenuItem("templates", actions.openTemplates),
-        AppBarMenuItem("settings", actions.openSettings),
-        AppBarMenuItem("sync account", actions.openSyncAccount),
-        AppBarMenuItem("sync log", actions.openSyncLog)
+        AppBarMenuItem("settings", actions.openSettings)
     ) + actions.menuItems
-    val first = when {
-        section == TODAY || pinned != null -> AppBarButton(MetroIcon.Add, "new task") { onNewTask(section) }
-        section == LISTS -> AppBarButton(MetroIcon.Add, "new list", onClick = onNewList)
-        else -> null
+    // Every section has an add button in the first slot, so sync and search never shift; on stats
+    // it adds to today.
+    val first = when (section) {
+        LISTS -> AppBarButton(MetroIcon.Add, "add list", onClick = onNewList)
+        else -> AppBarButton(MetroIcon.Add, "add task") { onNewTask(section) }
     }
     MetroAppBar(buttons = listOfNotNull(first, sync, search), menuItems = menu)
 }

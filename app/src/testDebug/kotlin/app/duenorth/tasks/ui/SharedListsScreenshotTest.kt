@@ -135,7 +135,7 @@ class SharedListsScreenshotTest {
     fun aListSharedWithYouOffersNoRenameOrDelete() {
         homeLists(dark = false, name = null)
         compose.onNodeWithText("Work").performTouchInput { longClick() }
-        compose.waitUntilAtLeastOneExists(hasText("list info"), TIMEOUT)
+        compose.waitUntilAtLeastOneExists(hasText("sharing"), TIMEOUT)
         compose.onNodeWithText("rename").assertDoesNotExist()
         compose.onNodeWithText("delete").assertDoesNotExist()
     }
@@ -169,7 +169,7 @@ class SharedListsScreenshotTest {
                 testPinnedLists(tasks, accounts),
                 clock
             )
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show(dark) {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, actions)

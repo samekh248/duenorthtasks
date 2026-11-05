@@ -86,14 +86,23 @@ class TaskDetailAppBarTest {
     }
 
     @Test
-    fun saveIsOffUntilTheTitleIsOpenedAndThenWritesTheEdit() {
-        compose.onNode(hasContentDescription("save")).assertIsNotEnabled()
-        compose.onNode(hasText("Pack")).performClick()
+    fun editTurnsIntoSaveWhileTypingAndSaveWritesTheEdit() {
+        compose.onNode(hasContentDescription("save")).assertDoesNotExist()
+        compose.onNode(hasContentDescription("edit")).performClick()
+        compose.onNode(hasContentDescription("edit")).assertDoesNotExist()
         compose.onNode(hasContentDescription("save")).assertIsEnabled()
         compose.onAllNodes(hasSetTextAction()).onFirst().performTextReplacement("Pack the car")
         compose.onNode(hasContentDescription("save")).performClick()
         compose.waitUntil(TIMEOUT) { stored()?.title == "Pack the car" }
         compose.waitUntilAtLeastOneExists(hasText("Pack the car"), TIMEOUT)
+        compose.onNode(hasContentDescription("save")).assertDoesNotExist()
+        compose.onNode(hasContentDescription("edit")).assertIsEnabled()
+    }
+
+    @Test
+    fun saveIsOffWhileTheTitleIsBlank() {
+        compose.onNode(hasText("Pack")).performClick()
+        compose.onAllNodes(hasSetTextAction()).onFirst().performTextReplacement("")
         compose.onNode(hasContentDescription("save")).assertIsNotEnabled()
     }
 

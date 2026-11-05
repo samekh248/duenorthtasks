@@ -99,7 +99,7 @@ private fun GalleryContent(
             }
             MetroAppBar(
                 buttons = listOf(
-                    AppBarButton(MetroIcon.Add, "new task") {},
+                    AppBarButton(MetroIcon.Add, "add task") {},
                     AppBarButton(MetroIcon.Sync, "sync", spinning = syncing) { syncing = !syncing },
                     AppBarButton(MetroIcon.Search, "search") {}
                 ),
@@ -177,7 +177,7 @@ private fun TasksSection() {
                     items = listOf(
                         ContextMenuItem("edit") {},
                         ContextMenuItem("delete") { tasks.removeAt(index) },
-                        ContextMenuItem("move to") {}
+                        ContextMenuItem("move to list") {}
                     )
                 )
             }
@@ -231,7 +231,7 @@ private fun ListsSection(accent: Accent) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)) {
             MetroListTile(count = null)
-            MetroText("new list", MetroTheme.typography.listName)
+            MetroText("add list", MetroTheme.typography.listName)
         }
         MetroText("$editing shade", MetroTheme.typography.subheader)
         MetroShadeRow(

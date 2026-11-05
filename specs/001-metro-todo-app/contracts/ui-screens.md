@@ -16,7 +16,7 @@ flowchart LR
     end
     subgraph Sections["sections (move with your finger, snap per section)"]
         direction LR
-        S1["today<br/>overdue (red)<br/>due today<br/>tomorrow"] --> SP["pinned lists<br/>one section each<br/>add box + open tasks"] --> S2["lists<br/>accent tile + count<br/>name + next task<br/>+ new list"] --> S3["stats<br/>done this week<br/>(spec 005)"]
+        S1["today<br/>overdue (red)<br/>due today<br/>tomorrow"] --> SP["pinned lists<br/>one section each<br/>add box + open tasks"] --> S2["lists<br/>accent tile + count<br/>name + next task<br/>+ add list"] --> S3["stats<br/>done this week<br/>(spec 005)"]
     end
     Title ~~~ Sections
 ```
@@ -36,9 +36,9 @@ flowchart TD
     Home -- "tap task (continuum)" --> Detail["task detail<br/>title, details, due, list, steps"]
     List -- "tap task (continuum)" --> Detail
     Home -- "type in 'add a task', enter" --> Home
-    Home -- "tap 'add details'" --> Expand["add box expands in place<br/>details, due chip, list chip<br/>hide details · add"]
-    Expand -- add --> Home
-    Home -- "app bar +" --> Focus["focuses the 'add a task' box"]
+    Home -- "tap 'more details'" --> Expand["add box expands in place<br/>details, due chip, list chip<br/>hide details · add task"]
+    Expand -- "add task" --> Home
+    Home -- "app bar + (add task)" --> Focus["focuses the 'add a task' box"]
     Home -- "app bar search" --> Search["search<br/>all lists"]
     Home -- "••• > settings" --> Settings["settings pivot<br/>theme · sync account · about"]
     Settings -- "sync account" --> Sync["sync account<br/>radio: one service"]
@@ -50,18 +50,20 @@ flowchart TD
 
 ## Screen contracts
 
+App bars and menus follow [spec 008](../../008-menu-cleanup/spec.md): the main action first, menus in the order organize, share, delete, destinations.
+
 | Screen | Layout | App bar buttons (labels on `•••`) | Overflow menu |
 |---|---|---|---|
-| Home panorama, "today" | "tasks" title with "due north" under it; "today" header, date caption, "add a task" box (with "add details" link once typing); task rows (square checkbox, 20sp title, up to two grey 14sp lines of details, 13sp caption "List · when", red if overdue); "tomorrow" group | new task, sync, search | settings, sync log |
-| Home panorama, "lists" | One row per list: 64dp tile in the list's shade of the app accent (the accent itself by default) with count, 24sp name, "next: ..." caption; "new list" row with outlined + tile. Shared lists (spec 002) add a two-people glyph top-left on the tile and start the caption with "shared" or "shared with you". Long-press a tile: rename, list shade, list info, delete (rename and delete only for lists the user owns) | new list, sync, settings | rename/reorder lists |
-| Home panorama, pinned list | One section per list pinned from the lists section or the list page, between "today" and "lists", in pin order: the list name as header, an "add a task" box for that list and its open tasks, all in the list's shade | new task, sync, search | unpin from home, templates, settings |
-| Home panorama, "stats" | Tasks done this week against last week, by day (spec 005) | sync, search | templates, settings, sync log |
-| List page | "DUE NORTH" small caps, list name as 52sp header, for shared lists a "shared · details" / "shared with you · details" line in the list's shade (spec 002), open tasks with due captions in the list's shade, collapsible "completed" group | new task, sharing (shared lists only), sort | rename list, list shade, list info, delete list (rename and delete only for lists the user owns) |
+| Home panorama, "today" | "tasks" title with "due north" under it; "today" header, date caption, "add a task" box (with "add details" link once typing); task rows (square checkbox, 20sp title, up to two grey 14sp lines of details, 13sp caption "List · when", red if overdue); "tomorrow" group | add task, sync, search | templates, settings |
+| Home panorama, "lists" | One row per list: 64dp tile in the list's shade of the app accent (the accent itself by default) with count, 24sp name, "next: ..." caption; "add list" row with outlined + tile. Shared lists (spec 002) add a two-people glyph top-left on the tile and start the caption with "shared" or "shared with you". Long-press a tile: reorder, rename, pin / unpin from home, list shade, sharing, make template, delete (rename and delete only for lists the user owns) | add list, sync, search | reorder lists, templates, settings |
+| Home panorama, pinned list | One section per list pinned from the lists section or the list page, between "today" and "lists", in pin order: the list name as header, an "add a task" box for that list and its open tasks, all in the list's shade | add task, sync, search | unpin from home, templates, settings |
+| Home panorama, "stats" | Tasks done this week against last week, by day (spec 005) | add task (to today), sync, search | templates, settings |
+| List page | "DUE NORTH" small caps, list name as 52sp header, for shared lists a "shared · details" / "shared with you · details" line in the list's shade (spec 002), open tasks with due captions in the list's shade, collapsible "completed" group | add task, reorder, sort, sharing | rename list, pin / unpin from home, list shade, make template, clear completed, delete list (rename and delete only for lists the user owns) |
 | Sharing (spec 002) | Overline = list name, header "sharing"; "status" (shared by you / shared with you / only you), "who's in it" (the service doesn't tell other apps; link to Microsoft To Do), "what you can do here", "list shade" link. Never shows member names | none | none |
 | List shade | Header "list shade", a row of seven flat swatches from lightest to darkest shade of the app accent (middle one = the accent, default), with a live preview of the list's tile and a task caption | none | none |
-| Task detail | "DUE NORTH · LIST" small caps, title 38sp Light, "due <date>" in accent, "details" label with full text (links tappable), steps if any, then due and list pickers, important (To Do only); tapping the title or details opens them for editing | complete, save (on while editing) | edit (discard changes while editing), reorder steps, move to list, delete |
+| Task detail | "DUE NORTH · LIST" small caps, title 38sp Light, "due <date>" in accent, "details" label with full text (links tappable), steps if any, then due and list pickers, important (To Do only); tapping the title or details opens them for editing | complete / reopen, edit (save while editing) | reorder steps, move to list, discard changes (while editing), delete |
 | Search | Header "search", text field focused, results grouped by list | none | none |
-| Sync account | "DUE NORTH" small caps, "sync account" header, one-line explanation, radio group (Google Tasks / Microsoft To Do, with "signed in as ..." or "not connected"), switching note, "sync every" picker, "sync on Wi-Fi only" toggle | sync now, sign out | none |
+| Sync account | "DUE NORTH" small caps, "sync account" header, one-line explanation, radio group (Google Tasks / Microsoft To Do, with "signed in as ..." or "not connected"), switching note, "sync every" picker, "sync on Wi-Fi only" toggle | sync now | sign out |
 | Settings | Pivot: "theme", "sync account", "about" | none | none |
 | Sync log | Header "sync log", rows newest first under day headers ("today", "yesterday", weekday, date); each row a "conflict · 8:35 am" caption (red for "sync problem") over the summary; a conflict with a replaced version opens in place to show it; empty note when there is nothing | clear (asks first) | none |
 

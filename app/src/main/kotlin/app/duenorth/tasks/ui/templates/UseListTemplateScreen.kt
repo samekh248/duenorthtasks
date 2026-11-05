@@ -101,7 +101,7 @@ fun UseListTemplateContent(
                 color = MetroTheme.colors.secondary
             )
             Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)) {
-                MetroButton("create", { onCreate(name.trim(), startDay) }, enabled = name.isNotBlank())
+                MetroButton("add list", { onCreate(name.trim(), startDay) }, enabled = name.isNotBlank())
                 MetroButton("cancel", onCancel)
             }
         }

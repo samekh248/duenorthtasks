@@ -24,8 +24,10 @@ reason this app exists, so it outranks Material defaults whenever the two disagr
   Panorama hub with an oversized "due north" title that scrolls sideways more slowly than the
   sections under it ("today", "lists", "stats"), like the WP8.1 Calendar and People hubs. The next
   section always peeks in from the right edge. Secondary pages use the Pivot where they need tabs.
-  Every screen has a bottom Application Bar with round outlined icon buttons and an ellipsis
-  (`•••`) that expands labels and a menu.
+  Every screen with actions has a bottom Application Bar with round outlined icon buttons and an
+  ellipsis (`•••`) that expands labels and a menu; read-only pages (search, settings, sharing,
+  list shade) and full-page forms with their own buttons need none. One icon means one verb: the main action sits first, and menus run
+  organize, share, delete (always last), then destinations (spec 008).
 - Light (white background, near-black text) and dark (pure black) themes MUST both be
   supported. By default the app follows the phone's light/dark setting; the user can override it
   with a manual light or dark choice. One accent color drives highlights, list tiles and due captions: magenta by
@@ -130,7 +132,7 @@ PATCH for wording) and states the reason. Plans and reviews MUST check the Const
 gates in `plan.md` against the principles above; any violation is listed in that plan's
 Complexity Tracking table with a justification.
 
-**Version**: 2.0.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-30
+**Version**: 2.1.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-11-05
 
 2.0.0: Principle I now allows the three opt-in styles from Due North Budget (tile relief, mica,
 Windows 10 Mobile) beside the default Metro style, at the owner's request.

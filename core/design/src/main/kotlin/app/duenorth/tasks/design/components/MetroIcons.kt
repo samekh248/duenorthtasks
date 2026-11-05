@@ -64,7 +64,10 @@ enum class MetroIcon {
     Move,
 
     /** A floppy disk: save the edits on a page. */
-    Save
+    Save,
+
+    /** A play triangle: use a template, making a list from it. Check stays for complete only. */
+    Use
 }
 
 @Composable
@@ -187,6 +190,13 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
                 lineTo(17f * u, 13.5f * u)
                 lineTo(17f * u, 20f * u)
             }
+        }
+
+        MetroIcon.Use -> path {
+            moveTo(7f * u, 4.5f * u)
+            lineTo(19f * u, 12f * u)
+            lineTo(7f * u, 19.5f * u)
+            close()
         }
 
         MetroIcon.Add -> {

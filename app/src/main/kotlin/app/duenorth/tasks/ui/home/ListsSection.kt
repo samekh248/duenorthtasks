@@ -47,7 +47,8 @@ internal fun ListsSection(
     onDelete: (ListRowUi) -> Unit,
     onReorder: (ListRowUi) -> Unit,
     onPin: (ListRowUi) -> Unit,
-    onUnpin: (ListRowUi) -> Unit
+    onUnpin: (ListRowUi) -> Unit,
+    onMakeTemplate: (ListRowUi) -> Unit = {}
 ) {
     LazyColumn(
         Modifier.fillMaxSize().testTag("lists"),
@@ -67,7 +68,8 @@ internal fun ListsSection(
                 onInfo = { onInfo(list) },
                 onDelete = { onDelete(list) },
                 onReorder = { onReorder(list) }.takeIf { state.lists.size > 1 },
-                onPin = { if (list.pinned) onUnpin(list) else onPin(list) }
+                onPin = { if (list.pinned) onUnpin(list) else onPin(list) },
+                onMakeTemplate = { onMakeTemplate(list) }
             )
         }
         item(key = "new", contentType = "new") {
@@ -80,7 +82,7 @@ internal fun ListsSection(
                 horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
             ) {
                 MetroListTile(count = null)
-                MetroText("new list", MetroTheme.typography.listName)
+                MetroText("add list", MetroTheme.typography.listName)
             }
         }
     }
@@ -96,7 +98,8 @@ private fun ListRow(
     onInfo: () -> Unit,
     onDelete: () -> Unit,
     onReorder: (() -> Unit)?,
-    onPin: () -> Unit
+    onPin: () -> Unit,
+    onMakeTemplate: () -> Unit
 ) {
     var menu by remember { mutableStateOf(false) }
     Box {
@@ -143,13 +146,15 @@ private fun ListRow(
         MetroContextMenu(
             expanded = menu,
             onDismiss = { menu = false },
-            // Only the owner can rename or delete a shared list; "list info" says so (spec 002 FR-120).
+            // The list page's menu, item for item and in its order (organize, share, delete last).
+            // Only the owner can rename or delete a shared list; "sharing" says so (spec 002 FR-120).
             items = listOfNotNull(
                 onReorder?.let { ContextMenuItem("reorder", MetroIcon.Reorder, it) },
-                ContextMenuItem(if (list.pinned) "unpin from home" else "pin to home", onPin),
                 ContextMenuItem("rename", MetroIcon.Edit, onRename).takeIf { list.sharing.canManage },
+                ContextMenuItem(if (list.pinned) "unpin from home" else "pin to home", onPin),
                 ContextMenuItem("list shade", onShade),
-                ContextMenuItem("list info", onInfo),
+                ContextMenuItem("sharing", MetroIcon.People, onInfo),
+                ContextMenuItem("make template", onMakeTemplate),
                 ContextMenuItem("delete", MetroIcon.Delete, onDelete).takeIf { list.sharing.canManage }
             )
         )

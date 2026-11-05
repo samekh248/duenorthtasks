@@ -92,7 +92,7 @@ class HomeFlowTest {
             testPinnedLists(tasks, accounts),
             clock
         )
-        val actions = HomeActions(openTask = { opened += it }, openList = {}, search = {}, openSyncAccount = {})
+        val actions = HomeActions(openTask = { opened += it }, openList = {}, search = {})
         compose.setContent {
             val state by viewModel.state.collectAsState()
             MetroTheme(darkTheme = false) { HomeContent(state, viewModel, actions) }

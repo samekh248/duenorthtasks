@@ -91,11 +91,11 @@ fun TemplatesContent(state: TemplatesUiState, viewModel: TemplatesViewModel, act
                         tile = kind == Kind.LIST,
                         onClick = { if (kind == Kind.LIST) actions.useList(row.id) else actions.editTask(row.id) },
                         menu = listOf(
-                            ContextMenuItem("edit") {
+                            ContextMenuItem("edit", MetroIcon.Edit) {
                                 if (kind == Kind.LIST) actions.editList(row.id) else actions.editTask(row.id)
                             },
                             ContextMenuItem("rename") { prompt = Prompt.Rename(kind, row) },
-                            ContextMenuItem("delete") { prompt = Prompt.Delete(kind, row) }
+                            ContextMenuItem("delete", MetroIcon.Delete) { prompt = Prompt.Delete(kind, row) }
                         ),
                         modifier = Modifier.animateItem()
                     )
@@ -104,16 +104,18 @@ fun TemplatesContent(state: TemplatesUiState, viewModel: TemplatesViewModel, act
         }
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Add, "new") { newName = if (pager.currentPage == 0) Kind.LIST else Kind.TASK }
+                AppBarButton(MetroIcon.Add, "add template") {
+                    newName = if (pager.currentPage == 0) Kind.LIST else Kind.TASK
+                }
             )
         )
     }
 
     newName?.let { kind ->
         MetroInputDialog(
-            title = if (kind == Kind.LIST) "new list template" else "new task template",
+            title = if (kind == Kind.LIST) "add list template" else "add task template",
             initialValue = "",
-            confirmLabel = "create",
+            confirmLabel = "add",
             onConfirm = { name ->
                 newName = null
                 when (kind) {

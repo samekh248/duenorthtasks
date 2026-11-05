@@ -162,7 +162,7 @@ class AddTaskClearsTest {
             pins,
             clock
         )
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, actions)

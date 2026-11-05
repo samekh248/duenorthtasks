@@ -260,7 +260,7 @@ class ScreenScreenshotTest {
                 testPinnedLists(tasks, accounts),
                 clock
             )
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show(dark) {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, actions)

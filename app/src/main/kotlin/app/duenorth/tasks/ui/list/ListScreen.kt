@@ -84,14 +84,16 @@ fun ListScreen(
     onShade: (String) -> Unit = {},
     onInfo: (String) -> Unit = {},
     onTemplates: TemplateLinks = TemplateLinks(),
+    /** "edit" on a task's menu: its page with the title and details open for typing. */
+    onEditTask: (String) -> Unit = onOpenTask,
     viewModel: ListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
-    ListContent(state, viewModel, onOpenTask, onShade, onInfo, onTemplates)
+    ListContent(state, viewModel, onOpenTask, onShade, onInfo, onTemplates, onEditTask)
 }
 
-/** Where "save as template" leads: the new template's editor (spec 004 US3). */
+/** Where "make template" leads: the new template's editor (spec 004 US3). */
 class TemplateLinks(val openListTemplate: (String) -> Unit = {}, val openTemplateTask: (String) -> Unit = {})
 
 /** The whole page, check boxes and captions included, uses the list's shade of the accent. */
@@ -102,7 +104,8 @@ fun ListContent(
     onOpenTask: (String) -> Unit,
     onShade: (String) -> Unit = {},
     onInfo: (String) -> Unit = {},
-    onTemplates: TemplateLinks = TemplateLinks()
+    onTemplates: TemplateLinks = TemplateLinks(),
+    onEditTask: (String) -> Unit = onOpenTask
 ) {
     ListAccent(viewModel.listId) {
         if (state.reordering) {
@@ -111,7 +114,7 @@ fun ListContent(
                 viewModel
             )
         } else {
-            ListPage(state, viewModel, onOpenTask, onShade, onInfo, onTemplates)
+            ListPage(state, viewModel, onOpenTask, onEditTask, onShade, onInfo, onTemplates)
         }
         if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
     }
@@ -152,7 +155,7 @@ private fun ReorderTasksPage(state: ListUiState, viewModel: ListViewModel) {
                 )
             }
         }
-        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = viewModel::endReorder)))
+        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Reorder, "done", onClick = viewModel::endReorder)))
     }
 }
 
@@ -161,6 +164,7 @@ private fun ListPage(
     state: ListUiState,
     viewModel: ListViewModel,
     onOpenTask: (String) -> Unit,
+    onEditTask: (String) -> Unit,
     onShade: (String) -> Unit,
     onInfo: (String) -> Unit,
     onTemplates: TemplateLinks
@@ -191,16 +195,17 @@ private fun ListPage(
             row = task,
             onToggle = { viewModel.setCompleted(task.id, it) },
             onOpen = { openTask(task.id) },
+            // The one task menu order (open, organize, share, delete last), the same as on home.
             menuItems = listOfNotNull(
+                ContextMenuItem("edit", MetroIcon.Edit) { onEditTask(task.id) },
                 ContextMenuItem("reorder", MetroIcon.Reorder) { viewModel.startReorder(task.id) }
                     .takeIf { !task.completed },
-                ContextMenuItem("edit", MetroIcon.Edit) { onOpenTask(task.id) },
-                ContextMenuItem("delete", MetroIcon.Delete) { viewModel.deleteTask(task.id) },
-                ContextMenuItem("move to", MetroIcon.Move) { moving = task },
+                ContextMenuItem("move to list", MetroIcon.Move) { moving = task },
                 importanceItem(state.importance, task) { viewModel.setImportant(task.id, it) },
-                ContextMenuItem("save as template") {
+                ContextMenuItem("make template") {
                     viewModel.saveTaskAsTemplate(task.id, onTemplates.openTemplateTask)
-                }
+                },
+                ContextMenuItem("delete", MetroIcon.Delete) { viewModel.deleteTask(task.id) }
             ),
             continuum = continuum,
             modifier = modifier,
@@ -270,23 +275,23 @@ private fun ListPage(
             }
         }
         MetroAppBar(
-            buttons = listOfNotNull(
-                AppBarButton(MetroIcon.Add, "new task") { addFocus.requestFocus() },
-                AppBarButton(MetroIcon.People, "sharing") { onInfo(viewModel.listId) }
-                    .takeIf { state.sharing.isShared },
+            // The sharing page is one button on every list, shared or not, so it has one way in.
+            buttons = listOf(
+                AppBarButton(MetroIcon.Add, "add task") { addFocus.requestFocus() },
                 AppBarButton(MetroIcon.Reorder, "reorder", enabled = state.open.size > 1) { viewModel.startReorder() },
-                AppBarButton(MetroIcon.Sort, "sort") { sorting = true }
+                AppBarButton(MetroIcon.Sort, "sort") { sorting = true },
+                AppBarButton(MetroIcon.People, "sharing") { onInfo(viewModel.listId) }
             ),
-            // Only the owner can rename or delete a shared list (spec 002 FR-120).
+            // Organize, share, then the ones that throw tasks away, last. Only the owner can
+            // rename or delete a shared list (spec 002 FR-120).
             menuItems = listOfNotNull(
                 AppBarMenuItem("rename list") { renaming = true }.takeIf { state.sharing.canManage },
-                AppBarMenuItem("clear completed") { clearing = true }.takeIf { state.completed.isNotEmpty() },
                 AppBarMenuItem(if (state.pinned) "unpin from home" else "pin to home") {
                     viewModel.setPinned(!state.pinned)
                 },
                 AppBarMenuItem("list shade") { onShade(viewModel.listId) },
-                AppBarMenuItem("list info") { onInfo(viewModel.listId) },
-                AppBarMenuItem("save as template") { viewModel.saveAsTemplate(onTemplates.openListTemplate) },
+                AppBarMenuItem("make template") { viewModel.saveAsTemplate(onTemplates.openListTemplate) },
+                AppBarMenuItem("clear completed") { clearing = true }.takeIf { state.completed.isNotEmpty() },
                 AppBarMenuItem("delete list") { deleting = true }.takeIf { state.sharing.canManage }
             )
         )
@@ -343,7 +348,7 @@ private fun ListPage(
     }
     moving?.let { task ->
         MetroPickerDialog(
-            title = "move to",
+            title = "move to list",
             options = state.lists,
             selected = state.lists.firstOrNull { it.id == task.listId },
             label = { it.title },

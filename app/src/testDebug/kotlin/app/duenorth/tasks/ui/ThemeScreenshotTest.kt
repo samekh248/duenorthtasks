@@ -205,7 +205,7 @@ class ThemeScreenshotTest {
             testPinnedLists(tasks, accounts),
             clock
         )
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show(dark, accent, demoShades(), style ?: MetroStyle.Default) {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, actions)

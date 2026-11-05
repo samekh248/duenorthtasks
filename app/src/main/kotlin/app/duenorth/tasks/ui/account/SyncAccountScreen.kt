@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.design.components.AppBarButton
+import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.components.MetroAppBar
 import app.duenorth.tasks.design.components.MetroDialog
 import app.duenorth.tasks.design.components.MetroIcon
@@ -144,9 +145,10 @@ fun SyncAccountContent(
                     "sync now",
                     spinning = state.syncing || state.loadingHistory,
                     onClick = onSyncNow
-                ),
-                AppBarButton(MetroIcon.Close, "sign out") { signingOut = true }
-            )
+                )
+            ),
+            // Rare and it clears the phone, so it sits behind the ellipsis rather than on a Close button.
+            menuItems = listOf(AppBarMenuItem("sign out") { signingOut = true })
         )
     }
 

@@ -102,7 +102,7 @@ class StyleContentScreenshotTest(private val style: MetroStyle, private val dark
             testPinnedLists(tasks, accounts),
             clock
         )
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, actions)
@@ -121,7 +121,7 @@ class StyleContentScreenshotTest(private val style: MetroStyle, private val dark
     fun menu() {
         showList()
         compose.onNodeWithText("Replace the hallway bulb").performTouchInput { longClick() }
-        compose.waitUntilAtLeastOneExists(hasText("move to", ignoreCase = true), TIMEOUT)
+        compose.waitUntilAtLeastOneExists(hasText("move to list", ignoreCase = true), TIMEOUT)
         snap("menu")
     }
 

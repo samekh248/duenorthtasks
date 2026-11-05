@@ -176,7 +176,11 @@ class MetroComponentScreenshotTest {
     @Test
     fun contextMenu() = snap("context_menu", padded = false) {
         MetroContextMenuContent(
-            items = listOf(ContextMenuItem("edit") {}, ContextMenuItem("delete") {}, ContextMenuItem("move to") {}),
+            items = listOf(
+                ContextMenuItem("edit") {},
+                ContextMenuItem("move to list") {},
+                ContextMenuItem("delete") {}
+            ),
             onItemClick = {}
         )
     }
@@ -200,7 +204,7 @@ class MetroComponentScreenshotTest {
     fun appBar() = snap("app_bar", padded = false) {
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Add, "new task") {},
+                AppBarButton(MetroIcon.Add, "add task") {},
                 AppBarButton(MetroIcon.Sync, "sync") {},
                 AppBarButton(MetroIcon.Search, "search") {}
             ),
@@ -212,7 +216,7 @@ class MetroComponentScreenshotTest {
     fun appBarExpanded() = snap("app_bar_expanded", padded = false) {
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Add, "new task") {},
+                AppBarButton(MetroIcon.Add, "add task") {},
                 AppBarButton(MetroIcon.Sync, "sync") {},
                 AppBarButton(MetroIcon.Search, "search") {}
             ),

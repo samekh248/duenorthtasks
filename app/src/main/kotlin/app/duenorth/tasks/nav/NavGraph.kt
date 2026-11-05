@@ -42,7 +42,7 @@ import app.duenorth.tasks.ui.templates.UseListTemplateScreen
 object Routes {
     const val HOME = "home"
     const val LIST = "list/{id}"
-    const val TASK = "task/{id}"
+    const val TASK = "task/{id}?edit={edit}"
     const val SEARCH = "search"
     const val ACCOUNT = "account"
     const val GALLERY = "gallery"
@@ -63,6 +63,9 @@ object Routes {
     fun listSharing(id: String) = "list/$id/sharing"
 
     fun task(id: String) = "task/$id"
+
+    /** The task page with its title and details already open for typing ("edit" on a task's menu). */
+    fun editTask(id: String) = "task/$id?edit=true"
 
     fun listTemplate(id: String) = "templates/list/$id"
 
@@ -103,15 +106,15 @@ fun DueNorthNavHost(
                 openTask = { nav.navigate(Routes.task(it)) },
                 openList = { nav.navigate(Routes.list(it)) },
                 search = { nav.navigate(Routes.SEARCH) },
-                openSyncAccount = { nav.navigate(Routes.ACCOUNT) },
+                editTask = { nav.navigate(Routes.editTask(it)) },
                 sync = app.syncNow,
                 openSettings = { nav.navigate(Routes.SETTINGS) },
                 openListShade = { nav.navigate(Routes.listShade(it)) },
                 openListInfo = { nav.navigate(Routes.listSharing(it)) },
-                openSyncLog = { nav.navigate(Routes.SYNC_LOG) },
                 reorderLists = { nav.navigate(Routes.reorderLists(it)) },
                 openTemplates = { nav.navigate(Routes.TEMPLATES) },
                 openTemplateTask = { nav.navigate(Routes.templateTask(it)) },
+                openListTemplate = { nav.navigate(Routes.listTemplate(it)) },
                 menuItems = if (DebugRoutes.GALLERY_ENABLED) {
                     listOf(AppBarMenuItem("component gallery") { nav.navigate(Routes.GALLERY) })
                 } else {
@@ -132,6 +135,7 @@ fun DueNorthNavHost(
             Page(this) {
                 ListScreen(
                     onOpenTask = { nav.navigate(Routes.task(it)) },
+                    onEditTask = { nav.navigate(Routes.editTask(it)) },
                     onClosed = { nav.closeIfOn(entry) },
                     onShade = { id -> nav.navigate(Routes.listShade(id)) },
                     onInfo = { id -> nav.navigate(Routes.listSharing(id)) },
@@ -216,8 +220,19 @@ fun DueNorthNavHost(
         composable(Routes.SYNC_LOG) {
             Page(this) { SyncLogScreen() }
         }
-        composable(Routes.TASK) { entry ->
-            Page(this) { TaskDetailScreen(onClosed = { nav.closeIfOn(entry) }, animatedScope = this) }
+        composable(
+            Routes.TASK,
+            arguments = listOf(
+                navArgument("edit") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { entry ->
+            val edit = entry.arguments?.getBoolean("edit") ?: false
+            Page(this) {
+                TaskDetailScreen(onClosed = { nav.closeIfOn(entry) }, animatedScope = this, startEditing = edit)
+            }
         }
         composable(Routes.ACCOUNT) {
             Page(this) { SyncAccountScreen(SyncAccountActions(switchTo = app.switchTo, signOut = app.signOut)) }
