@@ -1,6 +1,13 @@
 package app.duenorth.tasks.ui.settings
 
+import android.Manifest
+import android.content.Intent
+import android.os.Build
 import android.os.SystemClock
+import android.provider.Settings
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,12 +28,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.inset
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -35,6 +45,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.BuildConfig
 import app.duenorth.tasks.design.components.MetroAccentGrid
@@ -42,6 +53,7 @@ import app.duenorth.tasks.design.components.MetroLink
 import app.duenorth.tasks.design.components.MetroPivot
 import app.duenorth.tasks.design.components.MetroRadio
 import app.duenorth.tasks.design.components.MetroText
+import app.duenorth.tasks.design.components.MetroToggle
 import app.duenorth.tasks.design.components.rememberPivotState
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.Accent
@@ -52,6 +64,7 @@ import app.duenorth.tasks.settings.ThemeMode
 import app.duenorth.tasks.settings.ThemeSettings
 import app.duenorth.tasks.ui.home.LogoMotion
 import app.duenorth.tasks.ui.home.drawLogo
+import kotlinx.coroutines.launch
 
 /** The settings pivot (contracts/ui-screens.md "Settings"). */
 @Composable
@@ -61,14 +74,67 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val theme by viewModel.theme.collectAsStateWithLifecycle()
+    val badgeEnabled by viewModel.badgeEnabled.collectAsStateWithLifecycle()
+    val badge = rememberBadgeToggle(viewModel)
     SettingsContent(
         theme ?: ThemeSettings(),
         onMode = viewModel::setMode,
         onAccent = viewModel::setAccent,
         onStyle = viewModel::setStyle,
         onOpenSyncAccount = onOpenSyncAccount,
-        onOpenSyncLog = onOpenSyncLog
+        onOpenSyncLog = onOpenSyncLog,
+        badge = BadgeState(on = badgeEnabled, allowed = badge.allowed),
+        onBadge = badge.onToggle
     )
+}
+
+/** The app icon badge toggle as shown: the setting, and whether notifications let it show. */
+data class BadgeState(val on: Boolean = true, val allowed: Boolean = true)
+
+private class BadgeToggle(val allowed: Boolean, val onToggle: (Boolean) -> Unit)
+
+/**
+ * Turning the badge on asks for the notification permission on Android 13+ while the phone still
+ * lets the app ask; once it does not (denied twice, or notifications turned off), it opens the
+ * app's notification settings instead. Coming back re-reads what the person chose there.
+ */
+@Composable
+private fun rememberBadgeToggle(viewModel: SettingsViewModel): BadgeToggle {
+    val context = LocalContext.current
+    val activity = LocalActivity.current
+    val scope = rememberCoroutineScope()
+    var allowed by remember { mutableStateOf(viewModel.notificationsAllowed()) }
+    LifecycleResumeEffect(Unit) {
+        val now = viewModel.notificationsAllowed()
+        if (now && !allowed) viewModel.refreshBadge()
+        allowed = now
+        onPauseOrDispose {}
+    }
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        allowed = viewModel.notificationsAllowed()
+        if (granted) viewModel.refreshBadge()
+    }
+    return BadgeToggle(allowed) { on ->
+        viewModel.setBadgeEnabled(on)
+        if (on && !allowed) {
+            scope.launch {
+                val permission = Manifest.permission.POST_NOTIFICATIONS
+                val canAsk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    !viewModel.permissionGranted() &&
+                    (!viewModel.badgeAsked() || activity?.shouldShowRequestPermissionRationale(permission) == true)
+                if (canAsk) {
+                    viewModel.markBadgeAsked()
+                    ask.launch(permission)
+                } else {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -79,7 +145,9 @@ fun SettingsContent(
     onStyle: (MetroStyle) -> Unit = {},
     onOpenSyncAccount: () -> Unit = {},
     onOpenSyncLog: () -> Unit = {},
-    initialPage: Int = 0
+    initialPage: Int = 0,
+    badge: BadgeState = BadgeState(),
+    onBadge: (Boolean) -> Unit = {}
 ) {
     val headers = listOf("theme", "sync account", "about")
     MetroPivot(
@@ -89,7 +157,7 @@ fun SettingsContent(
         state = rememberPivotState(headers.size, initialPage)
     ) { index ->
         when (index) {
-            0 -> ThemePage(theme, onMode, onAccent, onStyle)
+            0 -> ThemePage(theme, onMode, onAccent, onStyle, badge, onBadge)
             1 -> SyncLinks(onOpenSyncAccount, onOpenSyncLog)
             else -> AboutPage()
         }
@@ -105,7 +173,9 @@ private fun ThemePage(
     theme: ThemeSettings,
     onMode: (ThemeMode) -> Unit,
     onAccent: (Accent) -> Unit,
-    onStyle: (MetroStyle) -> Unit
+    onStyle: (MetroStyle) -> Unit,
+    badge: BadgeState,
+    onBadge: (Boolean) -> Unit
 ) {
     val systemDark = isSystemInDarkTheme()
     Column(
@@ -156,8 +226,35 @@ private fun ThemePage(
                 modifier = Modifier.testTag("style-${style.name}")
             )
         }
+        AppIconBadge(badge, onBadge)
         Box(Modifier.padding(bottom = MetroDimens.Grid))
     }
+}
+
+/**
+ * Like a WP8.1 live tile's count: the app icon shows how many tasks the today section holds. Off
+ * while notifications are not allowed, whatever the setting, with a line saying why.
+ */
+@Composable
+private fun AppIconBadge(badge: BadgeState, onBadge: (Boolean) -> Unit) {
+    Label("app icon")
+    MetroToggle(
+        checked = badge.on && badge.allowed,
+        onCheckedChange = onBadge,
+        label = "show today's count",
+        modifier = Modifier.fillMaxWidth().testTag("today-badge")
+    )
+    MetroText(
+        if (badge.on && !badge.allowed) {
+            "Notifications are off for Due North Tasks, so the icon can't show the count. " +
+                "Turn this on to allow them."
+        } else {
+            "Tasks due today or overdue, as on the today section. Some launchers show a dot " +
+                "instead of the number."
+        },
+        MetroTheme.typography.caption,
+        color = MetroTheme.colors.secondary
+    )
 }
 
 /** One line under each style's name, saying what it changes. */

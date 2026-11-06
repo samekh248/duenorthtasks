@@ -1,25 +1,45 @@
 package app.duenorth.tasks
 
+import android.Manifest
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import app.duenorth.tasks.badge.TodayBadge
+import app.duenorth.tasks.badge.TodayBadgeSettings
+import app.duenorth.tasks.badge.TodayNotifier
 import app.duenorth.tasks.design.components.MetroAppBarHost
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.ui.AppRoot
 import app.duenorth.tasks.ui.settings.AppearanceViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val appearance: AppearanceViewModel by viewModels()
+
+    @Inject lateinit var badge: TodayBadge
+
+    @Inject lateinit var badgeSettings: TodayBadgeSettings
+
+    @Inject lateinit var notifier: TodayNotifier
+
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) badge.refresh()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +67,19 @@ class MainActivity : ComponentActivity() {
             ) {
                 MetroAppBarHost { AppRoot() }
             }
+        }
+        askForBadgeOnce()
+    }
+
+    /**
+     * Android 13+ needs the notification permission before the app icon can show today's count.
+     * The app asks once, on the first launch; after that only the settings toggle asks.
+     */
+    private fun askForBadgeOnce() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        lifecycleScope.launch {
+            if (notifier.allowed() || !badgeSettings.enabled.first()) return@launch
+            if (badgeSettings.takeFirstAsk()) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 }

@@ -81,11 +81,20 @@ private const val FLAG_INCLUDE_STOPPED_PACKAGES = 32
 
 /** Makes sure the fake service holds [tasks] tasks and the phone has synced them all. */
 internal fun MacrobenchmarkScope.seed(tasks: Int) {
+    allowNotifications()
     val out = device.executeShellCommand(
         "am broadcast -f $FLAG_INCLUDE_STOPPED_PACKAGES -n $RECEIVER " +
             "-a $TARGET_PACKAGE.bench.SEED --ei tasks $tasks"
     )
     check("seeded" in out) { "Seeding failed: $out" }
+}
+
+/**
+ * Grants the notification permission the today badge asks for on a first launch (Android 13+),
+ * so its dialog never covers the screens being measured.
+ */
+internal fun MacrobenchmarkScope.allowNotifications() {
+    device.executeShellCommand("pm grant $TARGET_PACKAGE android.permission.POST_NOTIFICATIONS")
 }
 
 /** Starts [changes] edits on the service, synced in [rounds], with [latencyMs] per call; returns at once. */
