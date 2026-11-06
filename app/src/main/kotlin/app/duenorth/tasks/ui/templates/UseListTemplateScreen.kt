@@ -3,7 +3,6 @@ package app.duenorth.tasks.ui.templates
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -24,8 +23,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.duenorth.tasks.design.components.MetroButton
+import app.duenorth.tasks.design.components.AppBarButton
+import app.duenorth.tasks.design.components.MetroAppBar
 import app.duenorth.tasks.design.components.MetroDatePicker
+import app.duenorth.tasks.design.components.MetroIcon
 import app.duenorth.tasks.design.components.MetroTaskPlaceholders
 import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.components.MetroTextField
@@ -49,32 +50,58 @@ fun UseListTemplateScreen(
     }, onCancel = onCancel)
 }
 
-/** spec 004 FR-321: name (prefilled with the template's), start date when needed, create or cancel. */
+/**
+ * spec 004 FR-321: name (prefilled with the template's), start date when needed. A form by Due North
+ * Budget's rules: save and cancel on the app bar, nothing else, and no buttons in the page.
+ */
 @Composable
 fun UseListTemplateContent(
     state: UseListTemplateUiState,
     onCreate: (name: String, start: LocalDate) -> Unit,
     onCancel: () -> Unit
 ) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(MetroTheme.colors.background)
-            .statusBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .testTag("use template")
-    ) {
+    // Keyed on the template's name so the field fills in once it has loaded.
+    var name by rememberSaveable(state.name) { mutableStateOf(state.name) }
+    var start by rememberSaveable { mutableStateOf<LocalDate?>(null) }
+    var picking by rememberSaveable { mutableStateOf(false) }
+    val startDay = start ?: state.today
+    Column(Modifier.fillMaxSize().background(MetroTheme.colors.background).imePadding()) {
+        Column(
+            Modifier
+                .weight(1f)
+                .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .testTag("use template")
+        ) {
+            UseListTemplateFields(state, name, { name = it }, startDay, picking, { picking = it }, { start = it })
+        }
+        MetroAppBar(
+            buttons = listOf(
+                AppBarButton(MetroIcon.Check, "save", enabled = !state.loading && name.isNotBlank()) {
+                    onCreate(name.trim(), startDay)
+                },
+                AppBarButton(MetroIcon.Close, "cancel", onClick = onCancel)
+            )
+        )
+    }
+}
+
+@Composable
+private fun UseListTemplateFields(
+    state: UseListTemplateUiState,
+    name: String,
+    onName: (String) -> Unit,
+    startDay: LocalDate,
+    picking: Boolean,
+    onPicking: (Boolean) -> Unit,
+    onStart: (LocalDate) -> Unit
+) {
+    Column {
         PageHeader(state.name, overline = "NEW LIST FROM TEMPLATE")
         if (state.loading) {
             MetroTaskPlaceholders(count = 2)
             return@Column
         }
-        // Keyed on the template's name so the field fills in once it has loaded.
-        var name by rememberSaveable(state.name) { mutableStateOf(state.name) }
-        var start by rememberSaveable { mutableStateOf<LocalDate?>(null) }
-        var picking by rememberSaveable { mutableStateOf(false) }
-        val startDay = start ?: state.today
         Column(
             Modifier.padding(horizontal = MetroDimens.Gutter, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -82,15 +109,15 @@ fun UseListTemplateContent(
             Caption("name")
             MetroTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = onName,
                 placeholder = "list name",
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth().testTag("new list name")
             )
             if (state.asksStart) {
                 Caption("start date")
-                Chip(DueText.relative(startDay, state.today)) { picking = !picking }
-                if (picking) MetroDatePicker(date = startDay, onDateChange = { start = it })
+                Chip(DueText.relative(startDay, state.today)) { onPicking(!picking) }
+                if (picking) MetroDatePicker(date = startDay, onDateChange = onStart)
             }
             MetroText(
                 listOfNotNull(
@@ -100,10 +127,6 @@ fun UseListTemplateContent(
                 MetroTheme.typography.caption,
                 color = MetroTheme.colors.secondary
             )
-            Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)) {
-                MetroButton("add list", { onCreate(name.trim(), startDay) }, enabled = name.isNotBlank())
-                MetroButton("cancel", onCancel)
-            }
         }
     }
 }

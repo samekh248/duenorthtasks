@@ -183,7 +183,7 @@ fun <T> ReorderStepsPage(
                 header = { item(key = "hint", contentType = "hint") { ReorderHint("drag a step to move it") } }
             ) { step -> row(step) }
         }
-        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Reorder, "done", onClick = onDone)))
+        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = onDone)))
     }
 }
 

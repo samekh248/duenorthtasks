@@ -2,69 +2,68 @@
 
 **Feature Branch**: `008-menu-cleanup`
 
-**Created**: 2026-11-05
+**Created**: 2026-11-05 · **Revised**: 2026-11-06
 
 **Status**: Implemented
 
 **Input**: User description: "Give me suggestions on how to clean up the menu organization. I want
 consistency, predictability, and discoverability. Make sure it is clear between complete, save, add
-actions in the UX." Then: "Build suggestions and logs should go into settings."
+actions in the UX." Then: "Build suggestions and logs should go into settings." Then: "Use the same
+rules Due North Budget uses for its menu system as far as naming and organization go."
 
 ## At a glance
 
-Every app bar and menu follows one template, and each of the four action verbs has one icon and one
-meaning. Where this spec differs from an earlier one (003 FR-203's ✓ "done", 004 FR-310/311's "save
-as template", 001's home menu), this spec wins.
+The app bar and its menus follow Due North Budget's rules (its `ScreenBar.kt` and spec 008
+"streamlined controls"). Where this spec differs from an earlier one (003 FR-203, 004 FR-310/311,
+001's home menu), this spec wins.
 
 ```mermaid
 flowchart LR
     subgraph Bar["app bar, left to right"]
-        B1["1 main action<br/>add, complete, use"] --> B2["2-3 page tools<br/>edit/save, reorder, sort, sync, search"] --> B4["4 sharing"] --> More["•••"]
+        B1["add (hubs) or the commit ✓"] --> B2["the page's own verbs"] --> More["•••"]
     end
-    More --> M1["organize<br/>reorder, move to list, rename, pin, important, shade"]
-    M1 --> M2["share and reuse<br/>sharing, make template"]
-    M2 --> M3["clear and delete<br/>clear completed, discard changes, delete: always last"]
-    M3 --> M4["go somewhere (home only)<br/>templates, settings"]
+    More --> M1["the page's other tools"]
+    M1 -->|rule| M2["sync (home only), settings"]
+    M2 -->|rule| M3["delete: the last line, in the accent"]
 ```
 
-A long-press menu uses the same order, with "edit" first and no destinations.
+A form (typing, or a page that only collects input) has save and cancel on the bar, delete alone in
+its menu, and no way off to settings. A long-press menu runs edit first, the item's verbs, and delete
+last in the accent.
 
-## The four verbs
+## The glyphs
 
-| Verb | Means | Icon | Where |
+| Glyph | Means | Label (menu, TalkBack) | Caption under the button |
 |---|---|---|---|
-| complete / reopen | The task is finished (same as ticking its box) | Check | Task and step check boxes; first button on the task page |
-| save | Write the title and details as typed | Save | Task and task template pages, in edit's slot, only while typing |
-| add | Make a new thing | Add | First button on home, a list and templates; the add boxes; every "add ..." dialog |
-| done | Leave reorder mode | Reorder | The only button in reorder mode |
+| + | make a new thing | add task, add list, add template | the noun alone: task, list, template |
+| ✓ | commit the page's main thing | complete / reopen, save, use template, done | the verb when there is no noun: complete, save, use, done |
+| ✕ | leave a form without writing | cancel | cancel |
+| pencil | open for typing | edit task, edit template | the noun alone: task, template |
 
-Check is only ever complete. "use" on a list template has its own play glyph.
+The glyph is the verb, so a caption is only the noun when there is one. Complete and save share the
+✓ but never share a bar: complete is on the task page while viewing, save replaces it while typing.
 
 ## Requirements
 
-- **FR-500**: Check MUST mean complete only. Reorder modes (tasks, lists, steps, template tasks) show
-  a single Reorder "done" button; back also ends them (replaces 003 FR-203's ✓).
-- **FR-501**: The task page app bar MUST be: complete / reopen, then edit, which becomes save while
-  the title or details are open. Its menu: reorder steps, move to list, discard changes (while
-  editing), delete. Back while editing saves and stays on the page, like complete does. A caption
-  under the fields says everything else saves as it changes.
-- **FR-502**: The task template page MUST use the same edit / save button and the same menu order
-  (reorder steps, discard changes, delete), with no complete.
-- **FR-503**: "save as template" MUST read "make template" everywhere (replaces 004 FR-310/311). A
-  list tile's long-press menu also offers it.
-- **FR-504**: Creating MUST use "add": add task, add list, add template, add task (list template),
-  "add" on new-thing dialogs, "add list" on the use template page. "+ add details" reads "more
-  details" and the add box's list picker is titled "list".
-- **FR-505**: Home's first button MUST be add on every section (add list on lists, add task
-  elsewhere; on stats it adds to today), so sync and search never move.
-- **FR-506**: Home's menu MUST hold only the section's own actions, then templates and settings.
-  Sync account and sync log are reached from settings.
-- **FR-507**: Task long-press menus MUST be the same on home and a list page: edit (opens the task
+- **FR-500**: ✓ commits. It is complete on the task page, save on every form, use on a list
+  template, and done in every reorder mode (replaces 003 FR-203's wording, same glyph).
+- **FR-501**: Captions under bar buttons MUST be the noun alone when the label has one ("task" under
+  + add task); the label stays the screen reader's name.
+- **FR-502**: Home (a hub) MUST lead with add (add list on lists, add task elsewhere; on stats it adds
+  to today), then search. Its menu: the section's own tools (unpin from home, reorder lists,
+  templates), then under a rule sync and settings, settings last. Sync account and sync log are
+  reached from settings.
+- **FR-503**: Object pages (a list, a task while viewing, a list template, a task template while
+  viewing, templates) MUST put their verbs on the bar and the rest in the menu, then settings under a
+  rule, then delete as the last line in the accent.
+- **FR-504**: Forms (the task and task template pages while typing, new list from template) MUST
+  show only save and cancel on the bar. Cancel leaves without writing; back while typing saves. Delete,
+  where there is one, is alone in the menu. The new list from template page has no in-page buttons.
+- **FR-505**: "save as template" reads "make template" (replaces 004 FR-310/311); list tiles offer it
+  too. Creating says "add": add task, add list, add template, "add" on new-thing dialogs.
+- **FR-506**: Task long-press menus MUST be the same on home and a list page: edit (opens the task
   ready for typing), reorder (list page, open tasks), move to list, mark important, make template,
-  delete.
-- **FR-508**: The list page and the list tile menus MUST list the same items in the same order:
-  (reorder,) rename, pin / unpin, list shade, sharing (tile; a button on the page), make template,
-  (clear completed, page only,) delete. The list page's sharing button shows on every list, and
-  "list info" is gone.
-- **FR-509**: Steps say "delete", not "remove". Sync account's sign out moves from a Close button to
-  its ••• menu.
+  delete. The list tile and list page menus list the same items in the same order. The list page's
+  sharing button shows on every list.
+- **FR-507**: Delete in a long-press menu, and every destructive overflow line (delete list, delete
+  task, delete template, sign out), MUST be drawn in the accent, last, under a rule.

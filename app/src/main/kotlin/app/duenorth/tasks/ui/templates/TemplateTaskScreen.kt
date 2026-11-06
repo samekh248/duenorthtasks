@@ -49,11 +49,15 @@ import app.duenorth.tasks.ui.common.StepRow
 import app.duenorth.tasks.ui.common.TitleDetailsFields
 
 @Composable
-fun TemplateTaskScreen(onClosed: () -> Unit, viewModel: TemplateTaskViewModel = hiltViewModel()) {
+fun TemplateTaskScreen(
+    onClosed: () -> Unit,
+    onSettings: () -> Unit = {},
+    viewModel: TemplateTaskViewModel = hiltViewModel()
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
     CompositionLocalProvider(LocalAccent provides shadeAccent(state.shadeStep)) {
-        TemplateTaskContent(state, viewModel)
+        TemplateTaskContent(state, viewModel, onSettings)
     }
 }
 
@@ -62,7 +66,7 @@ private fun overline(state: TemplateTaskUiState) =
 
 /** spec 004 FR-331: a task page with a "TASK TEMPLATE" overline and a due offset instead of a date. */
 @Composable
-fun TemplateTaskContent(state: TemplateTaskUiState, viewModel: TemplateTaskViewModel) {
+fun TemplateTaskContent(state: TemplateTaskUiState, viewModel: TemplateTaskViewModel, onSettings: () -> Unit = {}) {
     var editing by rememberSaveable { mutableStateOf(false) }
     // The title and details as typed: the app bar's save writes them, as on a task's page.
     var draftTitle by rememberSaveable { mutableStateOf("") }
@@ -157,20 +161,29 @@ fun TemplateTaskContent(state: TemplateTaskUiState, viewModel: TemplateTaskViewM
                 )
             }
         }
-        // The task page's bar without complete: edit, which turns into save while typing; delete last in the menu.
+        // The task page's bar without complete: an object page while viewing, a form (save, cancel) while typing.
         MetroAppBar(
-            buttons = listOf(
-                if (editing) {
-                    AppBarButton(MetroIcon.Save, "save", enabled = canSave) { saveEdits() }
-                } else {
-                    AppBarButton(MetroIcon.Edit, "edit", enabled = !state.loading) { beginEditing() }
-                }
-            ),
-            menuItems = listOfNotNull(
-                AppBarMenuItem("reorder steps") { viewModel.startReorder() }.takeIf { state.steps.size > 1 },
-                AppBarMenuItem("discard changes") { editing = false }.takeIf { editing },
-                AppBarMenuItem("delete") { deleting = true }
-            )
+            buttons = if (editing) {
+                listOf(
+                    AppBarButton(MetroIcon.Check, "save", enabled = canSave) { saveEdits() },
+                    AppBarButton(MetroIcon.Close, "cancel") { editing = false }
+                )
+            } else {
+                listOf(
+                    AppBarButton(MetroIcon.Edit, "edit template", caption = "template", enabled = !state.loading) {
+                        beginEditing()
+                    }
+                )
+            },
+            menuItems = if (editing) {
+                listOf(AppBarMenuItem("delete template", destructive = true) { deleting = true })
+            } else {
+                listOfNotNull(
+                    AppBarMenuItem("reorder steps") { viewModel.startReorder() }.takeIf { state.steps.size > 1 },
+                    AppBarMenuItem("settings", rule = true, onClick = onSettings),
+                    AppBarMenuItem("delete template", destructive = true) { deleting = true }
+                )
+            }
         )
     }
 

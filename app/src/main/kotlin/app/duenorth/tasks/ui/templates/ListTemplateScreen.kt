@@ -52,7 +52,12 @@ import app.duenorth.tasks.ui.common.ReorderHint
 import app.duenorth.tasks.ui.common.ReorderRow
 import app.duenorth.tasks.ui.home.EmptyNote
 
-class ListTemplateActions(val use: () -> Unit, val editTask: (String) -> Unit, val closed: () -> Unit)
+class ListTemplateActions(
+    val use: () -> Unit,
+    val editTask: (String) -> Unit,
+    val closed: () -> Unit,
+    val openSettings: () -> Unit = {}
+)
 
 @Composable
 fun ListTemplateScreen(actions: ListTemplateActions, viewModel: ListTemplateViewModel = hiltViewModel()) {
@@ -95,7 +100,7 @@ private fun ReorderTemplateTasks(state: ListTemplateUiState, viewModel: ListTemp
                 ReorderRow(title = task.title, caption = task.caption, captionColor = MetroTheme.colors.secondary)
             }
         }
-        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Reorder, "done", onClick = viewModel::endReorder)))
+        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = viewModel::endReorder)))
     }
 }
 
@@ -152,16 +157,19 @@ private fun TemplatePage(state: ListTemplateUiState, viewModel: ListTemplateView
                 }
             }
         }
+        // An object page by Due North Budget's rules: use (the check commits) and its verbs on the bar,
+        // the rest in the menu, settings under a rule and delete last in the accent.
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Use, "use", onClick = actions.use),
-                AppBarButton(MetroIcon.Add, "add task") { adding = true },
+                AppBarButton(MetroIcon.Check, "use template", caption = "use", onClick = actions.use),
+                AppBarButton(MetroIcon.Add, "add task", caption = "task") { adding = true },
                 AppBarButton(MetroIcon.Reorder, "reorder", enabled = state.tasks.size > 1) { viewModel.startReorder() }
             ),
             menuItems = listOf(
                 AppBarMenuItem("rename template") { renaming = true },
                 AppBarMenuItem("template shade") { shading = true },
-                AppBarMenuItem("delete template") { deleting = true }
+                AppBarMenuItem("settings", rule = true, onClick = actions.openSettings),
+                AppBarMenuItem("delete template", destructive = true) { deleting = true }
             )
         )
     }

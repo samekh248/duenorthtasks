@@ -216,11 +216,15 @@ class MetroComponentScreenshotTest {
     fun appBarExpanded() = snap("app_bar_expanded", padded = false) {
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Add, "add task") {},
-                AppBarButton(MetroIcon.Sync, "sync") {},
+                AppBarButton(MetroIcon.Add, "add task", caption = "task") {},
+                AppBarButton(MetroIcon.Reorder, "reorder") {},
                 AppBarButton(MetroIcon.Search, "search") {}
             ),
-            menuItems = listOf(AppBarMenuItem("settings") {}, AppBarMenuItem("sync log") {}),
+            menuItems = listOf(
+                AppBarMenuItem("rename list") {},
+                AppBarMenuItem("settings", rule = true) {},
+                AppBarMenuItem("delete list", destructive = true) {}
+            ),
             initiallyExpanded = true
         )
     }

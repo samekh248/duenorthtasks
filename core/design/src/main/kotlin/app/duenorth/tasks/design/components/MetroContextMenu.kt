@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
@@ -34,6 +35,9 @@ import app.duenorth.tasks.design.theme.Relief
 @Immutable
 data class ContextMenuItem(val label: String, val icon: MetroIcon? = null, val onClick: () -> Unit) {
     constructor(label: String, onClick: () -> Unit) : this(label, null, onClick)
+
+    /** Delete, always the menu's last line, is drawn in the accent, as in Due North Budget. */
+    val destructive: Boolean get() = icon == MetroIcon.Delete
 }
 
 /**
@@ -104,7 +108,11 @@ fun MetroContextMenuContent(
                                 if (item.icon != null) MetroIconGlyph(item.icon, size = 18.dp)
                             }
                         }
-                        MetroText(item.label, MetroTheme.typography.body)
+                        MetroText(
+                            item.label,
+                            MetroTheme.typography.body,
+                            color = if (item.destructive) MetroTheme.accent.text else Color.Unspecified
+                        )
                     }
                 }
             }
@@ -128,7 +136,8 @@ fun MetroContextMenuContent(
             MetroText(
                 item.label,
                 MetroTheme.typography.subheader,
-                Modifier
+                color = if (item.destructive) MetroTheme.accent.text else Color.Unspecified,
+                modifier = Modifier
                     .fillMaxWidth()
                     .metroTilt()
                     .clickable(interactionSource = null, indication = null, role = Role.Button) { onItemClick(item) }
