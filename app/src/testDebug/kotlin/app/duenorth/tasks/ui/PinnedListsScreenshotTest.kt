@@ -150,6 +150,10 @@ class PinnedListsScreenshotTest {
         compose.onNodeWithText("delete").performClick()
         compose.onNodeWithText("delete").performClick()
         compose.waitUntilDoesNotExist(hasTestTag("pinned:Work"), TIMEOUT)
+        // Deleting unpins first and removes the list after, so wait for the row to go too: closing the
+        // database while that delete still runs fails the test.
+        compose.waitUntilDoesNotExist(hasText("Work") and hasAnyAncestor(hasTestTag("lists")), TIMEOUT)
+        settle()
         assertEquals(emptyList<String>(), pinnedTitles())
     }
 
