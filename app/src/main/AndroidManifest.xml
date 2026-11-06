@@ -31,5 +31,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Posts the today notification again when it is swiped away, so the badge stays. -->
+        <receiver
+            android:name=".badge.TodayDismissedReceiver"
+            android:exported="false" />
     </application>
 </manifest>

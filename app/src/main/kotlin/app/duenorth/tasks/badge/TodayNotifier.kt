@@ -17,6 +17,8 @@ import app.duenorth.tasks.data.db.TaskWithList
 /**
  * Launchers draw their icon badge from the app's notifications, so the count rides on one quiet
  * notification: no sound, no vibration, no pop-up, never on a watch. Its number is the badge.
+ * The badge lives and dies with that notification, so it is ongoing ("clear all" leaves it) and
+ * a swipe that removes it anyway posts it again through [TodayDismissedReceiver] while tasks are due.
  */
 class TodayNotifier(private val context: Context) {
     private val manager = NotificationManagerCompat.from(context)
@@ -46,6 +48,13 @@ class TodayNotifier(private val context: Context) {
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+        // Fires only when the person removes it, never on our own cancel, so it cannot loop.
+        val dismissed = PendingIntent.getBroadcast(
+            context,
+            0,
+            Intent(context, TodayDismissedReceiver::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         val title = today.title()
         val style = NotificationCompat.InboxStyle().setBigContentTitle(title)
         today.titles.forEach { style.addLine(it) }
@@ -65,6 +74,8 @@ class TodayNotifier(private val context: Context) {
             .setShowWhen(false)
             .setLocalOnly(true)
             .setContentIntent(open)
+            .setOngoing(true)
+            .setDeleteIntent(dismissed)
             .build()
         try {
             manager.notify(NOTIFICATION_ID, notification)
