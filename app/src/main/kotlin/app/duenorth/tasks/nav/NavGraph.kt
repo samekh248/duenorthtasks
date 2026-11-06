@@ -84,12 +84,7 @@ class AppActions(val syncNow: () -> Unit, val switchTo: (ProviderKind) -> Unit, 
  * away first, then the new one swings in, so the NavHost keeps the old page on screen until then.
  */
 @Composable
-fun DueNorthNavHost(
-    app: AppActions,
-    syncing: Boolean,
-    syncButtonTurning: Boolean = syncing,
-    nav: NavHostController = rememberNavController()
-) {
+fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = rememberNavController()) {
     val keepOldPage = fadeOut(tween(1, delayMillis = TURNSTILE_MS))
     NavHost(
         navController = nav,
@@ -125,7 +120,6 @@ fun DueNorthNavHost(
                 HomeScreen(
                     actions,
                     syncing,
-                    syncButtonTurning = syncButtonTurning,
                     showLists = showLists,
                     onListsShown = { entry.savedStateHandle[SHOW_LISTS] = false }
                 )
@@ -136,6 +130,7 @@ fun DueNorthNavHost(
                 ListScreen(
                     onOpenTask = { nav.navigate(Routes.task(it)) },
                     onEditTask = { nav.navigate(Routes.editTask(it)) },
+                    onSettings = { nav.navigate(Routes.SETTINGS) },
                     onClosed = { nav.closeIfOn(entry) },
                     onShade = { id -> nav.navigate(Routes.listShade(id)) },
                     onInfo = { id -> nav.navigate(Routes.listSharing(id)) },
@@ -152,7 +147,8 @@ fun DueNorthNavHost(
                     TemplatesActions(
                         useList = { nav.navigate(Routes.useListTemplate(it)) },
                         editList = { nav.navigate(Routes.listTemplate(it)) },
-                        editTask = { nav.navigate(Routes.templateTask(it)) }
+                        editTask = { nav.navigate(Routes.templateTask(it)) },
+                        openSettings = { nav.navigate(Routes.SETTINGS) }
                     )
                 )
             }
@@ -164,7 +160,8 @@ fun DueNorthNavHost(
                     ListTemplateActions(
                         use = { nav.navigate(Routes.useListTemplate(id)) },
                         editTask = { nav.navigate(Routes.templateTask(it)) },
-                        closed = { nav.closeIfOn(entry) }
+                        closed = { nav.closeIfOn(entry) },
+                        openSettings = { nav.navigate(Routes.SETTINGS) }
                     )
                 )
             }
@@ -184,7 +181,9 @@ fun DueNorthNavHost(
             }
         }
         composable(Routes.TEMPLATE_TASK) { entry ->
-            Page(this) { TemplateTaskScreen(onClosed = { nav.closeIfOn(entry) }) }
+            Page(this) {
+                TemplateTaskScreen(onClosed = { nav.closeIfOn(entry) }, onSettings = { nav.navigate(Routes.SETTINGS) })
+            }
         }
         composable(Routes.LIST_SHADE) {
             Page(this) { ListShadeScreen() }
@@ -231,7 +230,12 @@ fun DueNorthNavHost(
         ) { entry ->
             val edit = entry.arguments?.getBoolean("edit") ?: false
             Page(this) {
-                TaskDetailScreen(onClosed = { nav.closeIfOn(entry) }, animatedScope = this, startEditing = edit)
+                TaskDetailScreen(
+                    onClosed = { nav.closeIfOn(entry) },
+                    animatedScope = this,
+                    startEditing = edit,
+                    onSettings = { nav.navigate(Routes.SETTINGS) }
+                )
             }
         }
         composable(Routes.ACCOUNT) {

@@ -86,11 +86,12 @@ fun TaskDetailScreen(
     animatedScope: AnimatedVisibilityScope?,
     /** Opens with the title and details ready for typing, as "edit" on a task's menu asks. */
     startEditing: Boolean = false,
+    onSettings: () -> Unit = {},
     viewModel: TaskDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
-    TaskDetailContent(state, viewModel, animatedScope, startEditing)
+    TaskDetailContent(state, viewModel, animatedScope, startEditing, onSettings)
 }
 
 @Composable
@@ -98,11 +99,12 @@ fun TaskDetailContent(
     state: TaskDetailUiState,
     viewModel: TaskDetailViewModel,
     animatedScope: AnimatedVisibilityScope?,
-    startEditing: Boolean = false
+    startEditing: Boolean = false,
+    onSettings: () -> Unit = {}
 ) {
     var editing by rememberSaveable { mutableStateOf(false) }
     var openedForEditing by rememberSaveable { mutableStateOf(false) }
-    // The title and details as typed: the app bar's save writes them, and complete saves them first.
+    // The title and details as typed: the app bar's save writes them, cancel drops them, and back saves them.
     var draftTitle by rememberSaveable { mutableStateOf("") }
     var draftDetails by rememberSaveable { mutableStateOf("") }
     var deleting by rememberSaveable { mutableStateOf(false) }
@@ -299,28 +301,37 @@ fun TaskDetailContent(
                 )
             }
         }
-        // WP8.1's edit page: complete (check, the only check in the app) in the first slot, then
-        // edit, which turns into save while typing; everything else behind the ellipsis.
+        // Due North Budget's rules. Viewing, the page is an object page: complete (the check commits)
+        // and edit on the bar, the rest in the menu, settings under a rule and delete last in the
+        // accent. Typing makes it a form: save and cancel on the bar, delete alone in the menu.
         MetroAppBar(
-            buttons = listOf(
-                AppBarButton(MetroIcon.Check, if (state.completed) "reopen" else "complete", enabled = !state.loading) {
-                    // Completing keeps what was typed, so finishing a task never throws an edit away.
-                    if (editing) saveEdits()
-                    viewModel.setCompleted(!state.completed)
-                },
-                if (editing) {
-                    AppBarButton(MetroIcon.Save, "save", enabled = canSave) { saveEdits() }
-                } else {
-                    AppBarButton(MetroIcon.Edit, "edit", enabled = !state.loading) { beginEditing() }
-                }
-            ),
-            // Organize, then the ones that throw something away, last.
-            menuItems = listOfNotNull(
-                AppBarMenuItem("reorder steps") { viewModel.startReorder() }.takeIf { state.steps.size > 1 },
-                AppBarMenuItem("move to list") { moving = true },
-                AppBarMenuItem("discard changes") { editing = false }.takeIf { editing },
-                AppBarMenuItem("delete") { deleting = true }
-            )
+            buttons = if (editing) {
+                listOf(
+                    AppBarButton(MetroIcon.Check, "save", enabled = canSave) { saveEdits() },
+                    AppBarButton(MetroIcon.Close, "cancel") { editing = false }
+                )
+            } else {
+                listOf(
+                    AppBarButton(
+                        MetroIcon.Check,
+                        if (state.completed) "reopen" else "complete",
+                        enabled = !state.loading
+                    ) { viewModel.setCompleted(!state.completed) },
+                    AppBarButton(MetroIcon.Edit, "edit task", caption = "task", enabled = !state.loading) {
+                        beginEditing()
+                    }
+                )
+            },
+            menuItems = if (editing) {
+                listOf(AppBarMenuItem("delete task", destructive = true) { deleting = true })
+            } else {
+                listOfNotNull(
+                    AppBarMenuItem("reorder steps") { viewModel.startReorder() }.takeIf { state.steps.size > 1 },
+                    AppBarMenuItem("move to list") { moving = true },
+                    AppBarMenuItem("settings", rule = true, onClick = onSettings),
+                    AppBarMenuItem("delete task", destructive = true) { deleting = true }
+                )
+            }
         )
     }
 

@@ -88,6 +88,6 @@ fun ReorderListsContent(state: ReorderListsUiState, onMove: (List<String>) -> Un
                 }
             }
         }
-        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Reorder, "done", onClick = onDone)))
+        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = onDone)))
     }
 }

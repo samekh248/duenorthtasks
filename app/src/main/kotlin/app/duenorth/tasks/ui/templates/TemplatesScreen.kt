@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.design.components.AppBarButton
+import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.components.ContextMenuItem
 import app.duenorth.tasks.design.components.MetroAppBar
 import app.duenorth.tasks.design.components.MetroContextMenu
@@ -39,7 +40,12 @@ import app.duenorth.tasks.design.theme.shadeAccent
 import app.duenorth.tasks.ui.home.EmptyNote
 
 /** What the templates page can open. */
-class TemplatesActions(val useList: (String) -> Unit, val editList: (String) -> Unit, val editTask: (String) -> Unit)
+class TemplatesActions(
+    val useList: (String) -> Unit,
+    val editList: (String) -> Unit,
+    val editTask: (String) -> Unit,
+    val openSettings: () -> Unit = {}
+)
 
 @Composable
 fun TemplatesScreen(actions: TemplatesActions, viewModel: TemplatesViewModel = hiltViewModel()) {
@@ -104,10 +110,11 @@ fun TemplatesContent(state: TemplatesUiState, viewModel: TemplatesViewModel, act
         }
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Add, "add template") {
+                AppBarButton(MetroIcon.Add, "add template", caption = "template") {
                     newName = if (pager.currentPage == 0) Kind.LIST else Kind.TASK
                 }
-            )
+            ),
+            menuItems = listOf(AppBarMenuItem("settings", rule = true, onClick = actions.openSettings))
         )
     }
 

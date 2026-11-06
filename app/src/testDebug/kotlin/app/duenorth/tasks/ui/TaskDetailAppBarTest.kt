@@ -34,6 +34,7 @@ import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -86,17 +87,27 @@ class TaskDetailAppBarTest {
     }
 
     @Test
-    fun editTurnsIntoSaveWhileTypingAndSaveWritesTheEdit() {
+    fun typingSwapsTheBarForSaveAndCancelAndSaveWritesTheEdit() {
         compose.onNode(hasContentDescription("save")).assertDoesNotExist()
-        compose.onNode(hasContentDescription("edit")).performClick()
-        compose.onNode(hasContentDescription("edit")).assertDoesNotExist()
-        compose.onNode(hasContentDescription("save")).assertIsEnabled()
+        compose.onNode(hasContentDescription("edit task")).performClick()
+        compose.onNode(hasContentDescription("complete")).assertDoesNotExist()
+        compose.onNode(hasContentDescription("cancel")).assertIsEnabled()
         compose.onAllNodes(hasSetTextAction()).onFirst().performTextReplacement("Pack the car")
         compose.onNode(hasContentDescription("save")).performClick()
         compose.waitUntil(TIMEOUT) { stored()?.title == "Pack the car" }
         compose.waitUntilAtLeastOneExists(hasText("Pack the car"), TIMEOUT)
         compose.onNode(hasContentDescription("save")).assertDoesNotExist()
-        compose.onNode(hasContentDescription("edit")).assertIsEnabled()
+        compose.onNode(hasContentDescription("complete")).assertIsEnabled()
+    }
+
+    @Test
+    fun cancelDropsTheEdit() {
+        compose.onNode(hasText("Pack")).performClick()
+        compose.onAllNodes(hasSetTextAction()).onFirst().performTextReplacement("Pack light")
+        compose.onNode(hasContentDescription("cancel")).performClick()
+        compose.waitUntilAtLeastOneExists(hasText("Pack"), TIMEOUT)
+        compose.onNode(hasContentDescription("edit task")).assertIsEnabled()
+        assertEquals("Pack", stored()?.title)
     }
 
     @Test
@@ -107,18 +118,16 @@ class TaskDetailAppBarTest {
     }
 
     @Test
-    fun completeKeepsAnEditInProgress() {
-        compose.onNode(hasText("Pack")).performClick()
-        compose.onAllNodes(hasSetTextAction()).onFirst().performTextReplacement("Pack light")
+    fun completeFinishesTheTask() {
         compose.onNode(hasContentDescription("complete")).performClick()
-        compose.waitUntil(TIMEOUT) { stored()?.let { it.completed && it.title == "Pack light" } == true }
+        compose.waitUntil(TIMEOUT) { stored()?.completed == true }
         compose.waitUntilAtLeastOneExists(hasContentDescription("reopen"), TIMEOUT)
     }
 
     @Test
-    fun deleteLivesInTheOverflowMenu() {
+    fun deleteIsTheMenusLastLine() {
         compose.onNode(hasContentDescription("more")).performClick()
-        compose.onNode(hasText("delete")).performClick()
+        compose.onNode(hasText("delete task")).performClick()
         compose.waitUntilAtLeastOneExists(hasText("delete task?"), TIMEOUT)
     }
 

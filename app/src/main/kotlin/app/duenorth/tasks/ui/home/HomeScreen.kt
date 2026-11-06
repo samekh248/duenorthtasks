@@ -83,7 +83,6 @@ class HomeActions(
 fun HomeScreen(
     actions: HomeActions,
     syncing: Boolean,
-    syncButtonTurning: Boolean = syncing,
     showLists: Boolean = false,
     onListsShown: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
@@ -96,7 +95,6 @@ fun HomeScreen(
         viewModel,
         actions,
         syncing,
-        syncButtonTurning,
         showLists,
         onListsShown,
         stats,
@@ -115,7 +113,6 @@ fun HomeContent(
     viewModel: HomeViewModel,
     actions: HomeActions,
     syncing: Boolean = false,
-    syncButtonTurning: Boolean = syncing,
     /** Jump to the lists section, as after making a list from a template; [onListsShown] then clears it. */
     showLists: Boolean = false,
     onListsShown: () -> Unit = {},
@@ -249,7 +246,6 @@ fun HomeContent(
             pager,
             sectionKeys,
             actions,
-            syncButtonTurning,
             onNewTask = { section ->
                 when {
                     section.startsWith("pin:") -> focusFor(section.removePrefix("pin:")).requestFocus()
@@ -326,7 +322,6 @@ private fun HomeAppBar(
     pager: PanoramaState,
     sectionKeys: List<String>,
     actions: HomeActions,
-    syncing: Boolean,
     onNewTask: (section: String) -> Unit,
     onNewList: () -> Unit,
     onUnpin: (listId: String) -> Unit
@@ -334,22 +329,30 @@ private fun HomeAppBar(
     val section = sectionKeys.getOrElse(pager.currentSection) { TODAY }
     val pinned = section.takeIf { it.startsWith("pin:") }?.removePrefix("pin:")
     val search = AppBarButton(MetroIcon.Search, "search", onClick = actions.search)
-    val sync = actions.sync?.let { AppBarButton(MetroIcon.Sync, "sync", spinning = syncing, onClick = it) }
-    // Section actions first, then the app's destinations; sync account and sync log live in settings.
+    // Due North Budget's hub menu: the section's own tools, then the shared tail under a rule (sync,
+    // then settings, last as WP8.1 apps put it). Sync account and sync log live in settings.
     val menu = listOfNotNull(
         pinned?.let { AppBarMenuItem("unpin from home") { onUnpin(it) } },
         AppBarMenuItem("reorder lists") { actions.reorderLists(null) }.takeIf { section == LISTS },
-        AppBarMenuItem("templates", actions.openTemplates),
-        AppBarMenuItem("settings", actions.openSettings)
-    ) + actions.menuItems
-    // Every section has an add button in the first slot, so sync and search never shift; on stats
-    // it adds to today.
+        AppBarMenuItem("templates", onClick = actions.openTemplates)
+    ) + hubTail(actions.sync, actions.openSettings) + actions.menuItems
+    // Every hub section leads with add, its caption the noun alone (the + is the verb); on stats it
+    // adds to today. So search never moves.
     val first = when (section) {
-        LISTS -> AppBarButton(MetroIcon.Add, "add list", onClick = onNewList)
-        else -> AppBarButton(MetroIcon.Add, "add task") { onNewTask(section) }
+        LISTS -> AppBarButton(MetroIcon.Add, "add list", caption = "list", onClick = onNewList)
+        else -> AppBarButton(MetroIcon.Add, "add task", caption = "task") { onNewTask(section) }
     }
-    MetroAppBar(buttons = listOfNotNull(first, sync, search), menuItems = menu)
+    MetroAppBar(buttons = listOf(first, search), menuItems = menu)
 }
+
+/**
+ * The tail every hub and object page menu ends with, under a rule, as in Due North Budget: sync when
+ * there is a sync engine, then settings.
+ */
+internal fun hubTail(sync: (() -> Unit)?, openSettings: () -> Unit): List<AppBarMenuItem> = listOfNotNull(
+    sync?.let { AppBarMenuItem("sync", onClick = it) },
+    AppBarMenuItem("settings", onClick = openSettings)
+).mapIndexed { i, item -> if (i == 0) item.copy(rule = true) else item }
 
 @Composable
 internal fun EmptyNote(text: String) {

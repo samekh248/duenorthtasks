@@ -61,13 +61,7 @@ enum class MetroIcon {
     Notes,
 
     /** An arrow into a bar: move to another list. */
-    Move,
-
-    /** A floppy disk: save the edits on a page. */
-    Save,
-
-    /** A play triangle: use a template, making a list from it. Check stays for complete only. */
-    Use
+    Move
 }
 
 @Composable
@@ -168,37 +162,6 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
             line(20f, 5f, 20f, 19f)
         }
 
-        // WP8.1's save: a disk with its shutter along the top and a label across the bottom.
-        MetroIcon.Save -> {
-            path {
-                moveTo(4f * u, 4f * u)
-                lineTo(17f * u, 4f * u)
-                lineTo(20f * u, 7f * u)
-                lineTo(20f * u, 20f * u)
-                lineTo(4f * u, 20f * u)
-                close()
-            }
-            path {
-                moveTo(8f * u, 4f * u)
-                lineTo(8f * u, 9f * u)
-                lineTo(15f * u, 9f * u)
-                lineTo(15f * u, 4f * u)
-            }
-            path {
-                moveTo(7f * u, 20f * u)
-                lineTo(7f * u, 13.5f * u)
-                lineTo(17f * u, 13.5f * u)
-                lineTo(17f * u, 20f * u)
-            }
-        }
-
-        MetroIcon.Use -> path {
-            moveTo(7f * u, 4.5f * u)
-            lineTo(19f * u, 12f * u)
-            lineTo(7f * u, 19.5f * u)
-            close()
-        }
-
         MetroIcon.Add -> {
             line(12f, 4f, 12f, 20f)
             line(4f, 12f, 20f, 12f)
@@ -209,6 +172,7 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
             line(19f, 5f, 5f, 19f)
         }
 
+        // As in Due North Budget, the check commits: complete, save, use, done.
         MetroIcon.Check -> path {
             moveTo(4f * u, 12.5f * u)
             lineTo(9.5f * u, 18f * u)

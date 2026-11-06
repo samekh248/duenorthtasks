@@ -148,7 +148,7 @@ fun SyncAccountContent(
                 )
             ),
             // Rare and it clears the phone, so it sits behind the ellipsis rather than on a Close button.
-            menuItems = listOf(AppBarMenuItem("sign out") { signingOut = true })
+            menuItems = listOf(AppBarMenuItem("sign out", destructive = true) { signingOut = true })
         )
     }
 

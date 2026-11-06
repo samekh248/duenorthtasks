@@ -50,18 +50,18 @@ flowchart TD
 
 ## Screen contracts
 
-App bars and menus follow [spec 008](../../008-menu-cleanup/spec.md): the main action first, menus in the order organize, share, delete, destinations.
+App bars and menus follow [spec 008](../../008-menu-cleanup/spec.md): the same rules as Due North Budget. Add or the ✓ leads the bar; the menu holds the page's other tools, then settings under a rule, then delete last in the accent. Forms show only save and cancel.
 
 | Screen | Layout | App bar buttons (labels on `•••`) | Overflow menu |
 |---|---|---|---|
-| Home panorama, "today" | "tasks" title with "due north" under it; "today" header, date caption, "add a task" box (with "add details" link once typing); task rows (square checkbox, 20sp title, up to two grey 14sp lines of details, 13sp caption "List · when", red if overdue); "tomorrow" group | add task, sync, search | templates, settings |
-| Home panorama, "lists" | One row per list: 64dp tile in the list's shade of the app accent (the accent itself by default) with count, 24sp name, "next: ..." caption; "add list" row with outlined + tile. Shared lists (spec 002) add a two-people glyph top-left on the tile and start the caption with "shared" or "shared with you". Long-press a tile: reorder, rename, pin / unpin from home, list shade, sharing, make template, delete (rename and delete only for lists the user owns) | add list, sync, search | reorder lists, templates, settings |
-| Home panorama, pinned list | One section per list pinned from the lists section or the list page, between "today" and "lists", in pin order: the list name as header, an "add a task" box for that list and its open tasks, all in the list's shade | add task, sync, search | unpin from home, templates, settings |
-| Home panorama, "stats" | Tasks done this week against last week, by day (spec 005) | add task (to today), sync, search | templates, settings |
-| List page | "DUE NORTH" small caps, list name as 52sp header, for shared lists a "shared · details" / "shared with you · details" line in the list's shade (spec 002), open tasks with due captions in the list's shade, collapsible "completed" group | add task, reorder, sort, sharing | rename list, pin / unpin from home, list shade, make template, clear completed, delete list (rename and delete only for lists the user owns) |
+| Home panorama, "today" | "tasks" title with "due north" under it; "today" header, date caption, "add a task" box (with "add details" link once typing); task rows (square checkbox, 20sp title, up to two grey 14sp lines of details, 13sp caption "List · when", red if overdue); "tomorrow" group | add task, search | templates, sync, settings |
+| Home panorama, "lists" | One row per list: 64dp tile in the list's shade of the app accent (the accent itself by default) with count, 24sp name, "next: ..." caption; "add list" row with outlined + tile. Shared lists (spec 002) add a two-people glyph top-left on the tile and start the caption with "shared" or "shared with you". Long-press a tile: reorder, rename, pin / unpin from home, list shade, sharing, make template, delete (rename and delete only for lists the user owns) | add list, search | reorder lists, templates, sync, settings |
+| Home panorama, pinned list | One section per list pinned from the lists section or the list page, between "today" and "lists", in pin order: the list name as header, an "add a task" box for that list and its open tasks, all in the list's shade | add task, search | unpin from home, templates, sync, settings |
+| Home panorama, "stats" | Tasks done this week against last week, by day (spec 005) | add task (to today), search | templates, sync, settings |
+| List page | "DUE NORTH" small caps, list name as 52sp header, for shared lists a "shared · details" / "shared with you · details" line in the list's shade (spec 002), open tasks with due captions in the list's shade, collapsible "completed" group | add task, reorder, sort, sharing | rename list, pin / unpin from home, list shade, make template, clear completed, settings, delete list (rename and delete only for lists the user owns) |
 | Sharing (spec 002) | Overline = list name, header "sharing"; "status" (shared by you / shared with you / only you), "who's in it" (the service doesn't tell other apps; link to Microsoft To Do), "what you can do here", "list shade" link. Never shows member names | none | none |
 | List shade | Header "list shade", a row of seven flat swatches from lightest to darkest shade of the app accent (middle one = the accent, default), with a live preview of the list's tile and a task caption | none | none |
-| Task detail | "DUE NORTH · LIST" small caps, title 38sp Light, "due <date>" in accent, "details" label with full text (links tappable), steps if any, then due and list pickers, important (To Do only); tapping the title or details opens them for editing | complete / reopen, edit (save while editing) | reorder steps, move to list, discard changes (while editing), delete |
+| Task detail | "DUE NORTH · LIST" small caps, title 38sp Light, "due <date>" in accent, "details" label with full text (links tappable), steps if any, then due and list pickers, important (To Do only); tapping the title or details opens them for editing | complete / reopen, edit task; while typing save, cancel | reorder steps, move to list, settings, delete task; while typing only delete task |
 | Search | Header "search", text field focused, results grouped by list | none | none |
 | Sync account | "DUE NORTH" small caps, "sync account" header, one-line explanation, radio group (Google Tasks / Microsoft To Do, with "signed in as ..." or "not connected"), switching note, "sync every" picker, "sync on Wi-Fi only" toggle | sync now | sign out |
 | Settings | Pivot: "theme", "sync account", "about" | none | none |
@@ -92,6 +92,6 @@ Google Tasks" (or Microsoft To Do).
   Google Tasks. Your tasks stay in that account and come back when you switch again." It warns
   first if there are unsynced changes.
 - Long-press on a task opens a Metro context menu (the item scales down slightly, menu drops
-  below it): "edit", "delete", "move to".
+  below it): edit, reorder, move to list, mark important, make template, delete (last, in the accent).
 - Pull down on a section or list triggers sync and shows progress dots across the top edge.
 - The status bar matches the theme background; system bars are edge-to-edge.

@@ -86,11 +86,12 @@ fun ListScreen(
     onTemplates: TemplateLinks = TemplateLinks(),
     /** "edit" on a task's menu: its page with the title and details open for typing. */
     onEditTask: (String) -> Unit = onOpenTask,
+    onSettings: () -> Unit = {},
     viewModel: ListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
-    ListContent(state, viewModel, onOpenTask, onShade, onInfo, onTemplates, onEditTask)
+    ListContent(state, viewModel, onOpenTask, onShade, onInfo, onTemplates, onEditTask, onSettings)
 }
 
 /** Where "make template" leads: the new template's editor (spec 004 US3). */
@@ -105,7 +106,8 @@ fun ListContent(
     onShade: (String) -> Unit = {},
     onInfo: (String) -> Unit = {},
     onTemplates: TemplateLinks = TemplateLinks(),
-    onEditTask: (String) -> Unit = onOpenTask
+    onEditTask: (String) -> Unit = onOpenTask,
+    onSettings: () -> Unit = {}
 ) {
     ListAccent(viewModel.listId) {
         if (state.reordering) {
@@ -114,7 +116,7 @@ fun ListContent(
                 viewModel
             )
         } else {
-            ListPage(state, viewModel, onOpenTask, onEditTask, onShade, onInfo, onTemplates)
+            ListPage(state, viewModel, onOpenTask, onEditTask, onShade, onInfo, onTemplates, onSettings)
         }
         if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
     }
@@ -155,7 +157,7 @@ private fun ReorderTasksPage(state: ListUiState, viewModel: ListViewModel) {
                 )
             }
         }
-        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Reorder, "done", onClick = viewModel::endReorder)))
+        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = viewModel::endReorder)))
     }
 }
 
@@ -167,7 +169,8 @@ private fun ListPage(
     onEditTask: (String) -> Unit,
     onShade: (String) -> Unit,
     onInfo: (String) -> Unit,
-    onTemplates: TemplateLinks
+    onTemplates: TemplateLinks,
+    onSettings: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val continuum = rememberContinuumState()
@@ -275,15 +278,15 @@ private fun ListPage(
             }
         }
         MetroAppBar(
-            // The sharing page is one button on every list, shared or not, so it has one way in.
+            // Due North Budget's object page: add first, its verbs on the bar (captions the noun alone),
+            // the rest in the menu, then settings under a rule, and delete last in the accent.
             buttons = listOf(
-                AppBarButton(MetroIcon.Add, "add task") { addFocus.requestFocus() },
+                AppBarButton(MetroIcon.Add, "add task", caption = "task") { addFocus.requestFocus() },
                 AppBarButton(MetroIcon.Reorder, "reorder", enabled = state.open.size > 1) { viewModel.startReorder() },
                 AppBarButton(MetroIcon.Sort, "sort") { sorting = true },
                 AppBarButton(MetroIcon.People, "sharing") { onInfo(viewModel.listId) }
             ),
-            // Organize, share, then the ones that throw tasks away, last. Only the owner can
-            // rename or delete a shared list (spec 002 FR-120).
+            // Only the owner can rename or delete a shared list (spec 002 FR-120).
             menuItems = listOfNotNull(
                 AppBarMenuItem("rename list") { renaming = true }.takeIf { state.sharing.canManage },
                 AppBarMenuItem(if (state.pinned) "unpin from home" else "pin to home") {
@@ -292,7 +295,8 @@ private fun ListPage(
                 AppBarMenuItem("list shade") { onShade(viewModel.listId) },
                 AppBarMenuItem("make template") { viewModel.saveAsTemplate(onTemplates.openListTemplate) },
                 AppBarMenuItem("clear completed") { clearing = true }.takeIf { state.completed.isNotEmpty() },
-                AppBarMenuItem("delete list") { deleting = true }.takeIf { state.sharing.canManage }
+                AppBarMenuItem("settings", rule = true, onClick = onSettings),
+                AppBarMenuItem("delete list", destructive = true) { deleting = true }.takeIf { state.sharing.canManage }
             )
         )
     }

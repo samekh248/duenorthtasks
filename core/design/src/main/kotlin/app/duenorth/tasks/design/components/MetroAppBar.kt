@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.motion.LocalAnimationsEnabled
 import app.duenorth.tasks.design.motion.MetroEasing
@@ -53,16 +54,30 @@ import app.duenorth.tasks.design.theme.Relief
 @Immutable
 data class AppBarButton(
     val icon: MetroIcon,
-    /** Shown under the button when the bar is expanded, and read by TalkBack. */
+    /** The whole command, verb and noun ("add task"): what TalkBack reads. */
     val label: String,
     val enabled: Boolean = true,
     /** Turns the glyph while true (the sync button during a sync); it finishes its turn when set false. */
     val spinning: Boolean = false,
+    /**
+     * The one line under the glyph when the bar is expanded. The glyph is the verb, so this is only the noun ("task"
+     * under +), as in Due North Budget; [label] stays the screen reader's name.
+     */
+    val caption: String = label,
     val onClick: () -> Unit
 )
 
+/**
+ * An overflow menu line, in lowercase, verb first. [rule] starts a new group under a thin rule (the shared sync and
+ * settings tail); [destructive] marks a command that throws something away: the last line, in the accent, under a rule.
+ */
 @Immutable
-data class AppBarMenuItem(val label: String, val onClick: () -> Unit)
+data class AppBarMenuItem(
+    val label: String,
+    val rule: Boolean = false,
+    val destructive: Boolean = false,
+    val onClick: () -> Unit
+)
 
 private const val MAX_BUTTONS = 4
 private const val EXPAND_MS = 200
@@ -151,11 +166,13 @@ fun MetroAppBar(
         }
         if (expanded && menuItems.isNotEmpty()) {
             Column(Modifier.padding(start = MetroDimens.Gutter * 2, bottom = MetroDimens.Gutter)) {
-                menuItems.forEach { item ->
+                menuItems.forEachIndexed { index, item ->
+                    if (index > 0 && (item.rule || item.destructive)) MenuRule(end = MetroDimens.Gutter * 2)
                     MetroText(
                         item.label,
                         type.subheader,
-                        Modifier
+                        color = if (item.destructive) MetroTheme.accent.text else colors.foreground,
+                        modifier = Modifier
                             .fillMaxWidth()
                             .metroTilt()
                             .clickable(interactionSource = null, indication = null, role = Role.Button) {
@@ -219,7 +236,7 @@ private fun AppBarIconButton(button: AppBarButton, showLabel: Boolean, onClick: 
         }
         if (showLabel) {
             MetroText(
-                button.label,
+                button.caption,
                 MetroTheme.typography.caption,
                 Modifier.padding(top = 4.dp, bottom = 6.dp),
                 color = color,
@@ -278,7 +295,7 @@ private fun Mobile10CommandBar(
                     MetroIconGlyph(button.icon, Modifier.spin(button.spinning), color = color, size = 24.dp)
                     if (expanded) {
                         MetroText(
-                            button.label,
+                            button.caption,
                             MetroTheme.typography.caption,
                             Modifier.padding(top = 4.dp),
                             color = color,
@@ -302,11 +319,15 @@ private fun Mobile10CommandBar(
         }
         if (expanded && menuItems.isNotEmpty()) {
             Column(Modifier.padding(bottom = 8.dp)) {
-                menuItems.forEach { item ->
+                menuItems.forEachIndexed { index, item ->
+                    if (index > 0 && (item.rule || item.destructive)) {
+                        MenuRule(start = MetroDimens.Gutter, end = MetroDimens.Gutter)
+                    }
                     MetroText(
                         item.label,
                         MetroTheme.typography.body,
-                        Modifier
+                        color = if (item.destructive) MetroTheme.accent.text else colors.foreground,
+                        modifier = Modifier
                             .fillMaxWidth()
                             .clickable(interactionSource = null, indication = null, role = Role.Button) {
                                 onExpandedChange(false)
@@ -322,6 +343,18 @@ private fun Mobile10CommandBar(
 }
 
 private val Mobile10CommandBarHeight = 48.dp
+
+/** The thin rule that starts a new group of menu lines. */
+@Composable
+private fun MenuRule(start: Dp = 0.dp, end: Dp = 0.dp) {
+    Box(
+        Modifier
+            .padding(start = start, end = end, top = 4.dp, bottom = 4.dp)
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(MetroTheme.colors.outline)
+    )
+}
 
 /**
  * A steady turn while [spinning], drawn in the layer only so nothing recomposes per frame. When it
