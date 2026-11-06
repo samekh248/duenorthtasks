@@ -156,7 +156,7 @@ class StatsScreenshotTest {
                 }
             )[HomeViewModel::class.java]
         val source = StatsSource(tasks, flowOf(partial), clock) { DayOfWeek.SUNDAY }
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {})
         compose.setContent {
             MetroTheme(darkTheme = dark) {
                 val state by viewModel.state.collectAsState()

@@ -121,13 +121,14 @@ class PinnedListsScreenshotTest {
 
         // lists ← Errands ← Work ← today ← stats: back from "lists" to "today", then round to "stats".
         swipeRight("lists")
-        compose.waitUntilAtLeastOneExists(hasContentDescription("new task"), TIMEOUT)
+        compose.waitUntilAtLeastOneExists(hasContentDescription("add task"), TIMEOUT)
         swipeRight("pinned:Errands")
         swipeRight("pinned:Work")
-        compose.waitUntilAtLeastOneExists(hasContentDescription("new task"), TIMEOUT)
+        compose.waitUntilAtLeastOneExists(hasContentDescription("add task"), TIMEOUT)
         swipeRight("today")
-        compose.waitUntilDoesNotExist(hasContentDescription("new task"), TIMEOUT)
-        compose.onNodeWithContentDescription("new list").assertDoesNotExist()
+        // Stats keeps add task in the first slot (it adds to today), so the buttons never shift.
+        compose.waitUntilAtLeastOneExists(hasContentDescription("add task"), TIMEOUT)
+        compose.onNodeWithContentDescription("add list").assertDoesNotExist()
 
         // And on from "stats" round to "today" and the first pinned list.
         swipeLeft("stats")
@@ -163,10 +164,10 @@ class PinnedListsScreenshotTest {
         compose.onNodeWithText("pin to home").performClick()
         compose.waitUntilAtLeastOneExists(hasTestTag("pinned:Errands"), TIMEOUT)
         // Pinning keeps "lists" in view; the new section is just before it.
-        compose.waitUntilAtLeastOneExists(hasContentDescription("new list"), TIMEOUT)
+        compose.waitUntilAtLeastOneExists(hasContentDescription("add list"), TIMEOUT)
 
         swipeRight("lists")
-        compose.waitUntilAtLeastOneExists(hasContentDescription("new task"), TIMEOUT)
+        compose.waitUntilAtLeastOneExists(hasContentDescription("add task"), TIMEOUT)
         settle()
         snap("pinned_section", dark)
 
@@ -177,7 +178,7 @@ class PinnedListsScreenshotTest {
         compose.onNodeWithText("unpin from home").performClick()
         compose.waitUntilDoesNotExist(hasTestTag("pinned:Errands"), TIMEOUT)
         // The section that took its place, "lists", comes into view.
-        compose.waitUntilAtLeastOneExists(hasContentDescription("new list"), TIMEOUT)
+        compose.waitUntilAtLeastOneExists(hasContentDescription("add list"), TIMEOUT)
         settle()
         snap("after_unpin", dark)
     }
@@ -232,7 +233,7 @@ class PinnedListsScreenshotTest {
         val shades = runBlocking {
             mapOf(tasks.listSummaries().first().first { it.title == "Errands" }.localId to -2)
         }
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show(dark, shades) {
             val state by viewModel.state.collectAsState()
             HomeContent(state, viewModel, actions)

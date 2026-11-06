@@ -95,7 +95,7 @@ private fun ReorderTemplateTasks(state: ListTemplateUiState, viewModel: ListTemp
                 ReorderRow(title = task.title, caption = task.caption, captionColor = MetroTheme.colors.secondary)
             }
         }
-        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = viewModel::endReorder)))
+        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Reorder, "done", onClick = viewModel::endReorder)))
     }
 }
 
@@ -141,11 +141,11 @@ private fun TemplatePage(state: ListTemplateUiState, viewModel: ListTemplateView
                         task,
                         onOpen = { actions.editTask(task.id) },
                         menu = listOfNotNull(
-                            ContextMenuItem("reorder") {
+                            ContextMenuItem("edit", MetroIcon.Edit) { actions.editTask(task.id) },
+                            ContextMenuItem("reorder", MetroIcon.Reorder) {
                                 viewModel.startReorder(task.id)
                             }.takeIf { state.tasks.size > 1 },
-                            ContextMenuItem("edit") { actions.editTask(task.id) },
-                            ContextMenuItem("delete") { viewModel.deleteTask(task.id) }
+                            ContextMenuItem("delete", MetroIcon.Delete) { viewModel.deleteTask(task.id) }
                         ),
                         modifier = Modifier.animateItem()
                     )
@@ -154,8 +154,8 @@ private fun TemplatePage(state: ListTemplateUiState, viewModel: ListTemplateView
         }
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Check, "use", onClick = actions.use),
-                AppBarButton(MetroIcon.Add, "add") { adding = true },
+                AppBarButton(MetroIcon.Use, "use", onClick = actions.use),
+                AppBarButton(MetroIcon.Add, "add task") { adding = true },
                 AppBarButton(MetroIcon.Reorder, "reorder", enabled = state.tasks.size > 1) { viewModel.startReorder() }
             ),
             menuItems = listOf(

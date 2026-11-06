@@ -211,6 +211,11 @@ class HomeViewModel @Inject constructor(
         add(pick.title, pick.details, due, listId) { list, id -> templates.useTaskTemplate(pick.id, list, today, id) }
     }
 
+    /** Saves list [id], with its shade [step], as a list template and hands its id to [then] (spec 004 US3). */
+    fun saveListAsTemplate(id: String, step: Int, then: (String) -> Unit) {
+        viewModelScope.launch { runCatching { templates.saveListAsTemplate(id, step).id }.onSuccess(then) }
+    }
+
     /** Saves task [id] as a task template and hands the template's id to [then] (spec 004 US3). */
     fun saveTaskAsTemplate(id: String, then: (String) -> Unit) {
         viewModelScope.launch { runCatching { templates.saveTaskAsTemplate(id) }.onSuccess(then) }

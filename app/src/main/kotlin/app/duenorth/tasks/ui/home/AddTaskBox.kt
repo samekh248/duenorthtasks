@@ -39,7 +39,7 @@ import java.time.LocalDate
 
 /**
  * The "add a task" box at the top of today (FR-011a, contracts/ui-screens.md "Adding a task").
- * Enter adds a title-only task due today. Once there is text, an accent "add details" link grows
+ * Enter adds a title-only task due today. Once there is text, an accent "more details" link grows
  * the same box in place with details, a due date chip and a list chip.
  */
 @Composable
@@ -90,7 +90,7 @@ fun AddTaskBox(
             titleField()
             if (title.isNotEmpty()) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    MetroLink("+ add details", { expanded = true })
+                    MetroLink("more details", { expanded = true })
                     Spacer(Modifier.weight(1f))
                     MetroText("enter adds it", MetroTheme.typography.caption, color = MetroTheme.colors.secondary)
                 }
@@ -135,7 +135,7 @@ fun AddTaskBox(
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 MetroLink("hide details", { expanded = false })
                 Spacer(Modifier.weight(1f))
-                MetroButton("add", {
+                MetroButton("add task", {
                     submit(title.trim())
                     titleState.clearText()
                 }, enabled = title.isNotBlank())
@@ -152,7 +152,7 @@ fun AddTaskBox(
 
     if (pickingList && lists.isNotEmpty()) {
         MetroPickerDialog(
-            title = "add to list",
+            title = "list",
             options = lists,
             selected = list,
             label = { it.title },

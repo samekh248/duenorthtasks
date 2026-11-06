@@ -89,7 +89,7 @@ class HomeAddThenTickTest {
             testPinnedLists(tasks, accounts),
             clock
         )
-        val actions = HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {})
+        val actions = HomeActions(openTask = {}, openList = {}, search = {})
         compose.setContent {
             val state by viewModel.state.collectAsState()
             MetroTheme(darkTheme = false) { HomeContent(state, viewModel, actions) }

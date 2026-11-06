@@ -1,5 +1,6 @@
 package app.duenorth.tasks.ui.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -83,20 +84,24 @@ import java.util.Locale
 fun TaskDetailScreen(
     onClosed: () -> Unit,
     animatedScope: AnimatedVisibilityScope?,
+    /** Opens with the title and details ready for typing, as "edit" on a task's menu asks. */
+    startEditing: Boolean = false,
     viewModel: TaskDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
-    TaskDetailContent(state, viewModel, animatedScope)
+    TaskDetailContent(state, viewModel, animatedScope, startEditing)
 }
 
 @Composable
 fun TaskDetailContent(
     state: TaskDetailUiState,
     viewModel: TaskDetailViewModel,
-    animatedScope: AnimatedVisibilityScope?
+    animatedScope: AnimatedVisibilityScope?,
+    startEditing: Boolean = false
 ) {
     var editing by rememberSaveable { mutableStateOf(false) }
+    var openedForEditing by rememberSaveable { mutableStateOf(false) }
     // The title and details as typed: the app bar's save writes them, and complete saves them first.
     var draftTitle by rememberSaveable { mutableStateOf("") }
     var draftDetails by rememberSaveable { mutableStateOf("") }
@@ -126,7 +131,7 @@ fun TaskDetailContent(
         return
     }
 
-    val startEditing = {
+    val beginEditing = {
         draftTitle = state.title
         draftDetails = state.details.orEmpty()
         editing = true
@@ -136,6 +141,15 @@ fun TaskDetailContent(
         if (canSave) viewModel.save(draftTitle, draftDetails)
         editing = false
     }
+    // "edit" on a task's menu opens the page ready for typing, once the task has loaded.
+    LaunchedEffect(startEditing, state.loading) {
+        if (startEditing && !openedForEditing && !state.loading) {
+            openedForEditing = true
+            beginEditing()
+        }
+    }
+    // Back while typing keeps what was typed, like complete does, and stays on the page.
+    BackHandler(enabled = editing) { saveEdits() }
 
     Column(Modifier.fillMaxSize().background(colors.background).imePadding()) {
         Column(
@@ -162,6 +176,11 @@ fun TaskDetailContent(
                     onDetailsChange = { draftDetails = it },
                     modifier = Modifier.testTag("edit-fields")
                 )
+                MetroText(
+                    "Save keeps the title and details. Everything else saves as you change it.",
+                    type.caption,
+                    color = colors.secondary
+                )
             } else {
                 // Tapping the title or the details opens them for editing; save in the app bar writes them.
                 MetroText(
@@ -176,7 +195,7 @@ fun TaskDetailContent(
                             interactionSource = null,
                             indication = null,
                             onClickLabel = "edit",
-                            onClick = startEditing
+                            onClick = beginEditing
                         )
                 )
                 if (state.due != null) DueLine(DueText.dueLine(state.due, state.today), listAccent(state.listId))
@@ -188,7 +207,7 @@ fun TaskDetailContent(
                             interactionSource = null,
                             indication = null,
                             onClickLabel = "edit",
-                            onClick = startEditing
+                            onClick = beginEditing
                         )
                     ) { DetailsBox(state.details) }
                 }
@@ -280,7 +299,8 @@ fun TaskDetailContent(
                 )
             }
         }
-        // WP8.1's edit page: complete and save as round buttons, everything else behind the ellipsis.
+        // WP8.1's edit page: complete (check, the only check in the app) in the first slot, then
+        // edit, which turns into save while typing; everything else behind the ellipsis.
         MetroAppBar(
             buttons = listOf(
                 AppBarButton(MetroIcon.Check, if (state.completed) "reopen" else "complete", enabled = !state.loading) {
@@ -288,16 +308,17 @@ fun TaskDetailContent(
                     if (editing) saveEdits()
                     viewModel.setCompleted(!state.completed)
                 },
-                AppBarButton(MetroIcon.Save, "save", enabled = canSave) { saveEdits() }
-            ),
-            menuItems = listOfNotNull(
                 if (editing) {
-                    AppBarMenuItem("discard changes") { editing = false }
+                    AppBarButton(MetroIcon.Save, "save", enabled = canSave) { saveEdits() }
                 } else {
-                    AppBarMenuItem("edit") { startEditing() }.takeIf { !state.loading }
-                },
+                    AppBarButton(MetroIcon.Edit, "edit", enabled = !state.loading) { beginEditing() }
+                }
+            ),
+            // Organize, then the ones that throw something away, last.
+            menuItems = listOfNotNull(
                 AppBarMenuItem("reorder steps") { viewModel.startReorder() }.takeIf { state.steps.size > 1 },
                 AppBarMenuItem("move to list") { moving = true },
+                AppBarMenuItem("discard changes") { editing = false }.takeIf { editing },
                 AppBarMenuItem("delete") { deleting = true }
             )
         )

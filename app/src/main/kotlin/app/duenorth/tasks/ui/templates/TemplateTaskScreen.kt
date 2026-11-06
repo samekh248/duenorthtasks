@@ -1,5 +1,6 @@
 package app.duenorth.tasks.ui.templates
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,7 +46,7 @@ import app.duenorth.tasks.ui.common.ReorderRow
 import app.duenorth.tasks.ui.common.ReorderStepsPage
 import app.duenorth.tasks.ui.common.SectionLabel
 import app.duenorth.tasks.ui.common.StepRow
-import app.duenorth.tasks.ui.common.TitleDetailsForm
+import app.duenorth.tasks.ui.common.TitleDetailsFields
 
 @Composable
 fun TemplateTaskScreen(onClosed: () -> Unit, viewModel: TemplateTaskViewModel = hiltViewModel()) {
@@ -63,6 +64,9 @@ private fun overline(state: TemplateTaskUiState) =
 @Composable
 fun TemplateTaskContent(state: TemplateTaskUiState, viewModel: TemplateTaskViewModel) {
     var editing by rememberSaveable { mutableStateOf(false) }
+    // The title and details as typed: the app bar's save writes them, as on a task's page.
+    var draftTitle by rememberSaveable { mutableStateOf("") }
+    var draftDetails by rememberSaveable { mutableStateOf("") }
     var deleting by rememberSaveable { mutableStateOf(false) }
     var pickingDue by rememberSaveable { mutableStateOf(false) }
     val type = MetroTheme.typography
@@ -81,6 +85,18 @@ fun TemplateTaskContent(state: TemplateTaskUiState, viewModel: TemplateTaskViewM
         return
     }
 
+    val beginEditing = {
+        draftTitle = state.title
+        draftDetails = state.details.orEmpty()
+        editing = true
+    }
+    val canSave = editing && draftTitle.isNotBlank()
+    val saveEdits = {
+        if (canSave) viewModel.save(draftTitle, draftDetails)
+        editing = false
+    }
+    BackHandler(enabled = editing) { saveEdits() }
+
     Column(Modifier.fillMaxSize().background(MetroTheme.colors.background).imePadding()) {
         Column(
             Modifier
@@ -98,15 +114,7 @@ fun TemplateTaskContent(state: TemplateTaskUiState, viewModel: TemplateTaskViewM
                 return@Column
             }
             if (editing) {
-                TitleDetailsForm(
-                    title = state.title,
-                    details = state.details.orEmpty(),
-                    onSave = { title, details ->
-                        viewModel.save(title, details)
-                        editing = false
-                    },
-                    onCancel = { editing = false }
-                )
+                TitleDetailsFields(draftTitle, { draftTitle = it }, draftDetails, { draftDetails = it })
             } else {
                 MetroText(state.title, type.detailTitle, Modifier.semantics { heading() })
                 if (!state.details.isNullOrBlank()) {
@@ -149,13 +157,19 @@ fun TemplateTaskContent(state: TemplateTaskUiState, viewModel: TemplateTaskViewM
                 )
             }
         }
+        // The task page's bar without complete: edit, which turns into save while typing; delete last in the menu.
         MetroAppBar(
             buttons = listOf(
-                AppBarButton(MetroIcon.Edit, "edit") { editing = true },
-                AppBarButton(MetroIcon.Delete, "delete") { deleting = true }
+                if (editing) {
+                    AppBarButton(MetroIcon.Save, "save", enabled = canSave) { saveEdits() }
+                } else {
+                    AppBarButton(MetroIcon.Edit, "edit", enabled = !state.loading) { beginEditing() }
+                }
             ),
             menuItems = listOfNotNull(
-                AppBarMenuItem("reorder steps") { viewModel.startReorder() }.takeIf { state.steps.size > 1 }
+                AppBarMenuItem("reorder steps") { viewModel.startReorder() }.takeIf { state.steps.size > 1 },
+                AppBarMenuItem("discard changes") { editing = false }.takeIf { editing },
+                AppBarMenuItem("delete") { deleting = true }
             )
         )
     }

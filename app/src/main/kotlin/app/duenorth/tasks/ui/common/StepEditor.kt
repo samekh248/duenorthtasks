@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,11 +34,9 @@ import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.components.AppBarButton
 import app.duenorth.tasks.design.components.ContextMenuItem
 import app.duenorth.tasks.design.components.MetroAppBar
-import app.duenorth.tasks.design.components.MetroButton
 import app.duenorth.tasks.design.components.MetroCheckBox
 import app.duenorth.tasks.design.components.MetroContextMenu
 import app.duenorth.tasks.design.components.MetroIcon
-import app.duenorth.tasks.design.components.MetroLink
 import app.duenorth.tasks.design.components.MetroQuickAddField
 import app.duenorth.tasks.design.components.MetroReorderList
 import app.duenorth.tasks.design.components.MetroText
@@ -49,7 +46,7 @@ import app.duenorth.tasks.design.theme.MetroTheme
 
 /*
  * The parts a task and a task template share on their pages: section labels, the title and
- * details form, step rows, the "add a step" box and the reorder steps page.
+ * details fields, step rows, the "add a step" box and the reorder steps page.
  */
 
 /** A small secondary caption over a section of a task or template page. */
@@ -59,22 +56,7 @@ fun SectionLabel(text: String) {
     MetroText(text, MetroTheme.typography.caption, color = MetroTheme.colors.secondary)
 }
 
-/** Edits a title and its details in place; save stays off while the title is blank. */
-@Composable
-fun TitleDetailsForm(title: String, details: String, onSave: (String, String) -> Unit, onCancel: () -> Unit) {
-    var newTitle by rememberSaveable { mutableStateOf(title) }
-    var newDetails by rememberSaveable { mutableStateOf(details) }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TitleDetailsFields(newTitle, { newTitle = it }, newDetails, { newDetails = it })
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            MetroLink("cancel", onCancel)
-            Spacer(Modifier.weight(1f))
-            MetroButton("save", { onSave(newTitle, newDetails) }, enabled = newTitle.isNotBlank())
-        }
-    }
-}
-
-/** The title and details boxes alone, for a page whose app bar saves them (the task page). */
+/** The title and details boxes; the page's app bar saves them (the task and task template pages). */
 @Composable
 fun TitleDetailsFields(
     title: String,
@@ -152,7 +134,7 @@ fun StepRow(
             onDismiss = { menu = false },
             items = listOfNotNull(
                 onReorder?.let { ContextMenuItem("reorder", MetroIcon.Reorder, it) },
-                ContextMenuItem("remove", MetroIcon.Delete, onRemove)
+                ContextMenuItem("delete", MetroIcon.Delete, onRemove)
             )
         )
     }
@@ -201,7 +183,7 @@ fun <T> ReorderStepsPage(
                 header = { item(key = "hint", contentType = "hint") { ReorderHint("drag a step to move it") } }
             ) { step -> row(step) }
         }
-        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Check, "done", onClick = onDone)))
+        MetroAppBar(buttons = listOf(AppBarButton(MetroIcon.Reorder, "done", onClick = onDone)))
     }
 }
 

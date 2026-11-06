@@ -190,13 +190,13 @@ class TemplatesScreenshotTest {
             HomeContent(
                 state,
                 viewModel,
-                HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {}),
+                HomeActions(openTask = {}, openList = {}, search = {}),
                 showLists = !shown,
                 onListsShown = { shown = true }
             )
         }
         compose.waitUntil(TIMEOUT) { shown }
-        compose.waitUntilAtLeastOneExists(hasContentDescription("new list"), TIMEOUT)
+        compose.waitUntilAtLeastOneExists(hasContentDescription("add list"), TIMEOUT)
     }
 
     private suspend fun task(
@@ -283,7 +283,7 @@ class TemplatesScreenshotTest {
             )[HomeViewModel::class.java]
         show(dark) {
             val state by viewModel.state.collectAsState()
-            HomeContent(state, viewModel, HomeActions(openTask = {}, openList = {}, search = {}, openSyncAccount = {}))
+            HomeContent(state, viewModel, HomeActions(openTask = {}, openList = {}, search = {}))
         }
         compose.waitUntilAtLeastOneExists(hasText("use a template"), TIMEOUT)
         compose.onNodeWithText("use a template").performClick()
