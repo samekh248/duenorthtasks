@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The app icon badge is drawn from one quiet notification holding today's count. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- "see people in microsoft to do" opens the To Do app when it is installed (spec 002). -->
     <queries>

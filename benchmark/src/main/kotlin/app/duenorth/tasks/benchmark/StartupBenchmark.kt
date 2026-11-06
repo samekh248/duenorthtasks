@@ -30,7 +30,10 @@ class StartupBenchmark {
         compilationMode = CompilationMode.Partial(),
         startupMode = mode,
         iterations = 5,
-        setupBlock = { pressHome() }
+        setupBlock = {
+            allowNotifications()
+            pressHome()
+        }
     ) {
         startActivityAndWait()
     }
