@@ -54,12 +54,14 @@ fun MetroTheme(
     val selection = remember(accentColors) {
         TextSelectionColors(handleColor = accentColors.fill, backgroundColor = accentColors.fill.copy(alpha = 0.4f))
     }
+    // Dark ink on white reads thinner than light ink on black, so a light page sets its type a weight heavier.
+    val lightAware = remember(typography, darkTheme) { if (darkTheme) typography else typography.forLightPage() }
     CompositionLocalProvider(
         LocalMetroColors provides colors,
         LocalAccent provides accentColors,
         LocalAppAccent provides accent,
         LocalListShades provides listShades,
-        LocalMetroTypography provides typography,
+        LocalMetroTypography provides lightAware,
         LocalMetroSurface provides remember(style, darkTheme) { MetroSurface.of(style, darkTheme) },
         LocalTextSelectionColors provides selection,
         LocalAnimationsEnabled provides rememberAnimationsEnabled(),

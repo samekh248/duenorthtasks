@@ -71,6 +71,31 @@ data class MetroTypography(
 
         val Default: MetroTypography = create()
     }
+
+    /**
+     * The ramp for a light page. Dark ink on white reads thinner than light ink on black, so Selawik's light and
+     * semilight looked washed out there (owner, 2026-11-12): on a light page each role moves one weight heavier,
+     * light to semilight and semilight to regular. A dark page keeps the ramp as it is.
+     */
+    fun forLightPage(): MetroTypography {
+        fun TextStyle.heavier() = when (fontWeight) {
+            MetroWeights.Light -> copy(fontWeight = MetroWeights.Semilight)
+            MetroWeights.Semilight -> copy(fontWeight = MetroWeights.Regular)
+            else -> this
+        }
+        return MetroTypography(
+            panoramaTitle = panoramaTitle.heavier(),
+            sectionHeader = sectionHeader.heavier(),
+            pageTitle = pageTitle.heavier(),
+            header = header.heavier(),
+            detailTitle = detailTitle.heavier(),
+            listName = listName.heavier(),
+            subheader = subheader.heavier(),
+            body = body.heavier(),
+            preview = preview.heavier(),
+            caption = caption.heavier()
+        )
+    }
 }
 
 /**

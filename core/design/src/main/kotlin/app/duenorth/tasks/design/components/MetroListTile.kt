@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.duenorth.tasks.design.theme.MetroTheme
-import app.duenorth.tasks.design.theme.MetroWeights
 import app.duenorth.tasks.design.theme.Relief
 import app.duenorth.tasks.design.theme.mobile10Card
 
@@ -61,7 +60,7 @@ fun MetroListTile(
         }
         MetroText(
             count.toString(),
-            MetroTheme.typography.listName.copy(fontSize = 22.sp, fontWeight = MetroWeights.Light),
+            MetroTheme.typography.listName.copy(fontSize = 22.sp),
             Modifier.padding(end = 6.dp, bottom = 2.dp),
             color = onFill,
             maxLines = 1

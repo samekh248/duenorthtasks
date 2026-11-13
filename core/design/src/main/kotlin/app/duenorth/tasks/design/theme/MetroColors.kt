@@ -25,7 +25,8 @@ data class MetroColors(
             isDark = false,
             background = Color(0xFFFFFFFF),
             foreground = Color(0xFF111111),
-            secondary = Color(0xFF5C5C5C),
+            // About 7:1 on white, as the dark theme's grey is on black.
+            secondary = Color(0xFF595959),
             chrome = Color(0xFFE5E5E5),
             overdue = Color(0xFFC40000),
             outline = Color(0xFF8C8C8C),
