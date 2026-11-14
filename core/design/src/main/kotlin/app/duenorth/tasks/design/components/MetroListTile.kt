@@ -14,14 +14,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.Relief
-import app.duenorth.tasks.design.theme.mobile10Card
+import app.duenorth.tasks.design.theme.slateCard
 
 /**
  * A list's tile: a flat square in the list's shade of the accent with its open-task count in the
  * bottom-right corner (research R3). Pass [count] = null for the outlined "new list" tile, and
  * [shared] = true to put the two-people glyph in the top-left corner (spec 002). Tile relief lifts the tile off
- * the page and mica rounds it; the "new list" tile is a raised blank, a layer card, or a faint wash under Windows
- * 10 Mobile.
+ * the page and frost rounds it; the "new list" tile is a raised blank, a layer card, or a faint wash under
+ * slate.
  */
 @Composable
 fun MetroListTile(
@@ -38,7 +38,7 @@ fun MetroListTile(
             modifier.size(size).then(
                 when {
                     style.relief -> Modifier.relief(Relief.Raised)
-                    style.mobile10 -> Modifier.background(MetroTheme.colors.mobile10Card)
+                    style.slate -> Modifier.background(MetroTheme.colors.slateCard)
                     else -> Modifier.border(2.dp, MetroTheme.colors.foreground)
                 }
             ),

@@ -87,8 +87,8 @@ private const val SPIN_MS = 1200
  * The WP8.1 Application Bar: up to four round outlined buttons along the bottom and an ellipsis
  * that expands the bar to show their labels and the overflow menu (research R3). Back closes an
  * expanded bar, and so does touching anything outside it inside a [MetroAppBarHost]. Tile relief raises
- * the buttons and fills add with the accent; mica floats the bar as an acrylic sheet of bare glyphs;
- * Windows 10 Mobile draws its own flat command bar ([Mobile10CommandBar]).
+ * the buttons and fills add with the accent; frost floats the bar as an acrylic sheet of bare glyphs;
+ * slate draws its own flat command bar ([SlateCommandBar]).
  */
 @Composable
 fun MetroAppBar(
@@ -116,12 +116,12 @@ fun MetroAppBar(
     } else {
         Modifier
     }
-    if (style.mobile10) {
-        Mobile10CommandBar(buttons, menuItems, expanded, { expanded = it }, modifier.then(tracked))
+    if (style.slate) {
+        SlateCommandBar(buttons, menuItems, expanded, { expanded = it }, modifier.then(tracked))
         return
     }
     val chrome = if (style.layers) {
-        // Mica: an acrylic sheet floating a gutter in from the screen's edges, over the page.
+        // Frost: an acrylic sheet floating a gutter in from the screen's edges, over the page.
         Modifier
             .background(colors.background)
             .navigationBarsPadding()
@@ -212,13 +212,13 @@ private fun AppBarIconButton(button: AppBarButton, showLabel: Boolean, onClick: 
     ) {
         val style = MetroTheme.style
         val accent = MetroTheme.accent
-        // Tile relief and mica fill add with the accent, so the page's main action leads the bar.
+        // Tile relief and frost fill add with the accent, so the page's main action leads the bar.
         val filled = style.filledAdd && button.icon == MetroIcon.Add && button.enabled
         Box(
             Modifier.size(MetroDimens.TouchTarget).then(
                 when {
                     filled -> Modifier.relief(Relief.Raised, small = true, corner = PillCorner, fill = accent.fill)
-                    // Mica's other buttons are bare glyphs on the acrylic.
+                    // Frost's other buttons are bare glyphs on the acrylic.
                     style.layers -> Modifier
                     // The button's own face is the ground it stands on: the bar's chrome.
                     style.relief -> Modifier.relief(
@@ -249,11 +249,11 @@ private fun AppBarIconButton(button: AppBarButton, showLabel: Boolean, onClick: 
 }
 
 /**
- * The Windows 10 Mobile command bar: bare glyphs right-aligned on a flat 48dp bar, the ellipsis last. Opened, it
+ * The slate command bar: bare glyphs right-aligned on a flat 48dp bar, the ellipsis last. Opened, it
  * shows each glyph's label under it and the menu below as a plain list in body type.
  */
 @Composable
-private fun Mobile10CommandBar(
+private fun SlateCommandBar(
     buttons: List<AppBarButton>,
     menuItems: List<AppBarMenuItem>,
     expanded: Boolean,
@@ -268,7 +268,7 @@ private fun Mobile10CommandBar(
             .navigationBarsPadding()
             .animateContentSize(tween(EXPAND_MS, easing = MetroEasing))
     ) {
-        Row(Modifier.fillMaxWidth().heightIn(min = Mobile10CommandBarHeight), horizontalArrangement = Arrangement.End) {
+        Row(Modifier.fillMaxWidth().heightIn(min = SlateCommandBarHeight), horizontalArrangement = Arrangement.End) {
             buttons.forEach { button ->
                 val color = if (button.enabled) colors.foreground else colors.outline
                 Column(
@@ -306,7 +306,7 @@ private fun Mobile10CommandBar(
             }
             Box(
                 Modifier
-                    .size(width = MetroDimens.TouchTarget, height = Mobile10CommandBarHeight)
+                    .size(width = MetroDimens.TouchTarget, height = SlateCommandBarHeight)
                     .clickable(interactionSource = null, indication = null, role = Role.Button) {
                         onExpandedChange(!expanded)
                     }
@@ -342,7 +342,7 @@ private fun Mobile10CommandBar(
     }
 }
 
-private val Mobile10CommandBarHeight = 48.dp
+private val SlateCommandBarHeight = 48.dp
 
 /** The thin rule that starts a new group of menu lines. */
 @Composable

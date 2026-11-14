@@ -10,30 +10,31 @@ import androidx.compose.ui.unit.dp
  * The look the person picks under settings, theme: the same four styles as Due North Budget, so the two apps can
  * be set alike. Metro is the flat WP8.1 look and the default (constitution Principle I).
  * Tile relief keeps Metro's type, square corners, flat accent fills, round app-bar buttons and grid, and only adds
- * light and shade. Mica is the Windows 11 look: a tinted page, rounded layer cards edged by a hairline, and an
- * acrylic app bar that floats above the page. Windows 10 Mobile follows the Windows 10 Mobile guidelines: sentence
- * case, a flat 48dp command bar of bare glyphs, grey filled buttons and outlined text boxes on pure white or black.
+ * light and shade. Frost (inspired by Windows 11's Fluent look) puts rounded layer cards edged by a hairline on a
+ * tinted page, under an acrylic app bar that floats above it. Slate (inspired by Windows 10 Mobile) writes in sentence
+ * case under a flat 48dp command bar of bare glyphs, with grey filled buttons and outlined text boxes on pure white
+ * or black. Neither name is a Microsoft product name, so neither the picker nor the store listing uses one.
  */
 enum class MetroStyle(
     val label: String,
     /** List tiles and panels lift off the page (tile relief). */
     val panels: Boolean = false,
-    /** Add is the one accent button on the app bar (tile relief, mica). */
+    /** Add is the one accent button on the app bar (tile relief, frost). */
     val filledAdd: Boolean = false,
-    /** Surfaces are rounded layer cards with a hairline edge instead of light and shade; bars float (mica). */
+    /** Surfaces are rounded layer cards with a hairline edge instead of light and shade; bars float (frost). */
     val layers: Boolean = false,
-    /** Windows 10 Mobile: sentence case, a flat command bar, filled buttons (windows 10 mobile). */
-    val mobile10: Boolean = false
+    /** Sentence case, a flat command bar, filled buttons (slate). */
+    val slate: Boolean = false
 ) {
     Metro("metro"),
     TileRelief("tile relief", panels = true, filledAdd = true),
-    Mica("mica", panels = true, filledAdd = true, layers = true),
-    Mobile10("windows 10 mobile", mobile10 = true);
+    Frost("frost", panels = true, filledAdd = true, layers = true),
+    Slate("slate", slate = true);
 
     /** Whether surfaces are drawn by [MetroSurface] (relief or layers) rather than Metro's outlines. */
-    val relief: Boolean get() = this != Metro && !mobile10
+    val relief: Boolean get() = this != Metro && !slate
 
-    /** The relief of a control at rest: raised, or under mica a field (a layer card with a line under it). */
+    /** The relief of a control at rest: raised, or under frost a field (a layer card with a line under it). */
     val control: Relief get() = if (layers) Relief.Inset else Relief.Raised
 
     companion object {
@@ -49,7 +50,7 @@ enum class Relief { Raised, Inset }
  * [depth] apart and softened by [blur]. Both are translucent, so the same light works on the page, on the app
  * bar's chrome and on an accent fill. Small things (buttons, boxes) use half of each.
  *
- * Under mica a surface is instead a [layer] card on the [page], edged by a [stroke] hairline, and what floats
+ * Under frost a surface is instead a [layer] card on the [page], edged by a [stroke] hairline, and what floats
  * (the app bar) is [acrylic] with the [shade] as its drop shadow. A field is a card with an [underline].
  */
 @Immutable
@@ -95,8 +96,8 @@ data class MetroSurface(
 }
 
 /**
- * The page colors of each style. Relief needs a page that is neither white nor black, so tile relief and mica put
- * Metro's ink on a light or dark grey; Windows 10 Mobile keeps the white or black page under its own chrome.
+ * The page colors of each style. Relief needs a page that is neither white nor black, so tile relief and frost put
+ * Metro's ink on a light or dark grey; slate keeps the white or black page under its own chrome.
  * Metro's own are [MetroColors.Light] and [MetroColors.Dark].
  */
 object StylePalettes {
@@ -105,13 +106,13 @@ object StylePalettes {
         val (background, chrome) = when (style) {
             MetroStyle.Metro -> return metro
             // ChromeMedium under the bar, BaseMedium for secondary ink.
-            MetroStyle.Mobile10 -> return metro.copy(
+            MetroStyle.Slate -> return metro.copy(
                 chrome = Color(if (dark) 0xFF1F1F1F else 0xFFF2F2F2),
                 secondary = Color(if (dark) 0xFF999999 else 0xFF595959),
                 outline = Color(if (dark) 0xFF666666 else 0xFF999999)
             )
             MetroStyle.TileRelief -> if (dark) 0xFF101010 to 0xFF1F1F1F else 0xFFEEEEEE to 0xFFE3E3E3
-            MetroStyle.Mica -> if (dark) 0xFF1E1D22 to 0xFF2C2C30 else 0xFFF1EFF3 to 0xFFF9F9F9
+            MetroStyle.Frost -> if (dark) 0xFF1E1D22 to 0xFF2C2C30 else 0xFFF1EFF3 to 0xFFF9F9F9
         }
         val page = Color(background)
         val secondary = when {
@@ -129,8 +130,8 @@ object StylePalettes {
     }
 }
 
-/** A Windows 10 Mobile card or tile that groups rather than acts: a faint wash of the ink, with no edge. */
-val MetroColors.mobile10Card: Color get() = foreground.copy(alpha = 0.06f)
+/** A slate card or tile that groups rather than acts: a faint wash of the ink, with no edge. */
+val MetroColors.slateCard: Color get() = foreground.copy(alpha = 0.06f)
 
 /** Moves [text] toward black (on a light page) or white (on a dark one) until it reads at [Contrast.MIN_TEXT]. */
 fun Contrast.ensure(text: Color, background: Color): Color {

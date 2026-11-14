@@ -37,7 +37,7 @@ import app.duenorth.tasks.design.theme.Relief
 /** A corner large enough to make any shape a circle or a pill. */
 val PillCorner: Dp = 999.dp
 
-/** Mica's corners: a layer card (a tile, a menu), a control on one (a field, a button), and a floating sheet. */
+/** Frost's corners: a layer card (a tile, a menu), a control on one (a field, a button), and a floating sheet. */
 object LayerCorner {
     val Card = 8.dp
     val Control = 6.dp
@@ -45,7 +45,7 @@ object LayerCorner {
 }
 
 /**
- * The shape of a surface under the current style: rounded by [corner] under mica, square under every other style,
+ * The shape of a surface under the current style: rounded by [corner] under frost, square under every other style,
  * as Metro draws everything.
  */
 @Composable
@@ -56,7 +56,7 @@ fun layerShape(corner: Dp = LayerCorner.Card): Shape =
 /**
  * Draws a relief surface behind the content: a panel ([small] false) or a control ([small] true), in the style's
  * light and shade, filled with [fill]. Corners are square, as in Metro, unless [corner] is given (the app bar's
- * round buttons). Under the Metro and Windows 10 Mobile styles it draws nothing, so callers add it unconditionally.
+ * round buttons). Under the Metro and slate styles it draws nothing, so callers add it unconditionally.
  */
 @Composable
 fun Modifier.relief(
@@ -68,7 +68,7 @@ fun Modifier.relief(
     val surface = MetroTheme.surface
     if (!surface.style.relief) return this
     val radius = when {
-        // Mica rounds everything a little, and turns the app bar's round buttons into rounded squares too.
+        // Frost rounds everything a little, and turns the app bar's round buttons into rounded squares too.
         surface.style.layers && (corner == null || corner == PillCorner) ->
             if (small) LayerCorner.Control else LayerCorner.Card
         else -> corner ?: 0.dp
@@ -100,15 +100,15 @@ enum class GroupPosition {
 /**
  * Draws this row's part of one surface shared by a group of rows, so a lazy list can build the group a row at a
  * time. Tile relief draws one panel ([relief] raised, or inset for a group that is put away, such as completed
- * tasks) split by a groove between rows; mica draws one layer card, rounded only at the group's ends and split by a
- * hairline; Windows 10 Mobile rules a hairline under each row; Metro draws nothing.
+ * tasks) split by a groove between rows; frost draws one layer card, rounded only at the group's ends and split by a
+ * hairline; slate rules a hairline under each row; Metro draws nothing.
  */
 @Composable
 fun Modifier.groupSurface(position: GroupPosition, relief: Relief = Relief.Raised): Modifier {
     val surface = MetroTheme.surface
     val style = surface.style
     val page = MetroTheme.colors.background
-    if (style.mobile10) {
+    if (style.slate) {
         val rule = MetroTheme.colors.foreground.copy(alpha = 0.12f)
         return drawBehind {
             val hair = 1.dp.toPx()
@@ -201,7 +201,7 @@ private fun DrawScope.drawRelief(
 }
 
 /**
- * Mica's version of [drawRelief]: the [MetroSurface.layer] card (or [fill], when it is not the page, such as an
+ * Frost's version of [drawRelief]: the [MetroSurface.layer] card (or [fill], when it is not the page, such as an
  * accent) edged by a hairline. Inset is a field: the same card with a line under it, as Windows 11 draws a text box.
  */
 private fun DrawScope.drawLayer(surface: MetroSurface, relief: Relief, size: Size, radius: Float, fill: Color) {
@@ -226,7 +226,7 @@ private fun DrawScope.drawLayer(surface: MetroSurface, relief: Relief, size: Siz
     }
 }
 
-/** Mica's mark of a field in use: a 2dp accent line along the bottom, over the resting underline. */
+/** Frost's mark of a field in use: a 2dp accent line along the bottom, over the resting underline. */
 @Composable
 fun Modifier.layerFocusLine(on: Boolean): Modifier {
     val accent = MetroTheme.accent.fill
@@ -241,7 +241,7 @@ fun Modifier.layerFocusLine(on: Boolean): Modifier {
 }
 
 /**
- * Mica's check box, as Windows 11 draws one: a square rounded by 4dp, a faint fill edged by a strong 1dp line
+ * Frost's check box, as Windows 11 draws one: a square rounded by 4dp, a faint fill edged by a strong 1dp line
  * when clear, the accent with a tick when [checked].
  */
 @Composable
@@ -283,7 +283,7 @@ fun LayerCheckBox(checked: Boolean, enabled: Boolean, modifier: Modifier = Modif
     }
 }
 
-/** A floating acrylic sheet (mica's app bar): the acrylic tint with a soft drop shadow, rounded and edged. */
+/** A floating acrylic sheet (frost's app bar): the acrylic tint with a soft drop shadow, rounded and edged. */
 fun Modifier.acrylicSheet(surface: MetroSurface): Modifier = drawBehind {
     val r = LayerCorner.Floating.toPx()
     drawIntoCanvas { canvas ->

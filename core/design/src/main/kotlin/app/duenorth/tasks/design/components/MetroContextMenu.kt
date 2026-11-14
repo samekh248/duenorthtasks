@@ -43,8 +43,8 @@ data class ContextMenuItem(val label: String, val icon: MetroIcon? = null, val o
 /**
  * WP8.1 context menu: a full-width band of lowercase commands that drops just below the
  * long-pressed item (or above it near the bottom of the screen). Place it inside the item. Tile relief raises the
- * band off the page; mica floats a narrower acrylic flyout at the right, with each item's glyph and a line before
- * delete; Windows 10 Mobile shows a menu flyout of body-type commands edged in grey.
+ * band off the page; frost floats a narrower acrylic flyout at the right, with each item's glyph and a line before
+ * delete; slate shows a menu flyout of body-type commands edged in grey.
  */
 @Composable
 fun MetroContextMenu(expanded: Boolean, onDismiss: () -> Unit, items: List<ContextMenuItem>) {
@@ -69,7 +69,7 @@ fun MetroContextMenuContent(
 ) {
     val style = MetroTheme.style
     val colors = MetroTheme.colors
-    if (style.layers || style.mobile10) {
+    if (style.layers || style.slate) {
         Box(modifier.fillMaxWidth().padding(horizontal = MetroDimens.Gutter), contentAlignment = Alignment.TopEnd) {
             Column(
                 Modifier
@@ -148,7 +148,7 @@ fun MetroContextMenuContent(
     }
 }
 
-/** Mica's flyout and Windows 10 Mobile's menu flyout are narrower than the screen, at its right. */
+/** Frost's flyout and slate's menu flyout are narrower than the screen, at its right. */
 private val LayerMenuWidth = 280.dp
 private val FlyoutWidth = 240.dp
 

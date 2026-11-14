@@ -14,10 +14,11 @@ reason this app exists, so it outranks Material defaults whenever the two disagr
   Material ripple. Flat color fills only. This is the **Metro** style, the default.
 - Styles: the user may pick one of the three sibling styles Due North Budget offers, so the two
   apps can be set alike (owner, 2026-10-30). **Tile relief** keeps Metro and adds soft light and
-  shade to tiles, buttons, boxes and app-bar buttons. **Mica** (Windows 11) puts rounded layer
-  cards with a hairline edge on a tinted page and floats the app bar as an acrylic sheet.
-  **Windows 10 Mobile** writes in sentence case under a flat command bar, with grey filled
-  buttons and outlined text boxes. These relax only the "content over chrome" rule above, and only
+  shade to tiles, buttons, boxes and app-bar buttons. **Frost** (inspired by Windows 11) puts rounded
+  layer cards with a hairline edge on a tinted page and floats the app bar as an acrylic sheet.
+  **Slate** (inspired by Windows 10 Mobile) writes in sentence case under a flat command bar, with
+  grey filled buttons and outlined text boxes. Style names are generic: never a Microsoft product
+  name in the picker or the store listing. These relax only the "content over chrome" rule above, and only
   while picked; type ramp, accents, motion, the grid and every other rule here still apply, and
   accent fills stay flat in every style.
 - The chosen look is **Light Panorama** (design C, picked 2026-10-04): the home screen is a
@@ -132,7 +133,10 @@ PATCH for wording) and states the reason. Plans and reviews MUST check the Const
 gates in `plan.md` against the principles above; any violation is listed in that plan's
 Complexity Tracking table with a justification.
 
-**Version**: 2.1.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-11-05
+**Version**: 2.1.1 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-11-14
 
 2.0.0: Principle I now allows the three opt-in styles from Due North Budget (tile relief, mica,
 Windows 10 Mobile) beside the default Metro style, at the owner's request.
+
+2.1.1: The mica and Windows 10 Mobile styles are renamed frost and slate, so no Microsoft product name
+appears in the app (owner, 2026-11-14).

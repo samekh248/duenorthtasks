@@ -145,8 +145,8 @@ object DueText {
  * sync changes what the row says, it fades the new text in rather than swapping it (FR-008).
  *
  * [position] places the row in its group (a date, a list's open or completed tasks), which tile relief draws as
- * one panel (pressed in when [putAway], as completed tasks are) and Windows 10 Mobile rules off row by row. Under
- * mica each open task is its own card with its due date on a pill, and a put-away group shares one card under
+ * one panel (pressed in when [putAway], as completed tasks are) and slate rules off row by row. Under
+ * frost each open task is its own card with its due date on a pill, and a put-away group shares one card under
  * its header. [showList] false leaves the list's name out of the caption on that list's own page, under every
  * style but Metro.
  */
@@ -165,9 +165,9 @@ fun TaskRow(
     var menu by remember { mutableStateOf(false) }
     val style = MetroTheme.style
     val caption = if (showList || style == MetroStyle.Metro) row.caption else row.captionWithoutList
-    // Mica sets a due date apart on a pill ("done" stays in the caption); Windows 10 Mobile greys the list's name.
+    // Frost sets a due date apart on a pill ("done" stays in the caption); slate greys the list's name.
     val badge = row.whenText.takeIf {
-        row.listTitle != null && (style.layers && !row.completed || style.mobile10)
+        row.listTitle != null && (style.layers && !row.completed || style.slate)
     }
     val surface = when {
         style == MetroStyle.Metro -> Modifier
@@ -203,8 +203,8 @@ fun TaskRow(
 /**
  * The header over a group of task rows ("tomorrow", "completed"), with a [count] and, when [expanded] is given,
  * a chevron that opens and closes the group. Metro writes it in light grey type; tile relief adds a raised count
- * badge (in the accent for a put-away group); mica uses a small semibold header, or for a put-away group the top
- * row of the card its rows share; Windows 10 Mobile writes it in the accent.
+ * badge (in the accent for a put-away group); frost uses a small semibold header, or for a put-away group the top
+ * row of the card its rows share; slate writes it in the accent.
  */
 @Composable
 fun GroupHeader(
@@ -256,7 +256,7 @@ fun GroupHeader(
             type.body.copy(fontWeight = MetroWeights.Semibold),
             modifier.then(click).padding(start = 4.dp, top = 16.dp, bottom = 8.dp)
         )
-        style.mobile10 -> Row(
+        style.slate -> Row(
             modifier.then(click).padding(top = 16.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)

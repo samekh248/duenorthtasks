@@ -34,6 +34,7 @@ roborazzi = "1.50.0"
 androidxTestExt = "1.3.0"
 androidxTestCore = "1.7.0"
 ktlintPlugin = "13.1.0"
+aboutLibraries = "13.2.1"
 
 [libraries]
 # Compose (foundation only, no Material: constitution Principle I)
@@ -112,3 +113,5 @@ room = { id = "androidx.room", version.ref = "room" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "benchmark" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintPlugin" }
+# Open-source licenses page: generates res/raw/aboutlibraries.json from the dependency graph at build time.
+aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutLibraries" }

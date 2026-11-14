@@ -226,7 +226,7 @@ fun TaskDetailContent(
                     null
                 }
             )
-            // Tile relief puts the steps on one panel; mica on one card that ends in the add-a-step box.
+            // Tile relief puts the steps on one panel; frost on one card that ends in the add-a-step box.
             val grouped = style.relief
             val rows = state.steps.size + if (style.layers) 1 else 0
             state.steps.forEachIndexed { index, step ->
@@ -257,7 +257,7 @@ fun TaskDetailContent(
                 pickingDate = false
             }
             if (style.layers) {
-                // Mica: one "schedule" card, a row each for the due date and the list.
+                // Frost: one "schedule" card, a row each for the due date and the list.
                 Label("schedule")
                 CardRow(MetroIcon.Calendar, "due date", dueLabel, GroupPosition.First) { pickingDate = !pickingDate }
                 CardRow(MetroIcon.ListLines, "list", state.listTitle, GroupPosition.Last) { moving = true }
@@ -267,7 +267,7 @@ fun TaskDetailContent(
                 }
             } else {
                 Label("due date")
-                if (style.mobile10) {
+                if (style.slate) {
                     DateBox(state.due) { pickingDate = !pickingDate }
                     if (state.due != null) MetroLink("clear due date", clearDue)
                 } else {
@@ -284,7 +284,7 @@ fun TaskDetailContent(
                 }
 
                 Label("list")
-                if (style.mobile10) {
+                if (style.slate) {
                     ComboBox(state.listTitle) { moving = true }
                 } else {
                     Chip(state.listTitle, icon = MetroIcon.ListLines) { moving = true }
@@ -364,7 +364,7 @@ fun TaskDetailContent(
 
 /**
  * A field's label: grey caption type in Metro and tile relief (with a raised [count] badge there), a small
- * semibold header under mica, and the ink color under Windows 10 Mobile, whose labels sit right over their fields.
+ * semibold header under frost, and the ink color under slate, whose labels sit right over their fields.
  */
 @Composable
 private fun Label(text: String, count: String? = null) {
@@ -374,7 +374,7 @@ private fun Label(text: String, count: String? = null) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         when {
             style.layers -> MetroText(text, type.body.copy(fontWeight = MetroWeights.Semibold))
-            style.mobile10 -> MetroText(text, type.body)
+            style.slate -> MetroText(text, type.body)
             else -> MetroText(text, type.caption, color = MetroTheme.colors.secondary)
         }
         if (count != null) {
@@ -387,21 +387,21 @@ private fun Label(text: String, count: String? = null) {
     }
 }
 
-/** The task's title: Metro's light 38sp, mica's semibold, Windows 10 Mobile's regular. */
+/** The task's title: Metro's light 38sp, frost's semibold, slate's regular. */
 @Composable
 private fun detailTitle(): TextStyle {
     val title = MetroTheme.typography.detailTitle
     val style = MetroTheme.style
     return when {
         style.layers -> title.copy(fontWeight = MetroWeights.Semibold, fontSize = 30.sp)
-        style.mobile10 -> title.copy(fontWeight = MetroWeights.Regular, fontSize = 30.sp)
+        style.slate -> title.copy(fontWeight = MetroWeights.Regular, fontSize = 30.sp)
         else -> title
     }
 }
 
 /**
  * "due tuesday" under the title: in the list's accent in Metro, a raised accent chip under tile relief, a pill
- * under mica, and body type under Windows 10 Mobile.
+ * under frost, and body type under slate.
  */
 @Composable
 private fun DueLine(text: String, accent: AccentColors) {
@@ -418,12 +418,12 @@ private fun DueLine(text: String, accent: AccentColors) {
                 .padding(horizontal = 12.dp, vertical = 4.dp),
             color = accent.onFill
         )
-        style.mobile10 -> MetroText(text, type.body, color = accent.text)
+        style.slate -> MetroText(text, type.body, color = accent.text)
         else -> MetroText(text, type.subheader, color = accent.text)
     }
 }
 
-/** The details: plain text in Metro, a pressed-in well under tile relief, a card under mica, a box under 10 Mobile. */
+/** The details: plain text in Metro, a pressed-in well under tile relief, a card under frost, a box under slate. */
 @Composable
 private fun DetailsBox(details: String) {
     val style = MetroTheme.style
@@ -440,7 +440,7 @@ private fun DetailsBox(details: String) {
         style.relief -> Box(Modifier.fillMaxWidth().relief(Relief.Inset).padding(12.dp)) {
             MetroLinkifiedText(details, body)
         }
-        style.mobile10 -> Box(
+        style.slate -> Box(
             Modifier.fillMaxWidth().border(2.dp, MetroTheme.colors.outline).padding(horizontal = 10.dp, vertical = 8.dp)
         ) {
             MetroLinkifiedText(details, body)
@@ -449,7 +449,7 @@ private fun DetailsBox(details: String) {
     }
 }
 
-/** A row of mica's schedule card: a glyph, what it sets, its value and a chevron, opening a picker. */
+/** A row of frost's schedule card: a glyph, what it sets, its value and a chevron, opening a picker. */
 @Composable
 private fun CardRow(icon: MetroIcon, label: String, value: String, position: GroupPosition, onClick: () -> Unit) {
     val colors = MetroTheme.colors
@@ -471,7 +471,7 @@ private fun CardRow(icon: MetroIcon, label: String, value: String, position: Gro
     }
 }
 
-/** Windows 10 Mobile's date picker at rest: day, date, month and year in an outlined box, split by lines. */
+/** Slate's date picker at rest: day, date, month and year in an outlined box, split by lines. */
 @Composable
 private fun DateBox(due: LocalDate?, onClick: () -> Unit) {
     val colors = MetroTheme.colors
@@ -505,7 +505,7 @@ private fun DateBox(due: LocalDate?, onClick: () -> Unit) {
     }
 }
 
-/** Windows 10 Mobile's combo box at rest: the value in an outlined box with a chevron, opening the list picker. */
+/** Slate's combo box at rest: the value in an outlined box with a chevron, opening the list picker. */
 @Composable
 private fun ComboBox(value: String, onClick: () -> Unit) {
     Row(

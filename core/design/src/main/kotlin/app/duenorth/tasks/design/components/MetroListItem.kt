@@ -25,7 +25,7 @@ import app.duenorth.tasks.design.theme.MetroWeights
  * grey lines of details and a caption (for tasks: "List · when", in the accent or red when
  * overdue), and an optional trailing mark such as the importance star. Tilts when pressed;
  * long-press opens the context menu. A [badge] (the due date) follows the grey caption in [captionColor]: on a
- * tinted pill when [badgePill] (mica), or after a dot (Windows 10 Mobile).
+ * tinted pill when [badgePill] (frost), or after a dot (slate).
  */
 @Composable
 fun MetroListItem(
@@ -114,7 +114,7 @@ fun MetroListItem(
     }
 }
 
-/** A short label on a pill tinted with [color], in that color: mica's due date. */
+/** A short label on a pill tinted with [color], in that color: frost's due date. */
 @Composable
 fun MetroPill(text: String, color: Color, modifier: Modifier = Modifier) {
     MetroText(

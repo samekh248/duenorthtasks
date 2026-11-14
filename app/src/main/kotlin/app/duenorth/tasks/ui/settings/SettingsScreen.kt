@@ -71,6 +71,7 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     onOpenSyncAccount: () -> Unit,
     onOpenSyncLog: () -> Unit = {},
+    onOpenLicenses: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val theme by viewModel.theme.collectAsStateWithLifecycle()
@@ -83,6 +84,7 @@ fun SettingsScreen(
         onStyle = viewModel::setStyle,
         onOpenSyncAccount = onOpenSyncAccount,
         onOpenSyncLog = onOpenSyncLog,
+        onOpenLicenses = onOpenLicenses,
         badge = BadgeState(on = badgeEnabled, allowed = badge.allowed),
         onBadge = badge.onToggle
     )
@@ -145,6 +147,7 @@ fun SettingsContent(
     onStyle: (MetroStyle) -> Unit = {},
     onOpenSyncAccount: () -> Unit = {},
     onOpenSyncLog: () -> Unit = {},
+    onOpenLicenses: () -> Unit = {},
     initialPage: Int = 0,
     badge: BadgeState = BadgeState(),
     onBadge: (Boolean) -> Unit = {}
@@ -159,7 +162,7 @@ fun SettingsContent(
         when (index) {
             0 -> ThemePage(theme, onMode, onAccent, onStyle, badge, onBadge)
             1 -> SyncLinks(onOpenSyncAccount, onOpenSyncLog)
-            else -> AboutPage()
+            else -> AboutPage(onOpenLicenses = onOpenLicenses)
         }
     }
 }
@@ -260,10 +263,10 @@ private fun AppIconBadge(badge: BadgeState, onBadge: (Boolean) -> Unit) {
 /** One line under each style's name, saying what it changes. */
 private val MetroStyle.caption: String
     get() = when (this) {
-        MetroStyle.Metro -> "flat Windows Phone 8.1"
+        MetroStyle.Metro -> "flat tiles and big lowercase type"
         MetroStyle.TileRelief -> "Metro with soft light and shade"
-        MetroStyle.Mica -> "Windows 11: rounded layers and a floating app bar"
-        MetroStyle.Mobile10 -> "sentence case and a flat command bar"
+        MetroStyle.Frost -> "rounded layers and a floating app bar"
+        MetroStyle.Slate -> "sentence case and a flat command bar"
     }
 
 /** The sync account and sync log pages have their own routes; this pivot item leads to them. */
@@ -302,17 +305,23 @@ private fun LinkRow(title: String, caption: String, onOpen: () -> Unit, modifier
     }
 }
 
+/** Shown at the foot of about; the store listing carries the same words. */
+internal const val TRADEMARK_NOTICE =
+    "Not affiliated with Microsoft or Google. Windows Phone and Microsoft To Do are trademarks of Microsoft; " +
+        "Google Tasks is a trademark of Google."
+
 /** Where the app's code lives, shown under "developer". */
 internal const val REPO_URL = "https://github.com/samekh248/duenorthtasks"
 
 /**
- * The about page: the tile, name and version, who makes it, and credits. Seven quick taps on the
+ * The about page: the tile, name and version, who makes it, credits with the open-source licenses
+ * ([onOpenLicenses]), and the trademark notice. Seven quick taps on the
  * version send a bison across the page ([BisonWalk]) once; the walk and the tap count are plain
  * remembered state, so leaving the page forgets both and the taps are needed again.
  * [bisonPreviewMs] pins a bison frame for screenshot tests.
  */
 @Composable
-internal fun AboutPage(bisonPreviewMs: Float? = null) {
+internal fun AboutPage(bisonPreviewMs: Float? = null, onOpenLicenses: () -> Unit = {}) {
     val uriHandler = LocalUriHandler.current
     val streak = remember { TapStreak() }
     var bisonRuns by remember { mutableIntStateOf(0) }
@@ -344,7 +353,7 @@ internal fun AboutPage(bisonPreviewMs: Float? = null) {
                 color = MetroTheme.colors.secondary
             )
             MetroText(
-                "A to-do list in the Windows Phone 8.1 style that syncs with Google Tasks or Microsoft To Do.",
+                "A Metro-style to-do list, inspired by Windows Phone, that syncs with Google Tasks or Microsoft To Do.",
                 MetroTheme.typography.body,
                 color = MetroTheme.colors.secondary
             )
@@ -355,6 +364,13 @@ internal fun AboutPage(bisonPreviewMs: Float? = null) {
             MetroText(
                 "Set in Selawik, © 2015 Microsoft Corporation, used under the SIL Open Font License 1.1.",
                 MetroTheme.typography.caption,
+                color = MetroTheme.colors.secondary
+            )
+            MetroLink("open-source licenses", onClick = onOpenLicenses, modifier = Modifier.testTag("licenses link"))
+            MetroText(
+                TRADEMARK_NOTICE,
+                MetroTheme.typography.caption,
+                Modifier.padding(top = MetroDimens.Gutter),
                 color = MetroTheme.colors.secondary
             )
         }
