@@ -1,7 +1,7 @@
 package app.duenorth.tasks.settings
 
-import app.duenorth.tasks.ui.settings.OssLicense
 import app.duenorth.tasks.ui.settings.OssLibrary
+import app.duenorth.tasks.ui.settings.OssLicense
 import app.duenorth.tasks.ui.settings.parseLicenses
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -32,7 +32,9 @@ class LicensesParseTest {
                 OssLibrary(
                     "OkHttp",
                     "5.1.0",
-                    listOf(OssLicense("Apache License 2.0", "https://www.apache.org/licenses/LICENSE-2.0", "Apache text"))
+                    listOf(
+                        OssLicense("Apache License 2.0", "https://www.apache.org/licenses/LICENSE-2.0", "Apache text")
+                    )
                 ),
                 OssLibrary(
                     "org.example:nameless",
