@@ -12,7 +12,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.theme.Accent
 import app.duenorth.tasks.design.theme.MetroTheme
@@ -65,13 +64,13 @@ class AboutScreenshotTest {
     @Test
     fun licensesDark() = licenses(dark = true)
 
-    /** The page reads the list the build generated; OkHttp's Apache license opens under it. */
+    /** The page reads the list the build generated; the first library's Apache license opens under it. */
     private fun licenses(dark: Boolean) {
         show(dark, Accent.Magenta) { LicensesScreen() }
-        compose.waitUntilAtLeastOneExists(hasText("OkHttp"), 5_000)
+        compose.waitUntilAtLeastOneExists(hasText("Activity"), 5_000)
         snap("licenses", dark)
-        compose.onNode(hasText("OkHttp")).performScrollTo().performClick()
-        compose.waitUntilAtLeastOneExists(hasText("Apache License", substring = true), 5_000)
+        compose.onNode(hasText("Activity")).performClick()
+        compose.waitUntilAtLeastOneExists(hasText("Version 2.0, January 2004", substring = true), 5_000)
         snap("licenses_open", dark)
     }
 
