@@ -7,8 +7,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.theme.Accent
 import app.duenorth.tasks.design.theme.MetroTheme
@@ -17,6 +21,7 @@ import app.duenorth.tasks.settings.ThemeSettings
 import app.duenorth.tasks.ui.settings.AboutPage
 import app.duenorth.tasks.ui.settings.BisonCanvas
 import app.duenorth.tasks.ui.settings.BisonTimeline
+import app.duenorth.tasks.ui.settings.LicensesScreen
 import app.duenorth.tasks.ui.settings.SettingsContent
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Assume.assumeTrue
@@ -31,6 +36,7 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(application = Application::class, qualifiers = "w411dp-h891dp-xxhdpi")
+@OptIn(ExperimentalTestApi::class)
 class AboutScreenshotTest {
     @get:Rule
     val compose = createComposeRule()
@@ -52,6 +58,22 @@ class AboutScreenshotTest {
 
     @Test
     fun bisonWalkingDark() = aboutWithBison(BisonTimeline.WALK_IN_MS * 0.55f, "walking", dark = true)
+
+    @Test
+    fun licensesLight() = licenses(dark = false)
+
+    @Test
+    fun licensesDark() = licenses(dark = true)
+
+    /** The page reads the list the build generated; OkHttp's Apache license opens under it. */
+    private fun licenses(dark: Boolean) {
+        show(dark, Accent.Magenta) { LicensesScreen() }
+        compose.waitUntilAtLeastOneExists(hasText("OkHttp"), 5_000)
+        snap("licenses", dark)
+        compose.onNode(hasText("OkHttp")).performScrollTo().performClick()
+        compose.waitUntilAtLeastOneExists(hasText("Apache License", substring = true), 5_000)
+        snap("licenses_open", dark)
+    }
 
     /**
      * Every frame of the walk at 25 fps, for an animated preview. Off unless BISON_FRAMES is set,

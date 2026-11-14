@@ -1,6 +1,8 @@
 package app.duenorth.tasks.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import app.duenorth.tasks.data.db.ListKey
 import app.duenorth.tasks.design.theme.Accent
 import app.duenorth.tasks.design.theme.MetroStyle
@@ -48,8 +50,18 @@ class ThemeSettingsStoreTest {
         store.setMode(ThemeMode.DARK)
         store.setAccent(Accent.Cobalt)
         assertEquals(ThemeSettings(ThemeMode.DARK, Accent.Cobalt), store.settings.first())
-        store.setStyle(MetroStyle.Mica)
-        assertEquals(ThemeSettings(ThemeMode.DARK, Accent.Cobalt, MetroStyle.Mica), store.settings.first())
+        store.setStyle(MetroStyle.Frost)
+        assertEquals(ThemeSettings(ThemeMode.DARK, Accent.Cobalt, MetroStyle.Frost), store.settings.first())
+    }
+
+    @Test
+    fun stylesSavedUnderTheirOldNamesKeepTheirNewOnes() = runBlocking {
+        val prefs = dataStore("old-style")
+        val store = ThemeSettingsStore(prefs)
+        mapOf("Mica" to MetroStyle.Frost, "Mobile10" to MetroStyle.Slate).forEach { (old, renamed) ->
+            prefs.edit { it[stringPreferencesKey("style")] = old }
+            assertEquals(renamed, store.settings.first().style)
+        }
     }
 
     @Test

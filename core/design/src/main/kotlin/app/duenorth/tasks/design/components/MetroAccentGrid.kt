@@ -62,7 +62,7 @@ private class Swatch(val name: String, val color: Color, val selected: Boolean, 
 @Composable
 private fun SwatchGrid(swatches: List<Swatch>, columns: Int, modifier: Modifier, spacing: Dp = MetroDimens.Gutter) {
     val outline = MetroTheme.colors.foreground
-    // Mica rounds the swatches a little; every other style keeps them square.
+    // Frost rounds the swatches a little; every other style keeps them square.
     val shape = layerShape(LayerCorner.Control)
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing)) {
         swatches.chunked(columns).forEach { row ->

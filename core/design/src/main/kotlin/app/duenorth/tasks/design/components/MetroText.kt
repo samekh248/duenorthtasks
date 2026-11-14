@@ -12,7 +12,7 @@ import app.duenorth.tasks.design.theme.MetroTheme
 
 /**
  * Text in the Metro type ramp. Defaults to the theme foreground; there is no Material Text here. Under the
- * Windows 10 Mobile style it is written in [sentenceCase].
+ * slate style it is written in [sentenceCase].
  */
 @Composable
 fun MetroText(
@@ -27,7 +27,7 @@ fun MetroText(
 ) {
     val resolved = if (color.isSpecified) color else MetroTheme.colors.foreground
     BasicText(
-        text = if (MetroTheme.style.mobile10) sentenceCase(text) else text,
+        text = if (MetroTheme.style.slate) sentenceCase(text) else text,
         modifier = modifier,
         style = style.copy(
             color = resolved,
@@ -40,7 +40,7 @@ fun MetroText(
 }
 
 /**
- * Windows 10 Mobile writes labels in sentence case where Metro writes them in lowercase: the first letter is raised
+ * Slate writes labels in sentence case where Metro writes them in lowercase: the first letter is raised
  * when the text starts in lowercase, so names, figures, links and all-caps titles are left as they are.
  */
 fun sentenceCase(text: String): String = when {

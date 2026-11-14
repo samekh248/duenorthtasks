@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.roborazzi) apply false
     alias(libs.plugins.baselineprofile) apply false
     alias(libs.plugins.ktlint) apply false
+    alias(libs.plugins.aboutlibraries) apply false
 }
 
 subprojects {

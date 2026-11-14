@@ -23,8 +23,8 @@ import app.duenorth.tasks.design.theme.Relief
 
 /**
  * A flat outlined chip for the due date and list pickers. The outline is 32dp tall, but the
- * touch target around it is the full 48dp (constitution Principle I). Under tile relief and mica it is a raised
- * button (a layer card under mica) led by its [icon].
+ * touch target around it is the full 48dp (constitution Principle I). Under tile relief and frost it is a raised
+ * button (a layer card under frost) led by its [icon].
  */
 @Composable
 fun Chip(text: String, modifier: Modifier = Modifier, icon: MetroIcon? = null, onClick: () -> Unit) {
