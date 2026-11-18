@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.roborazzi)
+    alias(libs.plugins.aboutlibraries)
 }
 
 // Client IDs come from local.properties or CI secrets, never from git (constitution, Technical Constraints).

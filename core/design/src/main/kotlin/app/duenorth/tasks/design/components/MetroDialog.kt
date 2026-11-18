@@ -28,7 +28,7 @@ import app.duenorth.tasks.design.theme.Relief
 /**
  * WP8.1 message dialog: a full-width band across the top of the screen with a title, a message
  * and two flat buttons, over a dimmed page. Back or a tap outside the band dismisses it. Tile relief raises the
- * band off the top edge; mica centers a Windows 11 dialog with its buttons on a footer band; under every style
+ * band off the top edge; frost centers a Windows 11 dialog with its buttons on a footer band; under every style
  * but Metro the confirm button is filled with the accent.
  */
 @Composable
@@ -109,7 +109,7 @@ fun MetroDialogContent(
     }
 }
 
-/** Mica's dialog, as Windows 11 draws one: a rounded acrylic sheet in the middle, its buttons on a footer band. */
+/** Frost's dialog, as Windows 11 draws one: a rounded acrylic sheet in the middle, its buttons on a footer band. */
 @Composable
 private fun LayerDialog(
     title: String,

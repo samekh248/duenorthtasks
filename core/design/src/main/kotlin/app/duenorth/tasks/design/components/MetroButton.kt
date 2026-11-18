@@ -25,7 +25,7 @@ import app.duenorth.tasks.design.theme.Relief
 
 /**
  * WP8.1 button: a flat rectangle with a 2dp outline that fills with the accent while pressed. Under tile relief
- * and mica it stands off the page and presses in under the finger; under Windows 10 Mobile it is a flat grey block.
+ * and frost it stands off the page and presses in under the finger; under slate it is a flat grey block.
  * A [primary] button (a dialog's confirm) is filled with the accent under every style but Metro, which keeps its
  * buttons alike.
  */
@@ -47,7 +47,7 @@ fun MetroButton(
         !enabled -> colors.outline
         filled -> accent.onFill
         style.relief && pressed -> accent.text
-        style.mobile10 -> colors.foreground
+        style.slate -> colors.foreground
         pressed -> accent.onFill
         else -> colors.foreground
     }
@@ -56,7 +56,7 @@ fun MetroButton(
             Modifier.relief(if (pressed) Relief.Inset else Relief.Raised, small = true, fill = accent.fill)
         filled -> Modifier.background(if (pressed) accent.fill.copy(alpha = 0.8f) else accent.fill)
         style.relief -> Modifier.relief(if (pressed && enabled) Relief.Inset else Relief.Raised, small = true)
-        style.mobile10 -> Modifier.background(colors.foreground.copy(alpha = if (pressed && enabled) 0.4f else 0.2f))
+        style.slate -> Modifier.background(colors.foreground.copy(alpha = if (pressed && enabled) 0.4f else 0.2f))
         else ->
             Modifier
                 .background(if (pressed && enabled) accent.fill else Color.Transparent)
@@ -77,8 +77,8 @@ fun MetroButton(
             .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Windows 10 Mobile labels its buttons in regular weight.
-        val label = if (style.mobile10) {
+        // Slate labels its buttons in regular weight.
+        val label = if (style.slate) {
             MetroTheme.typography.body
         } else {
             MetroTheme.typography.body.copy(

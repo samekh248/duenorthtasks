@@ -38,7 +38,7 @@ class ThemeSettingsStore(private val store: DataStore<Preferences>) {
             ThemeSettings(
                 mode = prefs[MODE].toEnum(ThemeMode.SYSTEM),
                 accent = prefs[ACCENT].toEnum(Accent.Default),
-                style = prefs[STYLE].toEnum(MetroStyle.Default)
+                style = (prefs[STYLE]?.let { RENAMED_STYLES[it] ?: it }).toEnum(MetroStyle.Default)
             )
         }
         .distinctUntilChanged()
@@ -60,6 +60,9 @@ class ThemeSettingsStore(private val store: DataStore<Preferences>) {
         private val MODE = stringPreferencesKey("theme_mode")
         private val ACCENT = stringPreferencesKey("accent")
         private val STYLE = stringPreferencesKey("style")
+
+        /** Styles stored under their old names keep working after the rename to generic names. */
+        private val RENAMED_STYLES = mapOf("Mica" to MetroStyle.Frost.name, "Mobile10" to MetroStyle.Slate.name)
         private val Context.themeDataStore by preferencesDataStore(name = "theme_settings")
 
         fun create(context: Context) = ThemeSettingsStore(context.applicationContext.themeDataStore)

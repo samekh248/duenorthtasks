@@ -68,8 +68,8 @@ fun rememberPivotState(pageCount: Int, initialPage: Int = 0): PivotState {
  * The WP8.1 Pivot, for secondary pages with tabs (settings). The current header comes first and
  * the others follow it in order, at 40% opacity, running off the right edge; tapping one jumps to
  * it. Pages swipe like a pager and loop: swiping on from the last page brings the first, and
- * swiping back from the first brings the last. Mica and Windows 10 Mobile use smaller headers, and
- * mica underlines the current one in the accent, like a Windows 11 selector bar.
+ * swiping back from the first brings the last. Frost and slate use smaller headers, and
+ * frost underlines the current one in the accent, like a Windows 11 selector bar.
  */
 @Composable
 fun MetroPivot(
@@ -83,13 +83,13 @@ fun MetroPivot(
     val type = MetroTheme.typography
     val scope = rememberCoroutineScope()
     val style = MetroTheme.style
-    val compact = style.layers || style.mobile10
+    val compact = style.layers || style.slate
     val headerStyle = if (compact) type.header.copy(fontSize = 36.sp) else type.header
     val selectorLine = MetroTheme.accent.fill
     Column(modifier.fillMaxSize().background(colors.background)) {
         if (pageTitle != null) {
             MetroText(
-                if (style.mobile10) pageTitle else pageTitle.uppercase(),
+                if (style.slate) pageTitle else pageTitle.uppercase(),
                 type.pageTitle,
                 Modifier.padding(start = MetroDimens.Gutter, top = MetroDimens.Gutter)
             )

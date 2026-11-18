@@ -31,8 +31,8 @@ import app.duenorth.tasks.design.theme.Relief
 /**
  * WP8.1 text box: a flat rectangle with a 2dp outline and no underline. When focused it turns
  * into a white box with dark text and an accent outline, in both themes, like the phone did. Tile
- * relief and mica cut the box into the page and keep the page's ink (mica adds an accent line under
- * the box being typed in); Windows 10 Mobile keeps an outline that turns to the accent.
+ * relief and frost cut the box into the page and keep the page's ink (frost adds an accent line under
+ * the box being typed in); slate keeps an outline that turns to the accent.
  */
 @Composable
 fun MetroTextField(

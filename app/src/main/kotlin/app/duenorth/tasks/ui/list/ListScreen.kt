@@ -265,7 +265,7 @@ private fun ListPage(
                         itemsIndexed(completed, key = { _, task ->
                             task.id
                         }, contentType = { _, _ -> "task" }) { index, task ->
-                            // Under mica the header is the top of the card the completed tasks share.
+                            // Under frost the header is the top of the card the completed tasks share.
                             val position = when {
                                 !layers -> GroupPosition.of(index, completed.size)
                                 index == completed.lastIndex -> GroupPosition.Last

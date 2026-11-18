@@ -119,28 +119,28 @@ class ThemeScreenshotTest {
     fun styleTileReliefListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.TileRelief)
 
     @Test
-    fun styleMicaSettingsLight() = styledSettings(MetroStyle.Mica, dark = false)
+    fun styleFrostSettingsLight() = styledSettings(MetroStyle.Frost, dark = false)
 
     @Test
-    fun styleMicaListsLight() = shadedLists(Accent.Magenta, dark = false, style = MetroStyle.Mica)
+    fun styleFrostListsLight() = shadedLists(Accent.Magenta, dark = false, style = MetroStyle.Frost)
 
     @Test
-    fun styleMicaSettingsDark() = styledSettings(MetroStyle.Mica, dark = true)
+    fun styleFrostSettingsDark() = styledSettings(MetroStyle.Frost, dark = true)
 
     @Test
-    fun styleMicaListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Mica)
+    fun styleFrostListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Frost)
 
     @Test
-    fun styleMobile10SettingsLight() = styledSettings(MetroStyle.Mobile10, dark = false)
+    fun styleSlateSettingsLight() = styledSettings(MetroStyle.Slate, dark = false)
 
     @Test
-    fun styleMobile10ListsLight() = shadedLists(Accent.Magenta, dark = false, style = MetroStyle.Mobile10)
+    fun styleSlateListsLight() = shadedLists(Accent.Magenta, dark = false, style = MetroStyle.Slate)
 
     @Test
-    fun styleMobile10SettingsDark() = styledSettings(MetroStyle.Mobile10, dark = true)
+    fun styleSlateSettingsDark() = styledSettings(MetroStyle.Slate, dark = true)
 
     @Test
-    fun styleMobile10ListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Mobile10)
+    fun styleSlateListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Slate)
 
     @Test
     fun listShadeLight() = listShade(dark = false)
@@ -175,7 +175,7 @@ class ThemeScreenshotTest {
         show(dark, Accent.Magenta) {
             SettingsContent(ThemeSettings(ThemeMode.SYSTEM, Accent.Magenta), onMode = {}, onAccent = {})
         }
-        compose.onNode(hasTestTag("style-Mobile10")).performScrollTo()
+        compose.onNode(hasTestTag("style-Slate")).performScrollTo()
         snap("style_picker", dark)
     }
 
@@ -212,7 +212,7 @@ class ThemeScreenshotTest {
         }
         compose.waitUntilAtLeastOneExists(hasText("Pay water bill"), TIMEOUT)
         compose.onNode(hasTestTag("today")).performTouchInput { swipeLeft() }
-        // Windows 10 Mobile writes it in sentence case.
+        // Slate writes it in sentence case.
         compose.waitUntilAtLeastOneExists(hasText("next: Call the vet", ignoreCase = true), TIMEOUT)
         compose.mainClock.advanceTimeBy(2_000)
         snap(

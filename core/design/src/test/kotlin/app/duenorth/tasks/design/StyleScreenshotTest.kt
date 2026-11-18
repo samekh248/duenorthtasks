@@ -46,10 +46,10 @@ class StyleScreenshotTest {
     fun tileRelief() = sheet(MetroStyle.TileRelief)
 
     @Test
-    fun mica() = sheet(MetroStyle.Mica)
+    fun frost() = sheet(MetroStyle.Frost)
 
     @Test
-    fun mobile10() = sheet(MetroStyle.Mobile10)
+    fun slate() = sheet(MetroStyle.Slate)
 
     private fun sheet(style: MetroStyle) {
         for (dark in listOf(false, true)) {

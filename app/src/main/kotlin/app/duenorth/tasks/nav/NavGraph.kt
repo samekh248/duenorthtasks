@@ -28,6 +28,7 @@ import app.duenorth.tasks.ui.list.ListScreen
 import app.duenorth.tasks.ui.list.TemplateLinks
 import app.duenorth.tasks.ui.order.ReorderListsScreen
 import app.duenorth.tasks.ui.search.SearchScreen
+import app.duenorth.tasks.ui.settings.LicensesScreen
 import app.duenorth.tasks.ui.settings.SettingsScreen
 import app.duenorth.tasks.ui.shade.ListShadeScreen
 import app.duenorth.tasks.ui.sharing.SharingScreen
@@ -50,6 +51,7 @@ object Routes {
     const val LIST_SHADE = "list/{id}/shade"
     const val LIST_SHARING = "list/{id}/sharing"
     const val SYNC_LOG = "sync-log"
+    const val LICENSES = "settings/licenses"
     const val REORDER_LISTS = "lists/reorder?from={from}"
     const val TEMPLATES = "templates"
     const val LIST_TEMPLATE = "templates/list/{id}"
@@ -200,7 +202,8 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
             Page(this) {
                 SettingsScreen(
                     onOpenSyncAccount = { nav.navigate(Routes.ACCOUNT) },
-                    onOpenSyncLog = { nav.navigate(Routes.SYNC_LOG) }
+                    onOpenSyncLog = { nav.navigate(Routes.SYNC_LOG) },
+                    onOpenLicenses = { nav.navigate(Routes.LICENSES) }
                 )
             }
         }
@@ -218,6 +221,9 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
         }
         composable(Routes.SYNC_LOG) {
             Page(this) { SyncLogScreen() }
+        }
+        composable(Routes.LICENSES) {
+            Page(this) { LicensesScreen() }
         }
         composable(
             Routes.TASK,
