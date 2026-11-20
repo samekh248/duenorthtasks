@@ -72,14 +72,16 @@ class AndroidGoogleAuth(private val context: Context, private val webClientId: S
         var result = authorization.authorize(request(email)).await()
         if (result.hasResolution()) {
             val sender = checkNotNull(result.pendingIntent).intentSender
-            val data = screen.launchForResult(sender) ?: throw ProviderError.AuthRequired()
+            val data = screen.launchForResult(sender)
+                ?: throw ProviderError.AuthRequired(IllegalStateException("Tasks access was not granted"))
             result = try {
                 authorization.getAuthorizationResultFromIntent(data)
             } catch (e: ApiException) {
                 throw ProviderError.AuthRequired(e)
             }
         }
-        cachedToken = result.accessToken ?: throw ProviderError.AuthRequired()
+        cachedToken = result.accessToken
+            ?: throw ProviderError.AuthRequired(IllegalStateException("Google returned no access token"))
         return AccountInfo(id = email, displayName = google.displayName ?: email, email = email)
     }
 
