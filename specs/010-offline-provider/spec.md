@@ -12,8 +12,8 @@
 
 Beside Google Tasks and Microsoft To Do, the sync account picker offers **this phone only**: no
 account, no sign-in, and tasks that live only in the phone's database and never sync. It counts as
-the one "service" (constitution Principle III), so picking a real service later leaves it, and
-leaving it deletes its tasks, since there is no other copy.
+the one "service" (constitution Principle III). Switching from it to a real service copies the
+phone's lists and tasks up to that service, after a confirmation that says so.
 
 ```mermaid
 flowchart LR
@@ -37,20 +37,26 @@ flowchart LR
 - **FR-703**: The sync account page hides "sync every", "sync on Wi-Fi only", the sync status and
   the sync button; the hub menu has no "sync" item. Notes that name a service ("details sync as
   notes in...", the order note, "here and in ...") say "here" or are left out.
-- **FR-704**: Leaving it (switching to a service, or "delete all tasks" in the menu) asks first
-  and says plainly that every list, task and template on the phone is deleted and not copied
-  across. Switching from a service to it signs out of that service as any switch does.
+- **FR-704**: "Delete all tasks" in the menu asks first and says plainly that every list, task and
+  template on the phone is deleted and kept nowhere else. Switching from a service to it signs out
+  of that service as any switch does, and starts the phone empty.
+- **FR-705**: Switching from it to a service asks first, saying the phone's lists and tasks are
+  copied there. Sign-in comes first, so a failed or cancelled sign-in changes nothing. Then, in one
+  write, the account row names the service and every list, task and step is queued as a create
+  (lists first; each list's tasks bottom first, since Google adds new tasks at the top), and a
+  sync runs. The phone's default list becomes an ordinary list beside the service's own default.
+  Templates stay. Nothing on the service is changed or deleted; the copied lists are added beside
+  what is already there.
 
 ## Out of scope
 
-- Copying the phone's tasks up to Google Tasks or To Do when switching (a later feature; it would
-  need its own confirmation under Principle III).
 - Backup or export of the phone's tasks.
 
 ## Tests
 
 - `core/data` `LocalOnlyTest`: nothing queued, deletes final, registry has no provider but local
   capabilities.
-- `app` `LocalOnlySessionTest`: connecting needs no sign-in and makes a list, sync does nothing,
-  leaving warns and clears the phone without touching the new service.
+- `app` `LocalOnlySessionTest`: connecting needs no sign-in and makes a list, sync does nothing;
+  switching to a service asks, then copies every list, task and step up to it with nothing lost;
+  a failed sign-in leaves the phone as it was.
 - `ScreenScreenshotTest`: account picker (light, dark) and sync account page for this phone only.

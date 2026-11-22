@@ -67,8 +67,19 @@ class AccountSession @Inject constructor(
         accounts.disconnect()
     }
 
-    /** Signs out of the current service, then into [kind] (FR-021: nothing is copied across). */
+    /**
+     * Signs out of the current service, then into [kind] (FR-021: nothing is copied across).
+     * Leaving "this phone only" for a service instead copies everything up to it (spec 010
+     * FR-705), since the phone holds the only copy; the switch dialog says so first.
+     */
     suspend fun switchTo(kind: ProviderKind, host: SignInHost) {
+        if (accounts.current()?.provider == ProviderKind.LOCAL && kind != ProviderKind.LOCAL) {
+            // Sign in first: if it fails or is cancelled, the phone stays as it was.
+            val info = connector.signIn(kind, host)
+            tasks.uploadPhoneTasks(kind, info.displayName, info.email)
+            scheduler.syncNow()
+            return
+        }
         signOut()
         connect(kind, host)
     }

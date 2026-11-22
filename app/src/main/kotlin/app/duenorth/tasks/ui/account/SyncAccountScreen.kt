@@ -60,7 +60,8 @@ fun SyncAccountScreen(actions: SyncAccountActions, viewModel: SyncAccountViewMod
  * asks first, and warns when changes on the phone haven't synced yet (T057).
  *
  * With "this phone only" (spec 010) there is nothing to sync: the sync settings and button go,
- * and leaving it says plainly that its tasks are deleted, since there is no other copy.
+ * switching to a service copies the phone's lists and tasks up to it (FR-705), and "delete all
+ * tasks" says plainly that there is no other copy.
  */
 @Composable
 fun SyncAccountContent(
@@ -178,8 +179,8 @@ fun SyncAccountContent(
         MetroDialog(
             title = "switch to ${serviceLabel(kind)}?",
             message = if (local) {
-                "This deletes every list, task and template on this phone. They aren't copied to " +
-                    "${serviceLabel(kind)}, and you can't undo it."
+                "Your lists and tasks on this phone are copied to ${serviceLabel(kind)} and sync with it from " +
+                    "now on. Your templates stay on this phone."
             } else {
                 "Switching signs out of $currentName. Your tasks stay in that account and come back when " +
                     "you switch again. Your templates are kept only on this phone, so they are removed." +
@@ -229,7 +230,7 @@ fun SyncAccountContent(
 
 /** Under the services while on "this phone only": leaving it doesn't take the tasks along. */
 internal const val LOCAL_SWITCH_NOTE =
-    "Switching to a service deletes the tasks kept on this phone; they aren't copied across."
+    "Switching to a service copies your lists and tasks on this phone up to it."
 
 /** Shown under 5 and 10 minutes in the "sync every" picker. */
 internal const val SHORT_INTERVAL_NOTE = "may drain the battery faster; Android may wait longer while the phone is idle"

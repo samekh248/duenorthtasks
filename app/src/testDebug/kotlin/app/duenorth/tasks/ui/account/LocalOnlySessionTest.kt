@@ -14,8 +14,10 @@ import app.duenorth.tasks.data.provider.AccountProviderRegistry
 import app.duenorth.tasks.data.repo.AccountRepository
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.design.theme.MetroTheme
+import app.duenorth.tasks.provider.api.ProviderError
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.api.SignInHost
+import app.duenorth.tasks.provider.api.TaskDraft
 import app.duenorth.tasks.provider.api.TaskProvider
 import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.sync.AccountConnector
@@ -37,6 +39,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -72,7 +75,12 @@ class LocalOnlySessionTest {
         val context = ApplicationProvider.getApplicationContext<Application>()
         WorkManagerTestInitHelper.initializeTestWorkManager(context)
         db = Room.inMemoryDatabaseBuilder(context, DueNorthDatabase::class.java).allowMainThreadQueries().build()
-        tasks = TaskRepository(db, Clock.fixed(Instant.parse("2026-11-22T09:00:00Z"), ZoneOffset.UTC))
+        tasks = TaskRepository(
+            db,
+            Clock.fixed(Instant.parse("2026-11-22T09:00:00Z"), ZoneOffset.UTC),
+            // As the app wires it: the phone keeps order itself until a service that stores it.
+            serviceStoresOrder = { db.accountDao().get()?.provider != ProviderKind.LOCAL }
+        )
         val providers = mapOf<ProviderKind, () -> TaskProvider>(ProviderKind.GOOGLE to { google })
         registry = AccountProviderRegistry(db.accountDao(), providers)
         val scheduler = SyncScheduler(
@@ -117,10 +125,18 @@ class LocalOnlySessionTest {
     }
 
     @Test
-    fun leavingWarnsThatTasksAreDeletedThenClearsThePhone() {
+    fun switchingToAServiceAsksThenCopiesEverythingUp() {
         runBlocking {
             session.connect(ProviderKind.LOCAL, object : SignInHost {})
-            tasks.createTask(tasks.defaultListIdOrCreate(), "Buy milk")
+            val inbox = tasks.defaultListIdOrCreate()
+            val errands = tasks.createList("Errands")
+            tasks.createTask(inbox, "Buy milk")
+            val vet = tasks.createTask(inbox, "Call the vet")
+            tasks.addStep(vet, "Find the card")
+            val done = tasks.createTask(errands, "Post the parcel")
+            tasks.setCompleted(done, true)
+            // Already on the service; the copy goes beside it, untouched.
+            google.seed("My Tasks", listOf(TaskDraft("Already there")))
         }
         var picked: ProviderKind? = null
         compose.setContent {
@@ -142,16 +158,47 @@ class LocalOnlySessionTest {
         }
         compose.onNode(hasText("sync every")).assertDoesNotExist()
         compose.onNode(hasText("Google Tasks")).performClick()
-        compose.onNode(hasText("This deletes every list, task and template on this phone.", substring = true))
-            .assertExists()
+        compose.onNode(hasText("copied to Google Tasks", substring = true)).assertExists()
         compose.onNode(hasText("switch")).performClick()
         compose.waitForIdle()
         assertEquals(ProviderKind.GOOGLE, picked)
 
-        runBlocking { session.switchTo(ProviderKind.GOOGLE, object : SignInHost {}) }
-        assertEquals(ProviderKind.GOOGLE, runBlocking { db.accountDao().get() }?.provider)
-        assertNull(runBlocking { tasks.defaultListId() })
-        // Only the sign-in reached the new service: no local task was copied across.
-        assertEquals(listOf("signIn"), google.calls)
+        runBlocking {
+            session.switchTo(ProviderKind.GOOGLE, object : SignInHost {})
+            assertEquals(ProviderKind.GOOGLE, db.accountDao().get()?.provider)
+            val engine = SyncEngine(db, registry, dispatcher = Dispatchers.Unconfined)
+            engine.sync()
+            if (engine.backfillPending) engine.backfill()
+            assertEquals(0, tasks.pendingCount.first())
+
+            val lists = google.getLists().associateBy { it.title }
+            assertEquals(setOf("My Tasks", "Tasks", "Errands"), lists.keys)
+            val inbox = google.getTaskChanges(lists.getValue("Tasks").id, null).changed
+            // Created bottom first: the fake numbers tasks in creation order, and Google, which adds
+            // each new task at the top, then ends up with the phone's order ("Call the vet" on top).
+            assertEquals(
+                listOf("Buy milk", "Call the vet"),
+                inbox.sortedBy { it.position }.map { it.title }
+            )
+            assertEquals(listOf("Find the card"), inbox.first { it.title == "Call the vet" }.steps.map { it.title })
+            val errands = google.getTaskChanges(lists.getValue("Errands").id, null).changed.single()
+            assertTrue(errands.title == "Post the parcel" && errands.completed)
+            val mine = google.getTaskChanges(lists.getValue("My Tasks").id, null).changed
+            assertEquals(listOf("Already there"), mine.map { it.title })
+        }
+    }
+
+    @Test
+    fun aFailedSignInLeavesThePhoneAsItWas() = runBlocking {
+        session.connect(ProviderKind.LOCAL, object : SignInHost {})
+        tasks.createTask(tasks.defaultListIdOrCreate(), "Buy milk")
+        google.failNext(ProviderError.AuthRequired())
+
+        assertThrows(ProviderError.AuthRequired::class.java) {
+            runBlocking { session.switchTo(ProviderKind.GOOGLE, object : SignInHost {}) }
+        }
+        assertEquals(ProviderKind.LOCAL, db.accountDao().get()?.provider)
+        assertEquals(0, tasks.pendingCount.first())
+        assertEquals(1, tasks.openTasks(checkNotNull(tasks.defaultListId())).first().size)
     }
 }
