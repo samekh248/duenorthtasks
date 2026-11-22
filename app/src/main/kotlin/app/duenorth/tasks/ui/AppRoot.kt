@@ -34,7 +34,7 @@ fun AppRoot(viewModel: AppViewModel = hiltViewModel()) {
     val actions = remember(viewModel) {
         AppActions(
             syncNow = viewModel::syncNow,
-            switchTo = { kind -> viewModel.switchTo(kind, host()) },
+            switchTo = { kind, copy -> viewModel.switchTo(kind, host(), copy) },
             signOut = viewModel::signOut
         )
     }

@@ -79,7 +79,12 @@ object Routes {
 }
 
 /** App-wide actions the pages need; signing out and switching outlive the page that asked. */
-class AppActions(val syncNow: () -> Unit, val switchTo: (ProviderKind) -> Unit, val signOut: () -> Unit)
+class AppActions(
+    val syncNow: () -> Unit,
+    /** The service to switch to, and whether to copy "this phone only"'s tasks up to it (spec 010). */
+    val switchTo: (ProviderKind, Boolean) -> Unit,
+    val signOut: () -> Unit
+)
 
 /**
  * Every page after the account gate (T026). Pages swing with the turnstile: the leaving page turns

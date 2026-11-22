@@ -138,7 +138,7 @@ class LocalOnlySessionTest {
             // Already on the service; the copy goes beside it, untouched.
             google.seed("My Tasks", listOf(TaskDraft("Already there")))
         }
-        var picked: ProviderKind? = null
+        var picked: Pair<ProviderKind, Boolean>? = null
         compose.setContent {
             MetroTheme(darkTheme = false) {
                 SyncAccountContent(
@@ -152,19 +152,21 @@ class LocalOnlySessionTest {
                     onInterval = {},
                     onWifiOnly = {},
                     onSyncNow = {},
-                    actions = SyncAccountActions(switchTo = { picked = it }, signOut = {})
+                    actions = SyncAccountActions(switchTo = { kind, copy -> picked = kind to copy }, signOut = {})
                 )
             }
         }
         compose.onNode(hasText("sync every")).assertDoesNotExist()
         compose.onNode(hasText("Google Tasks")).performClick()
+        // Copying is ticked to start with; the message follows the box.
+        compose.onNode(hasText("copy my lists and tasks to Google Tasks")).assertExists()
         compose.onNode(hasText("copied to Google Tasks", substring = true)).assertExists()
         compose.onNode(hasText("switch")).performClick()
         compose.waitForIdle()
-        assertEquals(ProviderKind.GOOGLE, picked)
+        assertEquals(ProviderKind.GOOGLE to true, picked)
 
         runBlocking {
-            session.switchTo(ProviderKind.GOOGLE, object : SignInHost {})
+            session.switchTo(ProviderKind.GOOGLE, object : SignInHost {}, copyPhoneTasks = true)
             assertEquals(ProviderKind.GOOGLE, db.accountDao().get()?.provider)
             val engine = SyncEngine(db, registry, dispatcher = Dispatchers.Unconfined)
             engine.sync()
@@ -189,13 +191,54 @@ class LocalOnlySessionTest {
     }
 
     @Test
+    fun copyingIsOptional() {
+        runBlocking {
+            session.connect(ProviderKind.LOCAL, object : SignInHost {})
+            tasks.createTask(tasks.defaultListIdOrCreate(), "Buy milk")
+        }
+        var picked: Pair<ProviderKind, Boolean>? = null
+        compose.setContent {
+            MetroTheme(darkTheme = false) {
+                SyncAccountContent(
+                    state = SyncAccountUiState(
+                        loading = false,
+                        provider = ProviderKind.LOCAL,
+                        signedInAs = "this phone"
+                    ),
+                    demoAvailable = false,
+                    isConfigured = { true },
+                    onInterval = {},
+                    onWifiOnly = {},
+                    onSyncNow = {},
+                    actions = SyncAccountActions(switchTo = { kind, copy -> picked = kind to copy }, signOut = {})
+                )
+            }
+        }
+        compose.onNode(hasText("Google Tasks")).performClick()
+        compose.onNode(hasText("copy my lists and tasks to Google Tasks")).performClick()
+        compose.onNode(hasText("This deletes every list, task and template on this phone.", substring = true))
+            .assertExists()
+        compose.onNode(hasText("switch")).performClick()
+        compose.waitForIdle()
+        assertEquals(ProviderKind.GOOGLE to false, picked)
+
+        runBlocking {
+            session.switchTo(ProviderKind.GOOGLE, object : SignInHost {}, copyPhoneTasks = false)
+            assertEquals(ProviderKind.GOOGLE, db.accountDao().get()?.provider)
+            assertNull(tasks.defaultListId())
+        }
+        // Only the sign-in reached the service: nothing from the phone was sent.
+        assertEquals(listOf("signIn"), google.calls)
+    }
+
+    @Test
     fun aFailedSignInLeavesThePhoneAsItWas() = runBlocking {
         session.connect(ProviderKind.LOCAL, object : SignInHost {})
         tasks.createTask(tasks.defaultListIdOrCreate(), "Buy milk")
         google.failNext(ProviderError.AuthRequired())
 
         assertThrows(ProviderError.AuthRequired::class.java) {
-            runBlocking { session.switchTo(ProviderKind.GOOGLE, object : SignInHost {}) }
+            runBlocking { session.switchTo(ProviderKind.GOOGLE, object : SignInHost {}, copyPhoneTasks = true) }
         }
         assertEquals(ProviderKind.LOCAL, db.accountDao().get()?.provider)
         assertEquals(0, tasks.pendingCount.first())

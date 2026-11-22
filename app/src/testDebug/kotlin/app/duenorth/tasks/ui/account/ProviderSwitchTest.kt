@@ -146,7 +146,7 @@ class ProviderSwitchTest {
                     onInterval = {},
                     onWifiOnly = {},
                     onSyncNow = {},
-                    actions = SyncAccountActions(switchTo = { picked = it }, signOut = {})
+                    actions = SyncAccountActions(switchTo = { kind, _ -> picked = kind }, signOut = {})
                 )
             }
         }

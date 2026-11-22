@@ -13,7 +13,7 @@
 Beside Google Tasks and Microsoft To Do, the sync account picker offers **this phone only**: no
 account, no sign-in, and tasks that live only in the phone's database and never sync. It counts as
 the one "service" (constitution Principle III). Switching from it to a real service copies the
-phone's lists and tasks up to that service, after a confirmation that says so.
+phone's lists and tasks up to that service if the user leaves "copy" ticked in the confirmation.
 
 ```mermaid
 flowchart LR
@@ -40,8 +40,10 @@ flowchart LR
 - **FR-704**: "Delete all tasks" in the menu asks first and says plainly that every list, task and
   template on the phone is deleted and kept nowhere else. Switching from a service to it signs out
   of that service as any switch does, and starts the phone empty.
-- **FR-705**: Switching from it to a service asks first, saying the phone's lists and tasks are
-  copied there. Sign-in comes first, so a failed or cancelled sign-in changes nothing. Then, in one
+- **FR-705**: Switching from it to a service asks first, with a "copy my lists and tasks to
+  <service>" check box, ticked to start with; the message says what happens either way. Unticked,
+  the switch works like any other: the phone is cleared and the service starts as it is. Ticked,
+  sign-in comes first, so a failed or cancelled sign-in changes nothing. Then, in one
   write, the account row names the service and every list, task and step is queued as a create
   (lists first; each list's tasks bottom first, since Google adds new tasks at the top), and a
   sync runs. The phone's default list becomes an ordinary list beside the service's own default.
@@ -57,6 +59,7 @@ flowchart LR
 - `core/data` `LocalOnlyTest`: nothing queued, deletes final, registry has no provider but local
   capabilities.
 - `app` `LocalOnlySessionTest`: connecting needs no sign-in and makes a list, sync does nothing;
-  switching to a service asks, then copies every list, task and step up to it with nothing lost;
+  switching to a service asks, then copies every list, task and step up to it with nothing lost,
+  or with the box unticked clears the phone and sends nothing;
   a failed sign-in leaves the phone as it was.
 - `ScreenScreenshotTest`: account picker (light, dark) and sync account page for this phone only.

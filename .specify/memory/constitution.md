@@ -78,8 +78,8 @@ the one choice, so it is never combined with a service either.
 - An account is connected to at most one provider. Connecting a second provider MUST first
   disconnect the first, after an explicit confirmation that names what happens to local data.
 - Switching providers MUST NOT silently merge, duplicate, or delete remote data on either side.
-- Leaving "this phone only" for a service copies its lists and tasks up to that service, only
-  after a confirmation that says so; they are added beside what the service already holds, and
+- Leaving "this phone only" for a service may copy its lists and tasks up to that service, only
+  when the user leaves that choice ticked in the confirmation; they are added beside what the service already holds, and
   nothing there is merged or deleted.
 - All provider-specific code lives behind a single `TaskProvider` interface. The UI, database and
   sync engine MUST NOT import Google or Microsoft SDK types.

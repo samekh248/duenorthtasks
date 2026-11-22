@@ -4,26 +4,33 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.duenorth.tasks.design.components.AppBarButton
 import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.components.MetroAppBar
+import app.duenorth.tasks.design.components.MetroCheckBox
 import app.duenorth.tasks.design.components.MetroDialog
 import app.duenorth.tasks.design.components.MetroIcon
 import app.duenorth.tasks.design.components.MetroPickerDialog
@@ -38,7 +45,11 @@ import app.duenorth.tasks.ui.common.Chip
 import app.duenorth.tasks.ui.common.PageHeader
 
 /** What the sync account page asks of the app: both end this page, so they run app-wide. */
-class SyncAccountActions(val switchTo: (ProviderKind) -> Unit, val signOut: () -> Unit)
+class SyncAccountActions(
+    /** The service to switch to, and whether to copy "this phone only"'s tasks up to it (spec 010). */
+    val switchTo: (ProviderKind, Boolean) -> Unit,
+    val signOut: () -> Unit
+)
 
 @Composable
 fun SyncAccountScreen(actions: SyncAccountActions, viewModel: SyncAccountViewModel = hiltViewModel()) {
@@ -60,7 +71,7 @@ fun SyncAccountScreen(actions: SyncAccountActions, viewModel: SyncAccountViewMod
  * asks first, and warns when changes on the phone haven't synced yet (T057).
  *
  * With "this phone only" (spec 010) there is nothing to sync: the sync settings and button go,
- * switching to a service copies the phone's lists and tasks up to it (FR-705), and "delete all
+ * switching to a service can copy the phone's lists and tasks up to it (FR-705), and "delete all
  * tasks" says plainly that there is no other copy.
  */
 @Composable
@@ -74,6 +85,8 @@ fun SyncAccountContent(
     actions: SyncAccountActions
 ) {
     var switching by rememberSaveable { mutableStateOf<ProviderKind?>(null) }
+    // Leaving "this phone only": copy its tasks up (the default), or start the service fresh.
+    var copyPhoneTasks by rememberSaveable { mutableStateOf(true) }
     var signingOut by rememberSaveable { mutableStateOf(false) }
     var pickingInterval by rememberSaveable { mutableStateOf(false) }
     val current = state.provider
@@ -108,11 +121,17 @@ fun SyncAccountContent(
                                 kind == current -> "signed in as ${state.signedInAs}"
                                 kind == ProviderKind.LOCAL -> LOCAL_CAPTION
                                 !isConfigured(kind) -> "not set up in this build yet"
-                                else -> "not connected"
+                                else ->
+                                    "not connected"
                             }
                         },
                         enabled = { kind -> kind == current || isConfigured(kind) },
-                        onPick = { kind -> if (kind != current) switching = kind }
+                        onPick = { kind ->
+                            if (kind != current) {
+                                copyPhoneTasks = true
+                                switching = kind
+                            }
+                        }
                     )
                     MetroText(
                         if (local) {
@@ -178,20 +197,33 @@ fun SyncAccountContent(
     switching?.let { kind ->
         MetroDialog(
             title = "switch to ${serviceLabel(kind)}?",
-            message = if (local) {
-                "Your lists and tasks on this phone are copied to ${serviceLabel(kind)} and sync with it from " +
-                    "now on. Your templates stay on this phone."
-            } else {
-                "Switching signs out of $currentName. Your tasks stay in that account and come back when " +
-                    "you switch again. Your templates are kept only on this phone, so they are removed." +
-                    unsyncedWarning(state.pendingChanges)
+            message = when {
+                local && copyPhoneTasks ->
+                    "Your lists and tasks on this phone are copied to ${serviceLabel(kind)} and sync with it " +
+                        "from now on. Your templates stay on this phone."
+                local ->
+                    "This deletes every list, task and template on this phone. They aren't copied to " +
+                        "${serviceLabel(kind)}, and you can't undo it."
+                else ->
+                    "Switching signs out of $currentName. Your tasks stay in that account and come back when " +
+                        "you switch again. Your templates are kept only on this phone, so they are removed." +
+                        unsyncedWarning(state.pendingChanges)
             },
             confirmLabel = "switch",
             onConfirm = {
                 switching = null
-                actions.switchTo(kind)
+                actions.switchTo(kind, local && copyPhoneTasks)
             },
-            onDismiss = { switching = null }
+            onDismiss = { switching = null },
+            extra = if (local) {
+                {
+                    CopyChoice(copyPhoneTasks, "copy my lists and tasks to ${serviceLabel(kind)}") {
+                        copyPhoneTasks = it
+                    }
+                }
+            } else {
+                null
+            }
         )
     }
     if (signingOut) {
@@ -228,9 +260,31 @@ fun SyncAccountContent(
     }
 }
 
+/** A check box with its label beside it, the whole row one tap target (48dp tall at least). */
+@Composable
+private fun CopyChoice(checked: Boolean, label: String, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .toggleable(
+                value = checked,
+                interactionSource = null,
+                indication = null,
+                role = Role.Checkbox,
+                onValueChange = onChange
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        MetroCheckBox(checked = checked, onCheckedChange = null)
+        MetroText(label, MetroTheme.typography.body, Modifier.weight(1f))
+    }
+}
+
 /** Under the services while on "this phone only": leaving it doesn't take the tasks along. */
 internal const val LOCAL_SWITCH_NOTE =
-    "Switching to a service copies your lists and tasks on this phone up to it."
+    "Switching to a service can copy your lists and tasks on this phone up to it, or leave them behind."
 
 /** Shown under 5 and 10 minutes in the "sync every" picker. */
 internal const val SHORT_INTERVAL_NOTE = "may drain the battery faster; Android may wait longer while the phone is idle"
