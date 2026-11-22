@@ -158,11 +158,16 @@ class ScreenScreenshotTest {
     }
 
     @Test
-    fun account() {
-        show(dark = false) {
+    fun account() = account(dark = false)
+
+    @Test
+    fun accountDark() = account(dark = true)
+
+    private fun account(dark: Boolean) {
+        show(dark) {
             AccountScreen(demoAvailable = true, connecting = null, error = null, isConfigured = { true }, onPick = {})
         }
-        snap("account", dark = false)
+        snap("account", dark)
     }
 
     @Test
@@ -171,12 +176,20 @@ class ScreenScreenshotTest {
     @Test
     fun syncAccountDark() = syncAccount(dark = true)
 
-    private fun syncAccount(dark: Boolean) {
+    /** "This phone only" (spec 010): no sync settings, no sync button. */
+    @Test
+    fun syncAccountLocalLight() = syncAccount(dark = false, provider = ProviderKind.LOCAL)
+
+    @Test
+    fun syncAccountLocalDark() = syncAccount(dark = true, provider = ProviderKind.LOCAL)
+
+    private fun syncAccount(dark: Boolean, provider: ProviderKind = ProviderKind.GOOGLE) {
+        val local = provider == ProviderKind.LOCAL
         val state = SyncAccountUiState(
             loading = false,
-            provider = ProviderKind.GOOGLE,
-            signedInAs = "you@example.com",
-            pendingChanges = 3
+            provider = provider,
+            signedInAs = if (local) "this phone" else "you@example.com",
+            pendingChanges = if (local) 0 else 3
         )
         show(dark) {
             SyncAccountContent(
@@ -189,7 +202,7 @@ class ScreenScreenshotTest {
                 actions = SyncAccountActions(switchTo = {}, signOut = {})
             )
         }
-        snap("sync_account", dark)
+        snap(if (local) "sync_account_local" else "sync_account", dark)
     }
 
     @Test

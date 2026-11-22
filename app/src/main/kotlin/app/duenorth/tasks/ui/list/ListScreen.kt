@@ -118,7 +118,12 @@ fun ListContent(
         } else {
             ListPage(state, viewModel, onOpenTask, onEditTask, onShade, onInfo, onTemplates, onSettings)
         }
-        if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
+        // "This phone only" has no service to explain (spec 010).
+        if (state.orderNote &&
+            state.serviceName.isNotEmpty()
+        ) {
+            OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
+        }
     }
 }
 

@@ -29,7 +29,7 @@ object DataModule {
     @Provides
     @Singleton
     fun taskRepository(db: DueNorthDatabase, clock: Clock, registry: ProviderRegistry): TaskRepository =
-        TaskRepository(db, clock, serviceStoresOrder = { registry.current()?.capabilities?.manualOrder != false })
+        TaskRepository(db, clock, serviceStoresOrder = { registry.capabilities()?.manualOrder != false })
 
     @Provides
     @Singleton

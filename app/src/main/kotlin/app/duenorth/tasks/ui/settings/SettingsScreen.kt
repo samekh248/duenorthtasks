@@ -280,7 +280,7 @@ private fun SyncLinks(onOpenAccount: () -> Unit, onOpenLog: () -> Unit) {
     ) {
         LinkRow(
             "sync account",
-            "choose Google Tasks or Microsoft To Do, sign in or out, and how often to sync",
+            "choose Google Tasks, Microsoft To Do or this phone only, sign in or out, and how often to sync",
             onOpenAccount
         )
         LinkRow(

@@ -76,6 +76,8 @@ class SyncEngine(
     /** Runs one sync. Concurrent calls wait for the one in progress and then run their own. */
     suspend fun sync(): SyncResult = mutex.withLock {
         withContext(dispatcher) {
+            // No service ("this phone only", or signed out): nothing to do, and no dots for it.
+            if (registry.current() == null) return@withContext SyncResult.NoAccount
             running.value = true
             try {
                 guarded { provider, stillConnected ->

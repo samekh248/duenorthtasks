@@ -22,7 +22,8 @@ import app.duenorth.tasks.ui.common.PageHeader
 
 /**
  * "sync account" before anything is connected (contracts/ui-screens.md): pick Google Tasks or
- * Microsoft To Do and sign in. A service whose client ID this build lacks is shown but disabled.
+ * Microsoft To Do and sign in, or keep tasks on this phone only (spec 010). A service whose client
+ * ID this build lacks is shown but disabled.
  * Debug builds also offer the demo account.
  */
 @Composable
@@ -41,7 +42,8 @@ fun AccountScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 MetroText(
-                    "Due North Tasks keeps your tasks in one service at a time. Pick the one you use.",
+                    "Due North Tasks keeps your tasks in one service at a time. Pick the one you use, or keep " +
+                        "them on this phone with no account.",
                     MetroTheme.typography.body,
                     color = MetroTheme.colors.secondary
                 )
@@ -50,9 +52,11 @@ fun AccountScreen(
                     selected = connecting,
                     caption = { kind ->
                         when {
+                            connecting == kind && kind == ProviderKind.LOCAL -> "setting up..."
                             connecting == kind -> "signing in..."
                             !isConfigured(kind) -> "not set up in this build yet"
                             kind == ProviderKind.FAKE -> "sample tasks kept on this phone (debug builds only)"
+                            kind == ProviderKind.LOCAL -> LOCAL_CAPTION
                             kind == ProviderKind.GOOGLE -> "sign in with your Google account"
                             else -> "sign in with your Microsoft account"
                         }
@@ -68,3 +72,6 @@ fun AccountScreen(
         if (connecting != null) MetroProgressDots()
     }
 }
+
+/** Under "this phone only": what it means, before and after picking it. */
+internal const val LOCAL_CAPTION = "no account; your tasks stay on this phone and never sync"

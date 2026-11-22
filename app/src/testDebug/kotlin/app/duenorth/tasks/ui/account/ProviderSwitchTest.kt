@@ -98,6 +98,7 @@ class ProviderSwitchTest {
             connector = connector,
             scheduler = scheduler,
             registry = AccountProviderRegistry(db.accountDao(), providers),
+            tasks = tasks,
             demo = Optional.empty()
         )
         runBlocking {

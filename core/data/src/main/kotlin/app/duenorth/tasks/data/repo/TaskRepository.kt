@@ -16,6 +16,7 @@ import app.duenorth.tasks.data.db.TaskListEntity
 import app.duenorth.tasks.data.db.TaskWithList
 import app.duenorth.tasks.data.order.OrderKeys
 import app.duenorth.tasks.provider.api.Patch
+import app.duenorth.tasks.provider.api.ProviderKind
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -32,7 +33,8 @@ import kotlinx.coroutines.flow.flowOf
  *
  * Reads are Room [Flow]s, so the screen updates the moment a write commits. Every write saves the
  * entity and its outbox operation in one transaction, then emits on [localEdits] so the sync
- * scheduler can push it. Nothing here touches the network.
+ * scheduler can push it. Nothing here touches the network. With "this phone only" (spec 010)
+ * nothing is queued and deletes are final at once, since nothing will ever push them.
  */
 class TaskRepository(
     private val db: DueNorthDatabase,
@@ -48,7 +50,7 @@ class TaskRepository(
     private val lists = db.taskListDao()
     private val tasks = db.taskDao()
     private val steps = db.stepDao()
-    private val outbox = Outbox(db.pendingOperationDao())
+    private val outbox = Outbox(db.pendingOperationDao()) { accounts.get()?.provider != ProviderKind.LOCAL }
 
     private val edits = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 

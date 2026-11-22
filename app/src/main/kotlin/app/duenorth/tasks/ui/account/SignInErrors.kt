@@ -14,7 +14,7 @@ import kotlinx.coroutines.CancellationException
 internal fun signInError(kind: ProviderKind, error: Exception): String {
     if (error is CancellationException) throw error
     runCatching { Log.w(TAG, "Sign-in to $kind failed", error) }
-    val service = serviceName(kind)
+    val service = serviceName(kind).ifEmpty { serviceLabel(kind) }
     val summary = when (error) {
         is ProviderError.AuthRequired -> "Couldn't sign in to $service. Try again."
         is ProviderError.Transient, is IOException -> "Couldn't reach $service. Check your connection and try again."
