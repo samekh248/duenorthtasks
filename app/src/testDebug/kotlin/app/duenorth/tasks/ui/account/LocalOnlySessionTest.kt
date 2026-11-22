@@ -77,7 +77,11 @@ class LocalOnlySessionTest {
         registry = AccountProviderRegistry(db.accountDao(), providers)
         val scheduler = SyncScheduler(
             workManager = WorkManager.getInstance(context),
-            settings = SyncSettingsStore(PreferenceDataStoreFactory.create { File(folder.root, "sync.preferences_pb") }),
+            settings = SyncSettingsStore(
+                PreferenceDataStoreFactory.create {
+                    File(folder.root, "sync.preferences_pb")
+                }
+            ),
             localEdits = tasks.localEdits,
             scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         )
@@ -122,7 +126,11 @@ class LocalOnlySessionTest {
         compose.setContent {
             MetroTheme(darkTheme = false) {
                 SyncAccountContent(
-                    state = SyncAccountUiState(loading = false, provider = ProviderKind.LOCAL, signedInAs = "this phone"),
+                    state = SyncAccountUiState(
+                        loading = false,
+                        provider = ProviderKind.LOCAL,
+                        signedInAs = "this phone"
+                    ),
                     demoAvailable = false,
                     isConfigured = { true },
                     onInterval = {},
