@@ -71,11 +71,16 @@ stutters fails the brief as much as a Material look would.
 
 ### III. One Provider at a Time (NON-NEGOTIABLE)
 
-The app syncs with exactly one backend: Google Tasks OR Microsoft To Do, never both.
+The app syncs with exactly one backend: Google Tasks OR Microsoft To Do, never both. The user
+may instead keep tasks on **this phone only**, with no account and no sync (spec 010); it counts as
+the one choice, so it is never combined with a service either.
 
 - An account is connected to at most one provider. Connecting a second provider MUST first
   disconnect the first, after an explicit confirmation that names what happens to local data.
 - Switching providers MUST NOT silently merge, duplicate, or delete remote data on either side.
+- Leaving "this phone only" for a service may copy its lists and tasks up to that service, only
+  when the user leaves that choice ticked in the confirmation; they are added beside what the service already holds, and
+  nothing there is merged or deleted.
 - All provider-specific code lives behind a single `TaskProvider` interface. The UI, database and
   sync engine MUST NOT import Google or Microsoft SDK types.
 
@@ -133,10 +138,13 @@ PATCH for wording) and states the reason. Plans and reviews MUST check the Const
 gates in `plan.md` against the principles above; any violation is listed in that plan's
 Complexity Tracking table with a justification.
 
-**Version**: 2.1.1 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-11-14
+**Version**: 2.2.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-11-22
 
 2.0.0: Principle I now allows the three opt-in styles from Due North Budget (tile relief, mica,
 Windows 10 Mobile) beside the default Metro style, at the owner's request.
 
 2.1.1: The mica and Windows 10 Mobile styles are renamed frost and slate, so no Microsoft product name
 appears in the app (owner, 2026-11-14).
+
+2.2.0: Principle III adds "this phone only", an offline choice with no account and no sync, at the
+owner's request (2026-11-22).

@@ -3,6 +3,7 @@ package app.duenorth.tasks.ui.account
 import app.duenorth.tasks.BuildConfig
 import app.duenorth.tasks.data.provider.ProviderRegistry
 import app.duenorth.tasks.data.repo.AccountRepository
+import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.api.SignInHost
 import app.duenorth.tasks.sync.AccountConnector
@@ -15,6 +16,9 @@ import javax.inject.Singleton
  * Signing in and out of the one connected service (constitution Principle III). Signing out stops
  * sync, signs out of the service and deletes the account row, which takes every list, task and
  * queued change on the phone with it. Tasks already synced stay in that account.
+ *
+ * "This phone only" (spec 010) has no account to sign in to: connecting just writes the account
+ * row and the default list, and signing out deletes everything, since there is no other copy.
  */
 @Singleton
 class AccountSession @Inject constructor(
@@ -22,6 +26,7 @@ class AccountSession @Inject constructor(
     private val connector: AccountConnector,
     private val scheduler: SyncScheduler,
     private val registry: ProviderRegistry,
+    private val tasks: TaskRepository,
     demo: Optional<DemoAccount>
 ) {
     private val demoAccount: DemoAccount? = demo.orElse(null)
@@ -33,14 +38,21 @@ class AccountSession @Inject constructor(
         ProviderKind.GOOGLE -> BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank()
         ProviderKind.MICROSOFT -> BuildConfig.MSAL_CLIENT_ID.isNotBlank()
         ProviderKind.FAKE -> demoAvailable
+        ProviderKind.LOCAL -> true
     }
 
     suspend fun connect(kind: ProviderKind, host: SignInHost) {
-        if (kind == ProviderKind.FAKE) {
-            connectDemo()
-        } else {
-            connector.connect(kind, host)
+        when (kind) {
+            ProviderKind.FAKE -> connectDemo()
+            ProviderKind.LOCAL -> connectLocal()
+            else -> connector.connect(kind, host)
         }
+    }
+
+    /** Starts "this phone only" with one empty list, as a new Google or To Do account has. */
+    private suspend fun connectLocal() {
+        if (accounts.current() == null) accounts.connect(ProviderKind.LOCAL, displayName = LOCAL_NAME, email = null)
+        tasks.defaultListIdOrCreate()
     }
 
     suspend fun connectDemo() {
@@ -55,9 +67,22 @@ class AccountSession @Inject constructor(
         accounts.disconnect()
     }
 
-    /** Signs out of the current service, then into [kind] (FR-021: nothing is copied across). */
-    suspend fun switchTo(kind: ProviderKind, host: SignInHost) {
+    /**
+     * Signs out of the current service, then into [kind] (FR-021: nothing is copied across).
+     * Leaving "this phone only" for a service, with [copyPhoneTasks] ticked in the switch dialog,
+     * instead copies everything up to it (spec 010 FR-705).
+     */
+    suspend fun switchTo(kind: ProviderKind, host: SignInHost, copyPhoneTasks: Boolean = false) {
+        if (copyPhoneTasks && accounts.current()?.provider == ProviderKind.LOCAL && kind != ProviderKind.LOCAL) {
+            // Sign in first: if it fails or is cancelled, the phone stays as it was.
+            val info = connector.signIn(kind, host)
+            tasks.uploadPhoneTasks(kind, info.displayName, info.email)
+            scheduler.syncNow()
+            return
+        }
         signOut()
         connect(kind, host)
     }
 }
+
+private const val LOCAL_NAME = "this phone"

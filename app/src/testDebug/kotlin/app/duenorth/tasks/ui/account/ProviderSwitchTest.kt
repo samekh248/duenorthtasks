@@ -98,6 +98,7 @@ class ProviderSwitchTest {
             connector = connector,
             scheduler = scheduler,
             registry = AccountProviderRegistry(db.accountDao(), providers),
+            tasks = tasks,
             demo = Optional.empty()
         )
         runBlocking {
@@ -145,7 +146,7 @@ class ProviderSwitchTest {
                     onInterval = {},
                     onWifiOnly = {},
                     onSyncNow = {},
-                    actions = SyncAccountActions(switchTo = { picked = it }, signOut = {})
+                    actions = SyncAccountActions(switchTo = { kind, _ -> picked = kind }, signOut = {})
                 )
             }
         }

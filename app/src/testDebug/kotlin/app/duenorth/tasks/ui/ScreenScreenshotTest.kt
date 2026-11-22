@@ -1,9 +1,12 @@
 package app.duenorth.tasks.ui
 
 import android.app.Application
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -14,6 +17,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -25,6 +29,9 @@ import app.duenorth.tasks.data.repo.SyncLogRepository
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.demo.DemoSeeder
+import app.duenorth.tasks.design.components.MetroCheckBox
+import app.duenorth.tasks.design.components.MetroDialogContent
+import app.duenorth.tasks.design.components.MetroText
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.fake.FakeProvider
@@ -158,11 +165,16 @@ class ScreenScreenshotTest {
     }
 
     @Test
-    fun account() {
-        show(dark = false) {
+    fun account() = account(dark = false)
+
+    @Test
+    fun accountDark() = account(dark = true)
+
+    private fun account(dark: Boolean) {
+        show(dark) {
             AccountScreen(demoAvailable = true, connecting = null, error = null, isConfigured = { true }, onPick = {})
         }
-        snap("account", dark = false)
+        snap("account", dark)
     }
 
     @Test
@@ -171,12 +183,51 @@ class ScreenScreenshotTest {
     @Test
     fun syncAccountDark() = syncAccount(dark = true)
 
-    private fun syncAccount(dark: Boolean) {
+    /** "This phone only" (spec 010): no sync settings, no sync button. */
+    @Test
+    fun syncAccountLocalLight() = syncAccount(dark = false, provider = ProviderKind.LOCAL)
+
+    @Test
+    fun syncAccountLocalDark() = syncAccount(dark = true, provider = ProviderKind.LOCAL)
+
+    /** Leaving "this phone only": the copy box under the message (spec 010 FR-705). */
+    @Test
+    fun switchFromPhoneLight() = switchFromPhone(dark = false)
+
+    @Test
+    fun switchFromPhoneDark() = switchFromPhone(dark = true)
+
+    private fun switchFromPhone(dark: Boolean) {
+        show(dark) {
+            MetroDialogContent(
+                title = "switch to Google Tasks?",
+                message = "Your lists and tasks on this phone are copied to Google Tasks and sync with it from now " +
+                    "on. Your templates stay on this phone.",
+                confirmLabel = "switch",
+                onConfirm = {},
+                dismissLabel = "cancel",
+                onDismiss = {},
+                extra = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        MetroCheckBox(checked = true, onCheckedChange = null)
+                        MetroText("copy my lists and tasks to Google Tasks", MetroTheme.typography.body)
+                    }
+                }
+            )
+        }
+        snap("switch_from_phone", dark)
+    }
+
+    private fun syncAccount(dark: Boolean, provider: ProviderKind = ProviderKind.GOOGLE) {
+        val local = provider == ProviderKind.LOCAL
         val state = SyncAccountUiState(
             loading = false,
-            provider = ProviderKind.GOOGLE,
-            signedInAs = "you@example.com",
-            pendingChanges = 3
+            provider = provider,
+            signedInAs = if (local) "this phone" else "you@example.com",
+            pendingChanges = if (local) 0 else 3
         )
         show(dark) {
             SyncAccountContent(
@@ -186,10 +237,10 @@ class ScreenScreenshotTest {
                 onInterval = {},
                 onWifiOnly = {},
                 onSyncNow = {},
-                actions = SyncAccountActions(switchTo = {}, signOut = {})
+                actions = SyncAccountActions(switchTo = { _, _ -> }, signOut = {})
             )
         }
-        snap("sync_account", dark)
+        snap(if (local) "sync_account_local" else "sync_account", dark)
     }
 
     @Test

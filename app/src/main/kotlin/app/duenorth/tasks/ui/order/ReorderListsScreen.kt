@@ -36,7 +36,12 @@ import app.duenorth.tasks.ui.common.ReorderHint
 fun ReorderListsScreen(onDone: () -> Unit, viewModel: ReorderListsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     ReorderListsContent(state, onMove = viewModel::reorder, onDone = onDone)
-    if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
+    // "This phone only" has no service to explain (spec 010).
+    if (state.orderNote &&
+        state.serviceName.isNotEmpty()
+    ) {
+        OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
+    }
 }
 
 /** The reorder lists page (specs/003-reordering US4): the list tiles with grippers. */

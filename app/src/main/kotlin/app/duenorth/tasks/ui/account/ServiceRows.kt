@@ -6,15 +6,17 @@ import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.ui.common.serviceName
 
 /** The services this build can offer, in the order the radio group shows them. */
-internal fun offeredServices(demoAvailable: Boolean): List<ProviderKind> =
-    listOfNotNull(ProviderKind.GOOGLE, ProviderKind.MICROSOFT, ProviderKind.FAKE.takeIf { demoAvailable })
+internal fun offeredServices(demoAvailable: Boolean): List<ProviderKind> = listOfNotNull(
+    ProviderKind.GOOGLE,
+    ProviderKind.MICROSOFT,
+    ProviderKind.LOCAL,
+    ProviderKind.FAKE.takeIf { demoAvailable }
+)
 
-internal fun serviceLabel(kind: ProviderKind): String = if (kind ==
-    ProviderKind.FAKE
-) {
-    "demo account"
-} else {
-    serviceName(kind)
+internal fun serviceLabel(kind: ProviderKind): String = when (kind) {
+    ProviderKind.FAKE -> "demo account"
+    ProviderKind.LOCAL -> "this phone only"
+    else -> serviceName(kind)
 }
 
 /** One radio per service: the connected one selected, each with its own caption. */

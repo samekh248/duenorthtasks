@@ -3,6 +3,7 @@ package app.duenorth.tasks.sync
 import app.duenorth.tasks.data.db.AccountDao
 import app.duenorth.tasks.data.db.AccountEntity
 import app.duenorth.tasks.data.db.AuthState
+import app.duenorth.tasks.provider.api.AccountInfo
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.api.SignInHost
 import app.duenorth.tasks.provider.api.TaskProvider
@@ -17,6 +18,15 @@ class AccountConnector(
     private val providers: Map<ProviderKind, () -> TaskProvider>,
     private val onConnected: () -> Unit
 ) {
+    /**
+     * Signs in to [kind] without touching the phone's data, for moving "this phone only" up to a
+     * service (spec 010 FR-705). The caller writes the account row once this succeeds.
+     */
+    suspend fun signIn(kind: ProviderKind, host: SignInHost): AccountInfo {
+        val provider = checkNotNull(providers[kind]) { "No provider is built into this app for $kind" }()
+        return provider.signIn(host)
+    }
+
     suspend fun connect(kind: ProviderKind, host: SignInHost): AccountEntity {
         val existing = accounts.get()
         check(existing == null || existing.provider == kind) {

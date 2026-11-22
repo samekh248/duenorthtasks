@@ -114,7 +114,12 @@ fun TaskDetailContent(
     val colors = MetroTheme.colors
     val style = MetroTheme.style
 
-    if (state.orderNote) OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
+    // "This phone only" has no service to explain (spec 010).
+    if (state.orderNote &&
+        state.serviceName.isNotEmpty()
+    ) {
+        OrderNoteDialog(state.serviceName, viewModel::dismissOrderNote)
+    }
     if (state.reordering) {
         LifecycleStartEffect(viewModel) {
             viewModel.holdForReorder(true)
@@ -338,7 +343,11 @@ fun TaskDetailContent(
     if (deleting) {
         MetroDialog(
             title = "delete task?",
-            message = "\"${state.title}\" will be deleted here and in the connected account.",
+            message = if (state.serviceName.isEmpty()) {
+                "\"${state.title}\" will be deleted from this phone."
+            } else {
+                "\"${state.title}\" will be deleted here and in the connected account."
+            },
             confirmLabel = "delete",
             onConfirm = {
                 deleting = false

@@ -54,6 +54,11 @@ class AppViewModel @Inject constructor(
 
     val syncing: StateFlow<Boolean> = engine.isSyncing
 
+    /** False for "this phone only" (spec 010), which has nothing to sync, so the sync item goes. */
+    val syncs: StateFlow<Boolean> = accounts.account
+        .map { it?.provider != ProviderKind.LOCAL }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
     val state: StateFlow<AppState> = accounts.account
         .map { if (it == null) AppState.NoAccount else AppState.Connected }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppState.Loading)
@@ -66,7 +71,8 @@ class AppViewModel @Inject constructor(
      * Signs out, then into [kind]. Runs here rather than on the sync account page because signing
      * out closes that page (the gate takes over) and would cancel the sign-in with it.
      */
-    fun switchTo(kind: ProviderKind, host: SignInHost) = signIn(kind) { session.switchTo(kind, host) }
+    fun switchTo(kind: ProviderKind, host: SignInHost, copyPhoneTasks: Boolean = false) =
+        signIn(kind) { session.switchTo(kind, host, copyPhoneTasks) }
 
     fun signOut() {
         viewModelScope.launch { session.signOut() }

@@ -78,7 +78,23 @@ data class BulkDelete(
     val stoppedBy: ProviderError? = null
 )
 
-enum class ProviderKind { GOOGLE, MICROSOFT, FAKE }
+enum class ProviderKind {
+    GOOGLE,
+    MICROSOFT,
+    FAKE,
+
+    /**
+     * "This phone only" (spec 010): no account and no service. Tasks live in the phone's database
+     * and never sync, so no [TaskProvider] is bound for it; [LOCAL_CAPABILITIES] says what it keeps.
+     */
+    LOCAL
+}
+
+/**
+ * What "this phone only" keeps (spec 010). The star is kept, since To Do can store it too
+ * (constitution Principle VI); order lives in the phone's own keys, as it does for To Do.
+ */
+val LOCAL_CAPABILITIES = ProviderCapabilities(importance = true, manualOrder = false, dueTime = false)
 
 data class ProviderCapabilities(
     /** Microsoft To Do only. */

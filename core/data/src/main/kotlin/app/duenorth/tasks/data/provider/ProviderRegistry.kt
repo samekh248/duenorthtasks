@@ -1,6 +1,8 @@
 package app.duenorth.tasks.data.provider
 
 import app.duenorth.tasks.data.db.AccountDao
+import app.duenorth.tasks.provider.api.LOCAL_CAPABILITIES
+import app.duenorth.tasks.provider.api.ProviderCapabilities
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.api.TaskProvider
 
@@ -9,8 +11,11 @@ import app.duenorth.tasks.provider.api.TaskProvider
  * The sync engine asks this, never a concrete provider.
  */
 fun interface ProviderRegistry {
-    /** The provider for the account row, or null when no service is connected. */
+    /** The provider for the account row, or null when no service is connected ("this phone only" included). */
     suspend fun current(): TaskProvider?
+
+    /** What the phone can keep for the account: the provider's, or "this phone only"'s, or null with no account. */
+    suspend fun capabilities(): ProviderCapabilities? = current()?.capabilities
 }
 
 /**
@@ -23,7 +28,15 @@ class AccountProviderRegistry(
 ) : ProviderRegistry {
     override suspend fun current(): TaskProvider? {
         val kind = accounts.get()?.provider ?: return null
+        // "This phone only" has nothing to sync with (spec 010).
+        if (kind == ProviderKind.LOCAL) return null
         val factory = checkNotNull(providers[kind]) { "No provider is built into this app for $kind" }
         return factory()
+    }
+
+    override suspend fun capabilities(): ProviderCapabilities? = when (accounts.get()?.provider) {
+        null -> null
+        ProviderKind.LOCAL -> LOCAL_CAPABILITIES
+        else -> current()?.capabilities
     }
 }

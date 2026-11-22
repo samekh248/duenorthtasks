@@ -2,6 +2,7 @@ package app.duenorth.tasks.data.repo
 
 import androidx.room.withTransaction
 import app.duenorth.tasks.data.db.AccountEntity
+import app.duenorth.tasks.data.db.AuthState
 import app.duenorth.tasks.data.db.CompletedStat
 import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.db.EntityType
@@ -16,6 +17,7 @@ import app.duenorth.tasks.data.db.TaskListEntity
 import app.duenorth.tasks.data.db.TaskWithList
 import app.duenorth.tasks.data.order.OrderKeys
 import app.duenorth.tasks.provider.api.Patch
+import app.duenorth.tasks.provider.api.ProviderKind
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -32,7 +34,8 @@ import kotlinx.coroutines.flow.flowOf
  *
  * Reads are Room [Flow]s, so the screen updates the moment a write commits. Every write saves the
  * entity and its outbox operation in one transaction, then emits on [localEdits] so the sync
- * scheduler can push it. Nothing here touches the network.
+ * scheduler can push it. Nothing here touches the network. With "this phone only" (spec 010)
+ * nothing is queued and deletes are final at once, since nothing will ever push them.
  */
 class TaskRepository(
     private val db: DueNorthDatabase,
@@ -48,7 +51,7 @@ class TaskRepository(
     private val lists = db.taskListDao()
     private val tasks = db.taskDao()
     private val steps = db.stepDao()
-    private val outbox = Outbox(db.pendingOperationDao())
+    private val outbox = Outbox(db.pendingOperationDao()) { accounts.get()?.provider != ProviderKind.LOCAL }
 
     private val edits = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -98,6 +101,38 @@ class TaskRepository(
     suspend fun defaultListIdOrCreate(): String = defaultListId() ?: createList(DEFAULT_LIST_TITLE, isDefault = true)
 
     suspend fun defaultListId(): String? = lists.defaultList()?.localId
+
+    /**
+     * Moves "this phone only" to [provider] without losing anything (spec 010 FR-705): the account
+     * row now names the service, and every list, task and step on the phone is queued to be created
+     * there, as if each had just been made offline. Lists go first so their tasks can follow; each
+     * list's tasks go bottom first, since Google puts every new task at the top.
+     */
+    suspend fun uploadPhoneTasks(provider: ProviderKind, displayName: String, email: String?) = write {
+        val account = checkNotNull(accounts.get()) { "No account" }
+        check(account.provider == ProviderKind.LOCAL) { "Only tasks kept on this phone are uploaded" }
+        check(provider != ProviderKind.LOCAL)
+        accounts.upsert(
+            account.copy(provider = provider, displayName = displayName, email = email, authState = AuthState.OK)
+        )
+        val at = now()
+        val phoneLists = db.syncDao().allLists().filterNot { it.deletedLocally }
+        for (list in phoneLists) {
+            // The service has its own default list; the phone's joins it as an ordinary one.
+            if (list.isDefault) lists.update(list.copy(isDefault = false))
+            outbox.enqueue(EntityType.LIST, list.localId, OperationKind.CREATE, at)
+        }
+        for (list in phoneLists) {
+            val open = tasks.openInList(list.localId).sortedWith(OrderKeys.taskComparator)
+            val queued = tasks.completedInList(list.localId) + open.asReversed()
+            for (task in queued) {
+                outbox.enqueue(EntityType.TASK, task.localId, OperationKind.CREATE, at)
+                steps.forTask(task.localId).filterNot { it.deletedLocally }.forEach { step ->
+                    outbox.enqueue(EntityType.STEP, step.localId, OperationKind.CREATE, at)
+                }
+            }
+        }
+    }
 
     // Lists
 

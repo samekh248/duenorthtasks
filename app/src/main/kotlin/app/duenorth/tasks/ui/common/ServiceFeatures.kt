@@ -16,16 +16,16 @@ import kotlinx.coroutines.flow.map
 class ServiceFeatures @Inject constructor(accounts: AccountRepository, private val registry: ProviderRegistry) {
     /** The importance star (FR-014): To Do has it, Google Tasks doesn't, so Google hides it. */
     val importance: Flow<Boolean> = accounts.account
-        .map { account -> account != null && registry.current()?.capabilities?.importance == true }
+        .map { account -> account != null && registry.capabilities()?.importance == true }
         .distinctUntilChanged()
 
     /** Lists can be shared (spec 002): To Do can, Google Tasks can't. */
     val sharedLists: Flow<Boolean> = accounts.account
-        .map { account -> account != null && registry.current()?.capabilities?.sharedLists == true }
+        .map { account -> account != null && registry.capabilities()?.sharedLists == true }
         .distinctUntilChanged()
 
     /** Task and step order (specs/003-reordering): Google Tasks stores it, To Do doesn't. */
     val storesOrder: Flow<Boolean> = accounts.account
-        .map { account -> account != null && registry.current()?.capabilities?.manualOrder == true }
+        .map { account -> account != null && registry.capabilities()?.manualOrder == true }
         .distinctUntilChanged()
 }

@@ -35,12 +35,14 @@ enum class ListSharing(
 }
 
 /** The message under "delete <list>?": a shared list goes for everyone in it. */
-fun deleteListMessage(title: String, openCount: Int, sharing: ListSharing, serviceName: String): String =
-    if (sharing == ListSharing.OWNED) {
-        "This deletes $title and its $openCount open tasks for everyone it's shared with, here and in $serviceName."
+fun deleteListMessage(title: String, openCount: Int, sharing: ListSharing, serviceName: String): String {
+    val where = if (serviceName.isEmpty()) "here" else "here and in $serviceName"
+    return if (sharing == ListSharing.OWNED) {
+        "This deletes $title and its $openCount open tasks for everyone it's shared with, $where."
     } else {
-        "This deletes the list and its $openCount open tasks here and in $serviceName."
+        "This deletes the list and its $openCount open tasks $where."
     }
+}
 
 /** The message under "clear completed?": how many go, where, and that it can't be undone. */
 fun clearCompletedMessage(count: Int, sharing: ListSharing, serviceName: String): String {

@@ -39,7 +39,9 @@ fun MetroDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     /** Null for a note with one button, which then also dismisses. */
-    dismissLabel: String? = "cancel"
+    dismissLabel: String? = "cancel",
+    /** A control under the message, such as a check box that changes what confirming does. */
+    extra: (@Composable () -> Unit)? = null
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -59,7 +61,8 @@ fun MetroDialog(
                 onConfirm = onConfirm,
                 dismissLabel = dismissLabel,
                 onDismiss = onDismiss,
-                modifier = Modifier.clickable(interactionSource = null, indication = null) {}
+                modifier = Modifier.clickable(interactionSource = null, indication = null) {},
+                extra = extra
             )
         }
     }
@@ -74,13 +77,14 @@ fun MetroDialogContent(
     onConfirm: () -> Unit,
     dismissLabel: String?,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    extra: (@Composable () -> Unit)? = null
 ) {
     val colors = MetroTheme.colors
     val type = MetroTheme.typography
     val style = MetroTheme.style
     if (style.layers) {
-        LayerDialog(title, message, confirmLabel, onConfirm, dismissLabel, onDismiss, modifier)
+        LayerDialog(title, message, confirmLabel, onConfirm, dismissLabel, onDismiss, modifier, extra)
         return
     }
     val chrome = if (style.relief) {
@@ -98,6 +102,7 @@ fun MetroDialogContent(
     ) {
         MetroText(title, type.subheader.copy(fontSize = type.listName.fontSize))
         MetroText(message, type.body)
+        extra?.invoke()
         Row(
             Modifier.fillMaxWidth().padding(top = MetroDimens.Gutter),
             horizontalArrangement = Arrangement.spacedBy(MetroDimens.Gutter)
@@ -118,7 +123,8 @@ private fun LayerDialog(
     onConfirm: () -> Unit,
     dismissLabel: String?,
     onDismiss: () -> Unit,
-    modifier: Modifier
+    modifier: Modifier,
+    extra: (@Composable () -> Unit)?
 ) {
     val surface = MetroTheme.surface
     val type = MetroTheme.typography
@@ -135,6 +141,7 @@ private fun LayerDialog(
         ) {
             MetroText(title, type.subheader.copy(fontWeight = MetroWeights.Semibold))
             MetroText(message, type.body)
+            extra?.invoke()
         }
         Row(
             Modifier

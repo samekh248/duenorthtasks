@@ -79,14 +79,25 @@ object Routes {
 }
 
 /** App-wide actions the pages need; signing out and switching outlive the page that asked. */
-class AppActions(val syncNow: () -> Unit, val switchTo: (ProviderKind) -> Unit, val signOut: () -> Unit)
+class AppActions(
+    val syncNow: () -> Unit,
+    /** The service to switch to, and whether to copy "this phone only"'s tasks up to it (spec 010). */
+    val switchTo: (ProviderKind, Boolean) -> Unit,
+    val signOut: () -> Unit
+)
 
 /**
  * Every page after the account gate (T026). Pages swing with the turnstile: the leaving page turns
  * away first, then the new one swings in, so the NavHost keeps the old page on screen until then.
  */
 @Composable
-fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = rememberNavController()) {
+fun DueNorthNavHost(
+    app: AppActions,
+    syncing: Boolean,
+    nav: NavHostController = rememberNavController(),
+    /** False for "this phone only" (spec 010): no sync item in the hub menu. */
+    syncs: Boolean = true
+) {
     val keepOldPage = fadeOut(tween(1, delayMillis = TURNSTILE_MS))
     NavHost(
         navController = nav,
@@ -104,7 +115,7 @@ fun DueNorthNavHost(app: AppActions, syncing: Boolean, nav: NavHostController = 
                 openList = { nav.navigate(Routes.list(it)) },
                 search = { nav.navigate(Routes.SEARCH) },
                 editTask = { nav.navigate(Routes.editTask(it)) },
-                sync = app.syncNow,
+                sync = app.syncNow.takeIf { syncs },
                 openSettings = { nav.navigate(Routes.SETTINGS) },
                 openListShade = { nav.navigate(Routes.listShade(it)) },
                 openListInfo = { nav.navigate(Routes.listSharing(it)) },

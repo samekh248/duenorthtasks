@@ -11,7 +11,11 @@ import java.time.Instant
  * (data-model.md, "Outbox coalescing"). Callers run it inside the same transaction as the entity
  * write, so the row and its operation are saved together or not at all.
  */
-internal class Outbox(private val dao: PendingOperationDao) {
+internal class Outbox(
+    private val dao: PendingOperationDao,
+    /** False for "this phone only" (spec 010): nothing is queued, since nothing will push it. */
+    private val syncs: suspend () -> Boolean = { true }
+) {
     enum class Result {
         /** A new operation was added. */
         QUEUED,
@@ -30,6 +34,9 @@ internal class Outbox(private val dao: PendingOperationDao) {
         now: Instant,
         fields: Set<String> = emptySet()
     ): Result {
+        // Nothing syncs, so the phone's copy is the only one: a delete is final at once, as for
+        // a create that was never pushed, and every other change is already saved in its row.
+        if (!syncs()) return if (kind == OperationKind.DELETE) Result.CANCELLED else Result.MERGED
         val waiting = dao.forEntity(entity, localId)
         val createWaiting = waiting.any { it.kind == OperationKind.CREATE }
         return when (kind) {
