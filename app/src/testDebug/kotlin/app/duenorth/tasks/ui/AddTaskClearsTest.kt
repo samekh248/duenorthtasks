@@ -87,7 +87,7 @@ class AddTaskClearsTest {
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test
@@ -109,17 +109,19 @@ class AddTaskClearsTest {
 
     @Test
     fun listPageBoxClearsBetweenQuickAdds() {
-        val list = ListViewModel(
-            SavedStateHandle(mapOf("id" to listId)),
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            testListShades(tasks, accounts),
-            accounts,
-            ServiceFeatures(accounts) { FakeProvider() },
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            pins,
-            clock
+        val list = track(
+            ListViewModel(
+                SavedStateHandle(mapOf("id" to listId)),
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                testListShades(tasks, accounts),
+                accounts,
+                ServiceFeatures(accounts) { FakeProvider() },
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                pins,
+                clock
+            )
         )
         show {
             val state by list.state.collectAsState()
@@ -152,15 +154,17 @@ class AddTaskClearsTest {
     private fun field(pane: SemanticsMatcher) = compose.onNode(isAddBox and hasAnyAncestor(pane))
 
     private fun showHome() {
-        val viewModel = HomeViewModel(
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            accounts,
-            ServiceFeatures(accounts) { FakeProvider() },
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            pins,
-            clock
+        val viewModel = track(
+            HomeViewModel(
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                accounts,
+                ServiceFeatures(accounts) { FakeProvider() },
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                pins,
+                clock
+            )
         )
         val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show {

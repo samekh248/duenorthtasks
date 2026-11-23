@@ -65,14 +65,16 @@ class TaskDetailAppBarTest {
         val features = ServiceFeatures(accounts) { FakeProvider() }
         runBlocking { accounts.connect(ProviderKind.FAKE, "demo", null) }
         taskId = runBlocking { tasks.createTask(tasks.defaultListIdOrCreate(), "Pack") }
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf("id" to taskId)),
-            tasks,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            accounts,
-            clock
+        val viewModel = track(
+            TaskDetailViewModel(
+                SavedStateHandle(mapOf("id" to taskId)),
+                tasks,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                accounts,
+                clock
+            )
         )
         compose.setContent {
             val state by viewModel.state.collectAsState()
@@ -83,7 +85,7 @@ class TaskDetailAppBarTest {
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test

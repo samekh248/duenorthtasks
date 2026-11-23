@@ -87,20 +87,22 @@ class StyleContentScreenshotTest(private val style: MetroStyle, private val dark
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test
     fun today() {
-        val viewModel = HomeViewModel(
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            accounts,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            testPinnedLists(tasks, accounts),
-            clock
+        val viewModel = track(
+            HomeViewModel(
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                accounts,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
+                clock
+            )
         )
         val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show {
@@ -139,14 +141,16 @@ class StyleContentScreenshotTest(private val style: MetroStyle, private val dark
     fun detail() {
         val id = runBlocking { tasks.tasksDueBy(clock.instant().atZone(clock.zone).toLocalDate().plusDays(1)).first() }
             .first { it.task.title == "Call the vet" }.task.localId
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf("id" to id)),
-            tasks,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            accounts,
-            clock
+        val viewModel = track(
+            TaskDetailViewModel(
+                SavedStateHandle(mapOf("id" to id)),
+                tasks,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                accounts,
+                clock
+            )
         )
         show {
             val state by viewModel.state.collectAsState()
@@ -158,17 +162,19 @@ class StyleContentScreenshotTest(private val style: MetroStyle, private val dark
 
     /** The Home list with its completed tasks open. */
     private fun showList() {
-        val viewModel = ListViewModel(
-            SavedStateHandle(mapOf("id" to runBlocking { homeListId() })),
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            testListShades(tasks, accounts),
-            accounts,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            testPinnedLists(tasks, accounts),
-            clock
+        val viewModel = track(
+            ListViewModel(
+                SavedStateHandle(mapOf("id" to runBlocking { homeListId() })),
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                testListShades(tasks, accounts),
+                accounts,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
+                clock
+            )
         )
         viewModel.toggleCompletedGroup()
         show {

@@ -98,7 +98,7 @@ class SharedListsScreenshotTest {
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test
@@ -159,15 +159,17 @@ class SharedListsScreenshotTest {
 
     private fun homeLists(dark: Boolean, name: String? = "home_lists_shared") {
         val viewModel =
-            HomeViewModel(
-                tasks,
-                TemplateRepository(db, tasks, clock),
-                accounts,
-                features,
-                ListHolds(),
-                testListOrder(tasks, accounts),
-                testPinnedLists(tasks, accounts),
-                clock
+            track(
+                HomeViewModel(
+                    tasks,
+                    TemplateRepository(db, tasks, clock),
+                    accounts,
+                    features,
+                    ListHolds(),
+                    testListOrder(tasks, accounts),
+                    testPinnedLists(tasks, accounts),
+                    clock
+                )
             )
         val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show(dark) {
@@ -182,15 +184,17 @@ class SharedListsScreenshotTest {
     }
 
     private fun list(title: String, dark: Boolean) {
-        val viewModel = ListViewModel(
-            SavedStateHandle(mapOf("id" to listId(title))),
-            tasks, TemplateRepository(db, tasks, clock), testListShades(tasks, accounts),
-            accounts,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            testPinnedLists(tasks, accounts),
-            clock
+        val viewModel = track(
+            ListViewModel(
+                SavedStateHandle(mapOf("id" to listId(title))),
+                tasks, TemplateRepository(db, tasks, clock), testListShades(tasks, accounts),
+                accounts,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
+                clock
+            )
         )
         show(dark) {
             val state by viewModel.state.collectAsState()
@@ -201,7 +205,8 @@ class SharedListsScreenshotTest {
     }
 
     private fun sharing(title: String, name: String, dark: Boolean) {
-        val viewModel = SharingViewModel(SavedStateHandle(mapOf("id" to listId(title))), tasks, accounts, features)
+        val viewModel =
+            track(SharingViewModel(SavedStateHandle(mapOf("id" to listId(title))), tasks, accounts, features))
         show(dark) {
             val state by viewModel.state.collectAsState()
             SharingContent(state, onShade = {}, onHandOff = {})
@@ -223,14 +228,16 @@ class SharedListsScreenshotTest {
                 )
             )
         }
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf("id" to task.localId)),
-            tasks,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            accounts,
-            clock
+        val viewModel = track(
+            TaskDetailViewModel(
+                SavedStateHandle(mapOf("id" to task.localId)),
+                tasks,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                accounts,
+                clock
+            )
         )
         show(dark) {
             val state by viewModel.state.collectAsState()
