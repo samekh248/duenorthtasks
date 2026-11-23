@@ -17,9 +17,13 @@ import androidx.room.TypeConverters
         SyncLogEntity::class,
         TemplateListEntity::class,
         TemplateTaskEntity::class,
-        TemplateStepEntity::class
+        TemplateStepEntity::class,
+        SharedListEntity::class,
+        ShareRosterEntity::class,
+        ShareFieldEntity::class,
+        SharePeerEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
     autoMigrations = [
         // Spec 002: list sharing flags and task assignment, all with defaults.
@@ -27,7 +31,9 @@ import androidx.room.TypeConverters
         // Spec 004: three new template tables.
         AutoMigration(from = 2, to = 3),
         // "clear completed": when it last ran in each list.
-        AutoMigration(from = 3, to = 4)
+        AutoMigration(from = 3, to = 4),
+        // Spec 011: share by tap tables.
+        AutoMigration(from = 4, to = 5)
     ]
 )
 @TypeConverters(Converters::class)
@@ -47,6 +53,8 @@ abstract class DueNorthDatabase : RoomDatabase() {
     abstract fun syncDao(): SyncDao
 
     abstract fun templateDao(): TemplateDao
+
+    abstract fun shareDao(): ShareDao
 
     companion object {
         const val NAME = "duenorth.db"

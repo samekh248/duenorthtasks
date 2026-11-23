@@ -30,7 +30,9 @@ fun MetroListTile(
     fill: Color = MetroTheme.accent.fill,
     onFill: Color = MetroTheme.accent.onFill,
     size: Dp = 64.dp,
-    shared: Boolean = false
+    shared: Boolean = false,
+    /** A glyph for the top-left corner in place of the two people, such as share by tap's link. */
+    glyph: MetroIcon? = null
 ) {
     val style = MetroTheme.style
     if (count == null) {
@@ -50,9 +52,10 @@ fun MetroListTile(
     }
     val face = if (style.relief) Modifier.relief(Relief.Raised, fill = fill) else Modifier.background(fill)
     Box(modifier.size(size).then(face), contentAlignment = Alignment.BottomEnd) {
-        if (shared) {
+        val corner = glyph ?: MetroIcon.People.takeIf { shared }
+        if (corner != null) {
             MetroIconGlyph(
-                MetroIcon.People,
+                corner,
                 Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 4.dp),
                 color = onFill,
                 size = 20.dp

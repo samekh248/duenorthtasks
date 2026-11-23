@@ -76,7 +76,11 @@ class HomeActions(
     val openTemplates: () -> Unit = {},
     val openTemplateTask: (String) -> Unit = {},
     val openListTemplate: (String) -> Unit = {},
-    val menuItems: List<AppBarMenuItem> = emptyList()
+    val menuItems: List<AppBarMenuItem> = emptyList(),
+    /** "tap to sync" (spec 011); null hides it (no NFC, not "this phone only", or no tap-shared lists). */
+    val tapSync: (() -> Unit)? = null,
+    /** Lists shared by tap, for their glyph and caption. */
+    val tapShared: Set<String> = emptySet()
 )
 
 @Composable
@@ -232,7 +236,8 @@ fun HomeContent(
                             onUnpin = { viewModel.unpin(it.id) },
                             onMakeTemplate = {
                                 viewModel.saveListAsTemplate(it.id, shades[it.id] ?: 0, actions.openListTemplate)
-                            }
+                            },
+                            tapShared = actions.tapShared
                         )
                     },
                     PanoramaSection(STATS) {
@@ -342,7 +347,8 @@ private fun HomeAppBar(
         LISTS -> AppBarButton(MetroIcon.Add, "add list", caption = "list", onClick = onNewList)
         else -> AppBarButton(MetroIcon.Add, "add task", caption = "task") { onNewTask(section) }
     }
-    MetroAppBar(buttons = listOf(first, search), menuItems = menu)
+    val tap = actions.tapSync?.let { AppBarButton(MetroIcon.Tap, "tap to sync", caption = "tap", onClick = it) }
+    MetroAppBar(buttons = listOfNotNull(first, search, tap), menuItems = menu)
 }
 
 /**

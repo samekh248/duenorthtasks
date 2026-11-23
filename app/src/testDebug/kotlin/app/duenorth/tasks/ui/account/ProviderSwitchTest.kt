@@ -14,6 +14,7 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import app.duenorth.tasks.data.db.DueNorthDatabase
 import app.duenorth.tasks.data.provider.AccountProviderRegistry
 import app.duenorth.tasks.data.repo.AccountRepository
+import app.duenorth.tasks.data.repo.RoomShareStore
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.data.repo.TemplateRepository
 import app.duenorth.tasks.design.theme.MetroTheme
@@ -99,6 +100,7 @@ class ProviderSwitchTest {
             scheduler = scheduler,
             registry = AccountProviderRegistry(db.accountDao(), providers),
             tasks = tasks,
+            shares = RoomShareStore(db),
             demo = Optional.empty()
         )
         runBlocking {
@@ -205,7 +207,11 @@ class ProviderSwitchTest {
             "sync_log",
             "template_list",
             "template_task",
-            "template_step"
+            "template_step",
+            "shared_list",
+            "share_roster",
+            "share_field",
+            "share_peer"
         )
     }
 }

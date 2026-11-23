@@ -4,6 +4,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- The app icon badge is drawn from one quiet notification holding today's count. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Share by tap (spec 011): phones swap lists over NFC. Phones without NFC don't offer it. -->
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
+    <uses-feature android:name="android.hardware.nfc.hce" android:required="false" />
 
     <!-- "see people in microsoft to do" opens the To Do app when it is installed (spec 002). -->
     <queries>
@@ -31,5 +35,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Share by tap: answers another phone's NFC reader, even when Due North is closed. -->
+        <service
+            android:name=".share.ShareCardService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/apduservice" />
+        </service>
     </application>
 </manifest>

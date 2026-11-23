@@ -5,9 +5,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -19,18 +21,23 @@ import app.duenorth.tasks.DebugRoutes
 import app.duenorth.tasks.design.components.AppBarMenuItem
 import app.duenorth.tasks.design.motion.TURNSTILE_MS
 import app.duenorth.tasks.provider.api.ProviderKind
+import app.duenorth.tasks.share.CardState
 import app.duenorth.tasks.ui.account.SyncAccountActions
 import app.duenorth.tasks.ui.account.SyncAccountScreen
 import app.duenorth.tasks.ui.detail.TaskDetailScreen
 import app.duenorth.tasks.ui.home.HomeActions
 import app.duenorth.tasks.ui.home.HomeScreen
 import app.duenorth.tasks.ui.list.ListScreen
+import app.duenorth.tasks.ui.list.TapLinks
 import app.duenorth.tasks.ui.list.TemplateLinks
 import app.duenorth.tasks.ui.order.ReorderListsScreen
 import app.duenorth.tasks.ui.search.SearchScreen
 import app.duenorth.tasks.ui.settings.LicensesScreen
 import app.duenorth.tasks.ui.settings.SettingsScreen
 import app.duenorth.tasks.ui.shade.ListShadeScreen
+import app.duenorth.tasks.ui.share.InviteScreen
+import app.duenorth.tasks.ui.share.TapScreen
+import app.duenorth.tasks.ui.share.TapStatusViewModel
 import app.duenorth.tasks.ui.sharing.SharingScreen
 import app.duenorth.tasks.ui.synclog.SyncLogScreen
 import app.duenorth.tasks.ui.templates.ListTemplateActions
@@ -57,6 +64,8 @@ object Routes {
     const val LIST_TEMPLATE = "templates/list/{id}"
     const val USE_LIST_TEMPLATE = "templates/list/{id}/use"
     const val TEMPLATE_TASK = "templates/task/{id}"
+    const val TAP = "tap?list={list}"
+    const val INVITE = "invite"
 
     fun list(id: String) = "list/$id"
 
@@ -74,6 +83,9 @@ object Routes {
     fun useListTemplate(id: String) = "templates/list/$id/use"
 
     fun templateTask(id: String) = "templates/task/$id"
+
+    /** Share by tap for [listId], or "tap to sync" without one (spec 011). */
+    fun tap(listId: String?) = if (listId == null) "tap" else "tap?list=$listId"
 
     fun reorderLists(from: String?) = if (from == null) "lists/reorder" else "lists/reorder?from=$from"
 }
@@ -96,8 +108,17 @@ fun DueNorthNavHost(
     syncing: Boolean,
     nav: NavHostController = rememberNavController(),
     /** False for "this phone only" (spec 010): no sync item in the hub menu. */
-    syncs: Boolean = true
+    syncs: Boolean = true,
+    tapStatus: TapStatusViewModel = hiltViewModel()
 ) {
+    val tap by tapStatus.availability.collectAsState()
+    val card by tapStatus.card.collectAsState()
+    // A phone tapped while Due North is open (or brought up by the invite) shows the invite page.
+    LaunchedEffect(card is CardState.Invite) {
+        if (card is CardState.Invite && nav.currentDestination?.route != Routes.INVITE) nav.navigate(Routes.INVITE)
+    }
+    val tapSync = { nav.navigate(Routes.tap(null)) }.takeIf { tap.available && tap.shared.isNotEmpty() }
+    val shareByTap: ((String) -> Unit)? = { id: String -> nav.navigate(Routes.tap(id)) }.takeIf { tap.available }
     val keepOldPage = fadeOut(tween(1, delayMillis = TURNSTILE_MS))
     NavHost(
         navController = nav,
@@ -123,6 +144,8 @@ fun DueNorthNavHost(
                 openTemplates = { nav.navigate(Routes.TEMPLATES) },
                 openTemplateTask = { nav.navigate(Routes.templateTask(it)) },
                 openListTemplate = { nav.navigate(Routes.listTemplate(it)) },
+                tapSync = tapSync,
+                tapShared = tap.shared,
                 menuItems = if (DebugRoutes.GALLERY_ENABLED) {
                     listOf(AppBarMenuItem("component gallery") { nav.navigate(Routes.GALLERY) })
                 } else {
@@ -139,6 +162,7 @@ fun DueNorthNavHost(
             }
         }
         composable(Routes.LIST) { entry ->
+            val listId = entry.arguments?.getString("id").orEmpty()
             Page(this) {
                 ListScreen(
                     onOpenTask = { nav.navigate(Routes.task(it)) },
@@ -150,6 +174,10 @@ fun DueNorthNavHost(
                     onTemplates = TemplateLinks(
                         openListTemplate = { nav.navigate(Routes.listTemplate(it)) },
                         openTemplateTask = { nav.navigate(Routes.templateTask(it)) }
+                    ),
+                    onTap = TapLinks(
+                        shareByTap = shareByTap?.let { { it(listId) } },
+                        tapSync = { nav.navigate(Routes.tap(null)) }.takeIf { tap.available && listId in tap.shared }
                     )
                 )
             }
@@ -205,7 +233,30 @@ fun DueNorthNavHost(
             Page(this) {
                 SharingScreen(
                     onClosed = { nav.closeIfOn(entry) },
-                    onShade = { id -> nav.navigate(Routes.listShade(id)) }
+                    onShade = { id -> nav.navigate(Routes.listShade(id)) },
+                    onShareByTap = shareByTap
+                )
+            }
+        }
+        composable(
+            Routes.TAP,
+            arguments = listOf(
+                navArgument("list") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { entry ->
+            Page(this) { TapScreen(onDone = { nav.closeIfOn(entry) }) }
+        }
+        composable(Routes.INVITE) { entry ->
+            Page(this) {
+                InviteScreen(
+                    onOpenList = { id ->
+                        nav.navigate(Routes.list(id)) { popUpTo(Routes.INVITE) { inclusive = true } }
+                    },
+                    onClosed = { nav.closeIfOn(entry) }
                 )
             }
         }

@@ -3,6 +3,7 @@ package app.duenorth.tasks.ui.account
 import app.duenorth.tasks.BuildConfig
 import app.duenorth.tasks.data.provider.ProviderRegistry
 import app.duenorth.tasks.data.repo.AccountRepository
+import app.duenorth.tasks.data.repo.RoomShareStore
 import app.duenorth.tasks.data.repo.TaskRepository
 import app.duenorth.tasks.provider.api.ProviderKind
 import app.duenorth.tasks.provider.api.SignInHost
@@ -11,6 +12,8 @@ import app.duenorth.tasks.sync.SyncScheduler
 import java.util.Optional
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Signing in and out of the one connected service (constitution Principle III). Signing out stops
@@ -27,6 +30,8 @@ class AccountSession @Inject constructor(
     private val scheduler: SyncScheduler,
     private val registry: ProviderRegistry,
     private val tasks: TaskRepository,
+    /** Share by tap's keys and records (spec 011), forgotten when "this phone only" ends (FR-812). */
+    private val shares: RoomShareStore,
     demo: Optional<DemoAccount>
 ) {
     private val demoAccount: DemoAccount? = demo.orElse(null)
@@ -64,6 +69,7 @@ class AccountSession @Inject constructor(
         scheduler.cancelAll()
         // Signing out of the service is best effort; the phone forgets the account either way.
         runCatching { registry.current()?.signOut() }
+        withContext(Dispatchers.IO) { shares.clearAll() }
         accounts.disconnect()
     }
 
@@ -76,6 +82,8 @@ class AccountSession @Inject constructor(
         if (copyPhoneTasks && accounts.current()?.provider == ProviderKind.LOCAL && kind != ProviderKind.LOCAL) {
             // Sign in first: if it fails or is cancelled, the phone stays as it was.
             val info = connector.signIn(kind, host)
+            // The lists go up as ordinary lists; their tap sharing ends here (FR-812).
+            withContext(Dispatchers.IO) { shares.clearAll() }
             tasks.uploadPhoneTasks(kind, info.displayName, info.email)
             scheduler.syncNow()
             return

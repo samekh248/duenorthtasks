@@ -48,7 +48,9 @@ internal fun ListsSection(
     onReorder: (ListRowUi) -> Unit,
     onPin: (ListRowUi) -> Unit,
     onUnpin: (ListRowUi) -> Unit,
-    onMakeTemplate: (ListRowUi) -> Unit = {}
+    onMakeTemplate: (ListRowUi) -> Unit = {},
+    /** Lists shared by tap (spec 011): the link glyph and "shared by tap". */
+    tapShared: Set<String> = emptySet()
 ) {
     LazyColumn(
         Modifier.fillMaxSize().testTag("lists"),
@@ -69,7 +71,8 @@ internal fun ListsSection(
                 onDelete = { onDelete(list) },
                 onReorder = { onReorder(list) }.takeIf { state.lists.size > 1 },
                 onPin = { if (list.pinned) onUnpin(list) else onPin(list) },
-                onMakeTemplate = { onMakeTemplate(list) }
+                onMakeTemplate = { onMakeTemplate(list) },
+                tapShared = list.id in tapShared
             )
         }
         item(key = "new", contentType = "new") {
@@ -99,7 +102,8 @@ private fun ListRow(
     onDelete: () -> Unit,
     onReorder: (() -> Unit)?,
     onPin: () -> Unit,
-    onMakeTemplate: () -> Unit
+    onMakeTemplate: () -> Unit,
+    tapShared: Boolean = false
 ) {
     var menu by remember { mutableStateOf(false) }
     Box {
@@ -116,7 +120,7 @@ private fun ListRow(
                 // TalkBack reads the name first, then "shared with you, 3 open" instead of a bare
                 // number from the tile.
                 .semantics {
-                    stateDescription = listOf(list.sharing.spoken, "${list.openCount} open")
+                    stateDescription = listOf(tapCaption(tapShared) ?: list.sharing.spoken, "${list.openCount} open")
                         .filter { it.isNotEmpty() }
                         .joinToString(", ")
                 },
@@ -128,13 +132,14 @@ private fun ListRow(
                 modifier = Modifier.clearAndSetSemantics {},
                 fill = shade.fill,
                 onFill = shade.onFill,
-                shared = list.sharing.isShared
+                shared = list.sharing.isShared,
+                glyph = MetroIcon.Link.takeIf { tapShared }
             )
             Column(Modifier.weight(1f)) {
                 MetroText(list.title, MetroTheme.typography.listName, maxLines = 1)
                 MetroText(
                     listOfNotNull(
-                        list.sharing.caption.ifEmpty { null },
+                        tapCaption(tapShared) ?: list.sharing.caption.ifEmpty { null },
                         list.next?.let { "next: $it" } ?: "no open tasks"
                     ).joinToString(" · "),
                     MetroTheme.typography.caption,
@@ -160,3 +165,5 @@ private fun ListRow(
         )
     }
 }
+
+private fun tapCaption(tapShared: Boolean): String? = "shared by tap".takeIf { tapShared }

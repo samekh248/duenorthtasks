@@ -87,12 +87,16 @@ fun ListScreen(
     /** "edit" on a task's menu: its page with the title and details open for typing. */
     onEditTask: (String) -> Unit = onOpenTask,
     onSettings: () -> Unit = {},
+    onTap: TapLinks = TapLinks(),
     viewModel: ListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
-    ListContent(state, viewModel, onOpenTask, onShade, onInfo, onTemplates, onEditTask, onSettings)
+    ListContent(state, viewModel, onOpenTask, onShade, onInfo, onTemplates, onEditTask, onSettings, onTap)
 }
+
+/** Share by tap's menu items (spec 011); a null one is hidden. */
+class TapLinks(val shareByTap: (() -> Unit)? = null, val tapSync: (() -> Unit)? = null)
 
 /** Where "make template" leads: the new template's editor (spec 004 US3). */
 class TemplateLinks(val openListTemplate: (String) -> Unit = {}, val openTemplateTask: (String) -> Unit = {})
@@ -107,7 +111,8 @@ fun ListContent(
     onInfo: (String) -> Unit = {},
     onTemplates: TemplateLinks = TemplateLinks(),
     onEditTask: (String) -> Unit = onOpenTask,
-    onSettings: () -> Unit = {}
+    onSettings: () -> Unit = {},
+    onTap: TapLinks = TapLinks()
 ) {
     ListAccent(viewModel.listId) {
         if (state.reordering) {
@@ -116,7 +121,7 @@ fun ListContent(
                 viewModel
             )
         } else {
-            ListPage(state, viewModel, onOpenTask, onEditTask, onShade, onInfo, onTemplates, onSettings)
+            ListPage(state, viewModel, onOpenTask, onEditTask, onShade, onInfo, onTemplates, onSettings, onTap)
         }
         // "This phone only" has no service to explain (spec 010).
         if (state.orderNote &&
@@ -175,7 +180,8 @@ private fun ListPage(
     onShade: (String) -> Unit,
     onInfo: (String) -> Unit,
     onTemplates: TemplateLinks,
-    onSettings: () -> Unit
+    onSettings: () -> Unit,
+    onTap: TapLinks
 ) {
     val scope = rememberCoroutineScope()
     val continuum = rememberContinuumState()
@@ -300,6 +306,8 @@ private fun ListPage(
                 AppBarMenuItem("list shade") { onShade(viewModel.listId) },
                 AppBarMenuItem("make template") { viewModel.saveAsTemplate(onTemplates.openListTemplate) },
                 AppBarMenuItem("clear completed") { clearing = true }.takeIf { state.completed.isNotEmpty() },
+                onTap.tapSync?.let { AppBarMenuItem("tap to sync", onClick = it) },
+                onTap.shareByTap?.let { AppBarMenuItem("share by tap", onClick = it) },
                 AppBarMenuItem("settings", rule = true, onClick = onSettings),
                 AppBarMenuItem("delete list", destructive = true) { deleting = true }.takeIf { state.sharing.canManage }
             )

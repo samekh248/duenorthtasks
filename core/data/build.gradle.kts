@@ -38,6 +38,7 @@ room {
 
 dependencies {
     api(project(":provider:api"))
+    api(project(":core:share"))
     api(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
