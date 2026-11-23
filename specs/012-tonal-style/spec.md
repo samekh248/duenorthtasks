@@ -43,3 +43,10 @@ flowchart LR
 
 Constitution 2.3.0 adds tonal to Principle I's opt-in styles. Accent fills stay flat; the one gradient is the
 page fading into the app bar, as in Budget.
+
+## Screenshots
+
+Today, a list, a task and the lists section in tonal (magenta accent):
+
+![Tonal, light](screenshots/tonal_overview_light.png)
+![Tonal, dark](screenshots/tonal_overview_dark.png)
