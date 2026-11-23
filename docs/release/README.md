@@ -66,9 +66,12 @@ Keep an offline copy of the keystore and its passwords; the keystore must never 
 
 ## Optimized APK for sideloading
 
-The Optimized APK workflow (Actions > Optimized APK > Run workflow) builds the benchmarkRelease
-APK, signed with the debug key so it installs over earlier optimized APKs and sign-in keeps
-working. It needs these secrets, and attaches `due-north-optimized-<version>-<date>.apk` to the run:
+The Optimized APK workflow builds the benchmarkRelease APK on every push to main (every merged pull
+request) and when started by hand (Actions > Optimized APK > Run workflow). It is signed with the
+debug key so it installs over earlier optimized APKs and sign-in keeps working, and its versionCode
+is 100 + the run number so each build is newer than the last. The APK,
+`due-north-optimized-<version>-build<n>-<date>.apk`, is attached to the run and published as a
+pre-release named "Build <n>" (tag `build-<n>`) on the repository's Releases page. It needs these secrets:
 
 | Secret | Value |
 |---|---|
