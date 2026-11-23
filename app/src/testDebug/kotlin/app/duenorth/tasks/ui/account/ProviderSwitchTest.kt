@@ -207,7 +207,11 @@ class ProviderSwitchTest {
             "sync_log",
             "template_list",
             "template_task",
-            "template_step"
+            "template_step",
+            "shared_list",
+            "share_roster",
+            "share_field",
+            "share_peer"
         )
     }
 }

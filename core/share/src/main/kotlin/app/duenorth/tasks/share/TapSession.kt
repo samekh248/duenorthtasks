@@ -331,8 +331,10 @@ class CardSession(
                 val bundle = msg.bundle ?: throw SecurityException("no list")
                 val roster = Roster(store.roster(msg.listId) + bundle.roster)
                 if (me.id !in roster.members) throw SecurityException("not added")
+                // The list's rows first: the share row points at them.
+                val title = engine.receive(msg.listId, bundle).title
                 store.saveSharedList(SharedList(msg.listId, owner = roster.owner ?: peerId, linkedAt = now()))
-                msg.listId to engine.receive(msg.listId, bundle).title
+                msg.listId to title
             } else {
                 val copy = msg.copy ?: throw SecurityException("no list")
                 store.createCopy(copy) to copy.title

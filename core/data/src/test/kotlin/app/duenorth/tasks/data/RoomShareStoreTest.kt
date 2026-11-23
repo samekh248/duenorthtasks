@@ -72,8 +72,11 @@ class RoomShareStoreTest {
         dustin.repo.addStep(milk, "Check the fridge")
         dustin.engine.start(list, "Dustin")
         dustin.engine.add(list, alex.id.id, "Alex")
-        alex.store.saveSharedList(SharedList(list, dustin.id.id, linkedAt = 0))
-        alex.store.transaction { alex.engine.receive(list, dustin.engine.everything(list)) }
+        // As the card phone does: the list's rows first, then the share row that points at them.
+        alex.store.transaction {
+            alex.engine.receive(list, dustin.engine.everything(list))
+            alex.store.saveSharedList(SharedList(list, dustin.id.id, linkedAt = 0))
+        }
 
         val received = alex.db.taskDao().get(milk)!!
         assertEquals("Oat milk", received.title)
