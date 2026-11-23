@@ -13,7 +13,12 @@ import androidx.room.Index
     tableName = "shared_list",
     primaryKeys = ["listId"],
     foreignKeys = [
-        ForeignKey(entity = TaskListEntity::class, parentColumns = ["localId"], childColumns = ["listId"], onDelete = ForeignKey.CASCADE)
+        ForeignKey(
+            entity = TaskListEntity::class,
+            parentColumns = ["localId"],
+            childColumns = ["listId"],
+            onDelete = ForeignKey.CASCADE
+        )
     ]
 )
 data class SharedListEntity(
@@ -30,7 +35,12 @@ data class SharedListEntity(
     tableName = "share_roster",
     primaryKeys = ["sig"],
     foreignKeys = [
-        ForeignKey(entity = TaskListEntity::class, parentColumns = ["localId"], childColumns = ["listId"], onDelete = ForeignKey.CASCADE)
+        ForeignKey(
+            entity = TaskListEntity::class,
+            parentColumns = ["localId"],
+            childColumns = ["listId"],
+            onDelete = ForeignKey.CASCADE
+        )
     ],
     indices = [Index("listId")]
 )
@@ -50,7 +60,12 @@ data class ShareRosterEntity(
     tableName = "share_field",
     primaryKeys = ["listId", "entity", "field"],
     foreignKeys = [
-        ForeignKey(entity = TaskListEntity::class, parentColumns = ["localId"], childColumns = ["listId"], onDelete = ForeignKey.CASCADE)
+        ForeignKey(
+            entity = TaskListEntity::class,
+            parentColumns = ["localId"],
+            childColumns = ["listId"],
+            onDelete = ForeignKey.CASCADE
+        )
     ]
 )
 data class ShareFieldEntity(
@@ -71,7 +86,12 @@ data class ShareFieldEntity(
     tableName = "share_peer",
     primaryKeys = ["id"],
     foreignKeys = [
-        ForeignKey(entity = AccountEntity::class, parentColumns = ["id"], childColumns = ["accountId"], onDelete = ForeignKey.CASCADE)
+        ForeignKey(
+            entity = AccountEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["accountId"],
+            onDelete = ForeignKey.CASCADE
+        )
     ],
     indices = [Index("accountId")]
 )

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Share by tap (spec 011): answers only Due North's own AID (Apdu.AID), so it never competes
+     with payment apps. The phone must be unlocked. -->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/share_service"
+    android:requireDeviceUnlock="true">
+    <aid-group android:category="other" android:description="@string/share_service">
+        <aid-filter android:name="F0444E54415053" />
+    </aid-group>
+</host-apdu-service>

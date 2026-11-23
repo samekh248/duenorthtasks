@@ -37,7 +37,11 @@ class RoomShareStoreTest {
         val engine = ShareEngine(store, id)
 
         init {
-            runBlocking { db.accountDao().upsert(AccountEntity(provider = ProviderKind.LOCAL, displayName = "this phone", email = null)) }
+            runBlocking {
+                db.accountDao().upsert(
+                    AccountEntity(provider = ProviderKind.LOCAL, displayName = "this phone", email = null)
+                )
+            }
         }
     }
 

@@ -35,16 +35,41 @@ import app.duenorth.tasks.design.theme.MetroDimens
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.ui.common.ListSharing
 import app.duenorth.tasks.ui.common.PageHeader
+import app.duenorth.tasks.ui.share.TapSharingViewModel
 
 @Composable
-fun SharingScreen(onClosed: () -> Unit, onShade: (String) -> Unit, viewModel: SharingViewModel = hiltViewModel()) {
+fun SharingScreen(
+    onClosed: () -> Unit,
+    onShade: (String) -> Unit,
+    /** Opens share by tap for this list; null when this phone can't (spec 011 FR-800, FR-811). */
+    onShareByTap: ((String) -> Unit)? = null,
+    viewModel: SharingViewModel = hiltViewModel(),
+    tapModel: TapSharingViewModel = hiltViewModel()
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val tap by tapModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(state.exists) { if (!state.exists) onClosed() }
+    val local = !state.serviceShares
     SharingContent(
         state,
         onShade = { onShade(viewModel.listId) },
-        onHandOff = { state.handOff?.let { openToDo(context, it) } }
+        onHandOff = { state.handOff?.let { openToDo(context, it) } },
+        tapStatus = if (local && (tap.shared || onShareByTap != null)) tapStatus(tap, onShareByTap != null) else null,
+        tapSection = if (local) {
+            {
+                TapSharingSection(
+                    tap,
+                    available = onShareByTap != null,
+                    onAdd = { onShareByTap?.invoke(viewModel.listId) },
+                    onRemove = tapModel::remove,
+                    onLeave = tapModel::leave,
+                    onSyncCompleted = tapModel::setSyncCompleted
+                )
+            }
+        } else {
+            null
+        }
     )
 }
 
@@ -54,7 +79,14 @@ fun SharingScreen(onClosed: () -> Unit, onShade: (String) -> Unit, viewModel: Sh
  * services don't tell other apps (research R2).
  */
 @Composable
-fun SharingContent(state: SharingUiState, onShade: () -> Unit, onHandOff: () -> Unit) {
+fun SharingContent(
+    state: SharingUiState,
+    onShade: () -> Unit,
+    onHandOff: () -> Unit,
+    /** Overrides the status block on "this phone only" when share by tap applies. */
+    tapStatus: Pair<String, String>? = null,
+    tapSection: (@Composable () -> Unit)? = null
+) {
     ListAccent(state.listId) {
         Column(
             Modifier
@@ -70,7 +102,8 @@ fun SharingContent(state: SharingUiState, onShade: () -> Unit, onHandOff: () -> 
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Label("status")
-                Status(state)
+                Status(state, tapStatus)
+                tapSection?.invoke()
                 if (state.serviceShares) {
                     Label("who's in it")
                     MetroText(
@@ -113,8 +146,8 @@ private fun Label(text: String) {
 }
 
 @Composable
-private fun Status(state: SharingUiState) {
-    val (title, detail) = when {
+private fun Status(state: SharingUiState, tapStatus: Pair<String, String>?) {
+    val (title, detail) = tapStatus ?: when {
         !state.serviceShares -> "only you" to "${state.serviceName} lists can't be shared"
         state.sharing == ListSharing.OWNED -> "shared by you" to "you own this list"
         state.sharing == ListSharing.WITH_YOU -> "shared with you" to "someone else owns this list"

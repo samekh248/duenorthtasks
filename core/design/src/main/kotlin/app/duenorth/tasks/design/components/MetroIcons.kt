@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -61,7 +62,16 @@ enum class MetroIcon {
     Notes,
 
     /** An arrow into a bar: move to another list. */
-    Move
+    Move,
+
+    /** Three widening arcs: an NFC tap (spec 011). */
+    Tap,
+
+    /** Two chain links: a list shared by tap (spec 011). */
+    Link,
+
+    /** A padlock: end-to-end encrypted (spec 011). */
+    Lock
 }
 
 @Composable
@@ -160,6 +170,42 @@ internal fun DrawScope.drawGlyph(icon: MetroIcon, color: Color, filled: Boolean 
                 lineTo(12f * u, 16f * u)
             }
             line(20f, 5f, 20f, 19f)
+        }
+
+        MetroIcon.Tap -> {
+            for ((i, r) in listOf(4f, 8f, 12f).withIndex()) {
+                val sweep = 70f + i * 10f
+                drawArc(
+                    color,
+                    -sweep / 2,
+                    sweep,
+                    false,
+                    topLeft = p(4f - r, 12f - r),
+                    size = Size(2 * r * u, 2 * r * u),
+                    style = stroke
+                )
+            }
+        }
+
+        MetroIcon.Link -> {
+            // Two rounded links at 45 degrees, overlapping in the middle.
+            for ((cx, cy) in listOf(9f to 15f, 15f to 9f)) {
+                drawRoundRect(
+                    color,
+                    topLeft = p(cx - 4f, cy - 4f),
+                    size = Size(8f * u, 8f * u),
+                    cornerRadius = CornerRadius(4f * u),
+                    style = stroke
+                )
+            }
+            line(10f, 14f, 14f, 10f)
+        }
+
+        MetroIcon.Lock -> {
+            drawRect(color, topLeft = p(5f, 11f), size = Size(14f * u, 9f * u), style = if (filled) Fill else stroke)
+            drawArc(color, 180f, 180f, false, topLeft = p(8f, 4f), size = Size(8f * u, 10f * u), style = stroke)
+            line(8f, 9f, 8f, 11f)
+            line(16f, 9f, 16f, 11f)
         }
 
         MetroIcon.Add -> {

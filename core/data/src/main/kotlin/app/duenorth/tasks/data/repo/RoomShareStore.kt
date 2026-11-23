@@ -24,6 +24,8 @@ import app.duenorth.tasks.share.TaskState
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /**
  * [ShareStore] over Room (spec 011). Writes go straight to the task tables: on "this phone only"
@@ -54,13 +56,28 @@ class RoomShareStore(
         dao.deleteSharedList(listId)
     }
 
-    override fun roster(listId: String): List<RosterEntry> = dao.roster(listId).map {
-        RosterEntry(it.listId, it.member, it.name, RosterKind.valueOf(it.kind), it.actor, Hlc(it.ms, it.n), it.sig)
-    }
+    override fun roster(listId: String): List<RosterEntry> = dao.roster(listId).map { it.toModel() }
+
+    /** For the screens: the lists this phone shares by tap, left ones included. */
+    fun observeSharedLists(): Flow<List<SharedList>> = dao.observeSharedLists().map { l -> l.map { it.toModel() } }
+
+    fun observeRoster(listId: String): Flow<List<RosterEntry>> =
+        dao.observeRoster(listId).map { l -> l.map { it.toModel() } }
+
+    fun observePeers(): Flow<List<Peer>> = dao.observePeers().map { l -> l.map { it.toModel() } }
 
     override fun addRoster(entry: RosterEntry) {
         dao.addRoster(
-            ShareRosterEntity(entry.sig, entry.list, entry.member, entry.name, entry.kind.name, entry.by, entry.clock.ms, entry.clock.n)
+            ShareRosterEntity(
+                entry.sig,
+                entry.list,
+                entry.member,
+                entry.name,
+                entry.kind.name,
+                entry.by,
+                entry.clock.ms,
+                entry.clock.n
+            )
         )
     }
 
@@ -99,7 +116,15 @@ class RoomShareStore(
     override fun peer(id: String): Peer? = dao.peer(id)?.toModel()
 
     override fun savePeer(peer: Peer) {
-        dao.savePeer(SharePeerEntity(peer.id, dhPublic = peer.dhPublic, name = peer.name, verifiedAt = peer.verifiedAt, lastTapAt = peer.lastTapAt))
+        dao.savePeer(
+            SharePeerEntity(
+                peer.id,
+                dhPublic = peer.dhPublic,
+                name = peer.name,
+                verifiedAt = peer.verifiedAt,
+                lastTapAt = peer.lastTapAt
+            )
+        )
     }
 
     override fun read(listId: String): ListState? {
@@ -152,7 +177,11 @@ class RoomShareStore(
         val oldSteps = dao.steps(t.id).map { StepState(it.localId, it.title, it.done) }
         if (oldSteps != t.steps) {
             dao.deleteSteps(t.id)
-            dao.insertSteps(t.steps.mapIndexed { i, s -> StepEntity(s.id, t.id, title = s.title, done = s.done, sortOrder = i) })
+            dao.insertSteps(
+                t.steps.mapIndexed { i, s ->
+                    StepEntity(s.id, t.id, title = s.title, done = s.done, sortOrder = i)
+                }
+            )
         }
     }
 
@@ -160,7 +189,16 @@ class RoomShareStore(
         val listId = newId()
         dao.saveList(TaskListEntity(localId = listId, title = state.title, localUpdatedAt = now()))
         state.tasks.forEach { t ->
-            writeTask(listId, t.copy(id = newId(), steps = t.steps.map { it.copy(id = newId()) }, updatedMs = now().toEpochMilli()))
+            writeTask(
+                listId,
+                t.copy(
+                    id = newId(),
+                    steps = t.steps.map {
+                        it.copy(id = newId())
+                    },
+                    updatedMs = now().toEpochMilli()
+                )
+            )
         }
         return listId
     }
@@ -178,6 +216,9 @@ class RoomShareStore(
     }
 
     private fun SharedListEntity.toModel() = SharedList(listId, owner, syncCompleted, linkedAt, left)
+
+    private fun ShareRosterEntity.toModel() =
+        RosterEntry(listId, member, name, RosterKind.valueOf(kind), actor, Hlc(ms, n), sig)
 
     private fun SharePeerEntity.toModel() = Peer(id, dhPublic, name, verifiedAt, lastTapAt)
 }

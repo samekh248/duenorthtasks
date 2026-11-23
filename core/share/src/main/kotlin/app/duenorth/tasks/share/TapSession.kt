@@ -40,6 +40,9 @@ sealed interface TapResult {
     data class Failed(val reason: String) : TapResult
 }
 
+/** Names travel in the handshake; longer ones are cut. */
+const val MAX_NAME = 40
+
 private fun commitment(dhPublic: ByteArray, signPublic: ByteArray, nonce: ByteArray) =
     Crypto.sha256("due-north commit v1".toByteArray(), dhPublic, signPublic, nonce)
 
@@ -130,9 +133,12 @@ class ReaderSession(
         host.peerFound(peerName, if (mutual) null else tiles)
         val deadline = now() + waitMs
         var theirs: Answer?
+        var name = peerName
         while (true) {
             val mine = host.myAnswer()
-            theirs = (ask(Poll(mine)) as? Status ?: throw SecurityException("expected status")).answer
+            val status = ask(Poll(mine)) as? Status ?: throw SecurityException("expected status")
+            theirs = status.answer
+            status.name?.takeIf { it.isNotBlank() }?.let { name = it.take(MAX_NAME) }
             if (mine == false) return TapResult.Declined(byMe = true)
             if (theirs == Answer.NO) return TapResult.Declined(byMe = false)
             if (theirs != null) host.theyAnswered(theirs)
@@ -164,10 +170,10 @@ class ReaderSession(
             entry?.let(store::addRoster)
             val old = store.peer(peerId)
             store.savePeer(
-                Peer(peerId, remoteDh.hex(), peerName, verifiedAt = old?.verifiedAt ?: now(), lastTapAt = now())
+                Peer(peerId, remoteDh.hex(), name, verifiedAt = old?.verifiedAt ?: now(), lastTapAt = now())
             )
         }
-        return TapResult.Shared(peerName, theirs!!)
+        return TapResult.Shared(name, theirs!!)
     }
 
     private suspend fun sync(peerId: String, peerName: String, ask: suspend (TapMsg) -> TapMsg): TapResult {
@@ -277,7 +283,7 @@ class CardSession(
             throw SecurityException("commitment broken")
         }
         peerId = sign.hex()
-        peerName = h3.name
+        peerName = h3.name.take(MAX_NAME)
         peerDh = remoteDh.hex()
         val (s, r) = noise.split()
         send = s
@@ -308,7 +314,8 @@ class CardSession(
                 done = true
                 host.finished(CardOutcome.Cancelled)
             }
-            Status(host.answer())
+            val answer = host.answer()
+            Status(answer, if (answer != null) myName() else null)
         }
         is Give -> give(msg)
         is SyncRequest -> syncRequest(msg)

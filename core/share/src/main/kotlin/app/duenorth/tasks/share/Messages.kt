@@ -103,7 +103,7 @@ data class Poll(val sharer: Boolean? = null) : TapMsg
 
 @Serializable
 @SerialName("status")
-data class Status(val answer: Answer? = null) : TapMsg
+data class Status(val answer: Answer? = null, val name: String? = null) : TapMsg
 
 /** The list itself, sent only after both people confirmed. */
 @Serializable
