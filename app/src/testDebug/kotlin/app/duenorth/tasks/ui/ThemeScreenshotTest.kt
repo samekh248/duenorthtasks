@@ -143,6 +143,18 @@ class ThemeScreenshotTest {
     fun styleSlateListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Slate)
 
     @Test
+    fun styleTonalSettingsLight() = styledSettings(MetroStyle.Tonal, dark = false)
+
+    @Test
+    fun styleTonalListsLight() = shadedLists(Accent.Magenta, dark = false, style = MetroStyle.Tonal)
+
+    @Test
+    fun styleTonalSettingsDark() = styledSettings(MetroStyle.Tonal, dark = true)
+
+    @Test
+    fun styleTonalListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Tonal)
+
+    @Test
     fun listShadeLight() = listShade(dark = false)
 
     @Test

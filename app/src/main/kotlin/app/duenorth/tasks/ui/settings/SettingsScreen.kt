@@ -267,6 +267,7 @@ private val MetroStyle.caption: String
         MetroStyle.TileRelief -> "Metro with soft light and shade"
         MetroStyle.Frost -> "rounded layers and a floating app bar"
         MetroStyle.Slate -> "sentence case and a flat command bar"
+        MetroStyle.Tonal -> "rounded cards tinted with your accent"
     }
 
 /** The sync account and sync log pages have their own routes; this pivot item leads to them. */

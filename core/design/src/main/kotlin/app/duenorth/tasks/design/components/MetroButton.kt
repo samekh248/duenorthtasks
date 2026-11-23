@@ -51,11 +51,19 @@ fun MetroButton(
         pressed -> accent.onFill
         else -> colors.foreground
     }
+    // Tonal draws its buttons as pills, as Material does.
+    val pill = if (style.tonal) PillCorner else null
     val face = when {
         filled && style.relief ->
-            Modifier.relief(if (pressed) Relief.Inset else Relief.Raised, small = true, fill = accent.fill)
+            Modifier.relief(
+                if (pressed) Relief.Inset else Relief.Raised,
+                small = true,
+                corner = pill,
+                fill = accent.fill
+            )
         filled -> Modifier.background(if (pressed) accent.fill.copy(alpha = 0.8f) else accent.fill)
-        style.relief -> Modifier.relief(if (pressed && enabled) Relief.Inset else Relief.Raised, small = true)
+        style.relief ->
+            Modifier.relief(if (pressed && enabled) Relief.Inset else Relief.Raised, small = true, corner = pill)
         style.slate -> Modifier.background(colors.foreground.copy(alpha = if (pressed && enabled) 0.4f else 0.2f))
         else ->
             Modifier

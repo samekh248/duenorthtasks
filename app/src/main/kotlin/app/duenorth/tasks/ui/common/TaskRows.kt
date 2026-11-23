@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import app.duenorth.tasks.data.db.TaskWithList
 import app.duenorth.tasks.design.components.ContextMenuItem
 import app.duenorth.tasks.design.components.GroupPosition
@@ -204,7 +205,7 @@ fun TaskRow(
  * The header over a group of task rows ("tomorrow", "completed"), with a [count] and, when [expanded] is given,
  * a chevron that opens and closes the group. Metro writes it in light grey type; tile relief adds a raised count
  * badge (in the accent for a put-away group); frost uses a small semibold header, or for a put-away group the top
- * row of the card its rows share; slate writes it in the accent.
+ * row of the card its rows share; tonal writes it in small caps; slate writes it in the accent.
  */
 @Composable
 fun GroupHeader(
@@ -251,6 +252,13 @@ fun GroupHeader(
             if (count != null) MetroText("$count", type.body, color = colors.secondary)
             chevron(colors.secondary)
         }
+        // Tonal: a small-caps title in the variant ink, as Due North Budget heads its cards.
+        style.tonal -> MetroText(
+            text.uppercase(),
+            type.caption.copy(fontWeight = MetroWeights.Semibold, letterSpacing = 0.08.em),
+            modifier.then(click).padding(start = 4.dp, top = 22.dp, bottom = 6.dp),
+            color = colors.secondary
+        )
         style.layers -> MetroText(
             text,
             type.body.copy(fontWeight = MetroWeights.Semibold),

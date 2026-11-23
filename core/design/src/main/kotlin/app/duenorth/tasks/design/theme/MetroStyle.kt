@@ -7,13 +7,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * The look the person picks under settings, theme: the same four styles as Due North Budget, so the two apps can
+ * The look the person picks under settings, theme: the same five styles as Due North Budget, so the two apps can
  * be set alike. Metro is the flat WP8.1 look and the default (constitution Principle I).
  * Tile relief keeps Metro's type, square corners, flat accent fills, round app-bar buttons and grid, and only adds
  * light and shade. Frost (inspired by Windows 11's Fluent look) puts rounded layer cards edged by a hairline on a
  * tinted page, under an acrylic app bar that floats above it. Slate (inspired by Windows 10 Mobile) writes in sentence
  * case under a flat 48dp command bar of bare glyphs, with grey filled buttons and outlined text boxes on pure white
  * or black. Neither name is a Microsoft product name, so neither the picker nor the store listing uses one.
+ * Tonal is half Metro and half Material 3, as Due North Budget draws it: Metro's Selawik type and lowercase labels
+ * with small-caps headings, on rounded tonal cards tinted with the accent, with pill buttons and chips and round
+ * tonal containers behind the app bar's glyphs.
  */
 enum class MetroStyle(
     val label: String,
@@ -24,12 +27,15 @@ enum class MetroStyle(
     /** Surfaces are rounded layer cards with a hairline edge instead of light and shade; bars float (frost). */
     val layers: Boolean = false,
     /** Sentence case, a flat command bar, filled buttons (slate). */
-    val slate: Boolean = false
+    val slate: Boolean = false,
+    /** Tonal: frost's layer cards, but tinted with the accent, larger corners, no hairline, and pills (tonal). */
+    val tonal: Boolean = false
 ) {
     Metro("metro"),
     TileRelief("tile relief", panels = true, filledAdd = true),
     Frost("frost", panels = true, filledAdd = true, layers = true),
-    Slate("slate", slate = true);
+    Slate("slate", slate = true),
+    Tonal("tonal", panels = true, layers = true, tonal = true);
 
     /** Whether surfaces are drawn by [MetroSurface] (relief or layers) rather than Metro's outlines. */
     val relief: Boolean get() = this != Metro && !slate
@@ -69,8 +75,21 @@ data class MetroSurface(
     companion object {
         val Flat = MetroSurface(MetroStyle.Metro, Color.Transparent, Color.Transparent, 0.dp, 0.dp)
 
-        fun of(style: MetroStyle, dark: Boolean): MetroSurface = when {
+        fun of(style: MetroStyle, dark: Boolean, accent: Accent = Accent.Default): MetroSurface = when {
             !style.relief -> Flat.copy(style = style)
+            style.tonal -> MetroSurface(
+                style,
+                highlight = Color.Transparent,
+                shade = if (dark) Color.Black.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.12f),
+                depth = 6.dp,
+                blur = 20.dp,
+                page = TonalTones.page(accent, dark),
+                // Rows group on a tonal card a step deeper into the accent than the page, with no edge.
+                layer = TonalTones.layer(accent, dark),
+                stroke = Color.Transparent,
+                acrylic = TonalTones.bar(accent, dark),
+                underline = Color.Transparent
+            )
             style.layers -> MetroSurface(
                 style,
                 highlight = Color.Transparent,
@@ -101,8 +120,24 @@ data class MetroSurface(
  * Metro's own are [MetroColors.Light] and [MetroColors.Dark].
  */
 object StylePalettes {
-    fun colors(style: MetroStyle, dark: Boolean): MetroColors {
+    fun colors(style: MetroStyle, dark: Boolean, accent: Accent = Accent.Default): MetroColors {
         val metro = if (dark) MetroColors.Dark else MetroColors.Light
+        if (style.tonal) {
+            val page = TonalTones.page(accent, dark)
+            val card = TonalTones.layer(accent, dark)
+            return metro.copy(
+                background = page,
+                chrome = TonalTones.bar(accent, dark),
+                // Grey ink pulled a little toward the accent, as a tonal palette's variant ink.
+                secondary = Contrast.ensure(
+                    lerp(Color(if (dark) 0xFFA29A9F else 0xFF57505A), accent.fill(dark), 0.12f),
+                    card
+                ),
+                outline = lerp(metro.outline, accent.fill(dark), 0.2f),
+                overdue = Contrast.ensure(metro.overdue, card),
+                scrim = page.copy(alpha = metro.scrim.alpha)
+            )
+        }
         val (background, chrome) = when (style) {
             MetroStyle.Metro -> return metro
             // ChromeMedium under the bar, BaseMedium for secondary ink.
@@ -111,6 +146,7 @@ object StylePalettes {
                 secondary = Color(if (dark) 0xFF999999 else 0xFF595959),
                 outline = Color(if (dark) 0xFF666666 else 0xFF999999)
             )
+            MetroStyle.Tonal -> error("tonal is tinted by the accent, above")
             MetroStyle.TileRelief -> if (dark) 0xFF101010 to 0xFF1F1F1F else 0xFFEEEEEE to 0xFFE3E3E3
             MetroStyle.Frost -> if (dark) 0xFF1E1D22 to 0xFF2C2C30 else 0xFFF1EFF3 to 0xFFF9F9F9
         }
@@ -128,6 +164,21 @@ object StylePalettes {
             scrim = page.copy(alpha = metro.scrim.alpha)
         )
     }
+}
+
+/**
+ * The tonal style's grounds, each a neutral moved toward the accent's swatch: the page, the deeper card rows group
+ * on, and the app bar. On a light page the card is the deeper tone; on a dark one, the lighter.
+ */
+object TonalTones {
+    fun page(accent: Accent, dark: Boolean): Color =
+        lerp(Color(if (dark) 0xFF121013 else 0xFFFFFBFC), accent.fill(dark), if (dark) 0.05f else 0.035f)
+
+    fun layer(accent: Accent, dark: Boolean): Color =
+        lerp(Color(if (dark) 0xFF201B1E else 0xFFFFFFFF), accent.fill(dark), if (dark) 0.11f else 0.09f)
+
+    fun bar(accent: Accent, dark: Boolean): Color =
+        lerp(Color(if (dark) 0xFF262024 else 0xFFFFFFFF), accent.fill(dark), if (dark) 0.16f else 0.14f)
 }
 
 /** A slate card or tile that groups rather than acts: a faint wash of the ink, with no edge. */

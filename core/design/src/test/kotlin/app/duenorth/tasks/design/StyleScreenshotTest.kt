@@ -51,6 +51,9 @@ class StyleScreenshotTest {
     @Test
     fun slate() = sheet(MetroStyle.Slate)
 
+    @Test
+    fun tonal() = sheet(MetroStyle.Tonal)
+
     private fun sheet(style: MetroStyle) {
         for (dark in listOf(false, true)) {
             val file = "build/outputs/roborazzi/style_${style.name.lowercase()}_${if (dark) "dark" else "light"}.png"

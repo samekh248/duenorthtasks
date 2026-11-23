@@ -12,12 +12,14 @@ reason this app exists, so it outranks Material defaults whenever the two disagr
   (defined in the plan's research notes, R2).
 - Content over chrome: no drop shadows, no gradients, no rounded cards, no elevation, no
   Material ripple. Flat color fills only. This is the **Metro** style, the default.
-- Styles: the user may pick one of the three sibling styles Due North Budget offers, so the two
+- Styles: the user may pick one of the four sibling styles Due North Budget offers, so the two
   apps can be set alike (owner, 2026-10-30). **Tile relief** keeps Metro and adds soft light and
   shade to tiles, buttons, boxes and app-bar buttons. **Frost** (inspired by Windows 11) puts rounded
   layer cards with a hairline edge on a tinted page and floats the app bar as an acrylic sheet.
   **Slate** (inspired by Windows 10 Mobile) writes in sentence case under a flat command bar, with
-  grey filled buttons and outlined text boxes. Style names are generic: never a Microsoft product
+  grey filled buttons and outlined text boxes. **Tonal** (added 2026-11-23) keeps Metro's type and
+  lowercase labels on rounded cards tinted with the accent, with pill buttons and chips, small-caps
+  group headers and a tonal app bar the page fades into. Style names are generic: never a Microsoft product
   name in the picker or the store listing. These relax only the "content over chrome" rule above, and only
   while picked; type ramp, accents, motion, the grid and every other rule here still apply, and
   accent fills stay flat in every style.
@@ -138,7 +140,7 @@ PATCH for wording) and states the reason. Plans and reviews MUST check the Const
 gates in `plan.md` against the principles above; any violation is listed in that plan's
 Complexity Tracking table with a justification.
 
-**Version**: 2.2.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-11-22
+**Version**: 2.3.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-11-23
 
 2.0.0: Principle I now allows the three opt-in styles from Due North Budget (tile relief, mica,
 Windows 10 Mobile) beside the default Metro style, at the owner's request.
@@ -148,3 +150,5 @@ appears in the app (owner, 2026-11-14).
 
 2.2.0: Principle III adds "this phone only", an offline choice with no account and no sync, at the
 owner's request (2026-11-22).
+
+2.3.0: Principle I adds the tonal style, ported from Due North Budget, at the owner's request (2026-11-23).
