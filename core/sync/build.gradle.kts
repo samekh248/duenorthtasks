@@ -21,8 +21,14 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
-        // Robolectric downloads android-all from the canonical Maven Central host.
-        unitTests.all { it.systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2") }
+        // Robolectric downloads android-all itself, outside Gradle: point it at Google's copy of
+        // Maven Central, which does not rate-limit shared cloud IPs the way Central does.
+        unitTests.all {
+            it.systemProperty(
+                "robolectric.dependency.repo.url",
+                "https://maven-central.storage-download.googleapis.com/maven2"
+            )
+        }
     }
 }
 
