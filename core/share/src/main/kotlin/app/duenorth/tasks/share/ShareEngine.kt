@@ -152,6 +152,11 @@ class ShareEngine(
      * a new member's own records are accepted; then records signed by anyone who was ever a member.
      */
     fun receive(listId: String, bundle: Bundle): ListResult {
+        if (store.read(listId) == null) {
+            // A list new to this phone: its row first, since the share data hangs off it.
+            val title = bundle.records.firstOrNull { it.entity == Fields.LIST && it.field == Fields.TITLE }?.value
+            store.write(ListState(listId, title.orEmpty(), emptyList()))
+        }
         bundle.roster.filter { it.list == listId && it.verify() }.forEach(store::addRoster)
         val roster = roster(listId)
         val shared = store.sharedList(listId)
