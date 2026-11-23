@@ -101,7 +101,7 @@ class ScreenScreenshotTest {
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test
@@ -157,7 +157,7 @@ class ScreenScreenshotTest {
 
     @Test
     fun search() {
-        val viewModel = SearchViewModel(tasks, features, clock)
+        val viewModel = track(SearchViewModel(tasks, features, clock))
         show(dark = false) { SearchScreen(onOpenTask = {}, viewModel = viewModel) }
         compose.onNode(hasTestTag("search field")).performTextInput("the")
         compose.waitUntilAtLeastOneExists(hasText("Water the plants"), TIMEOUT)
@@ -251,7 +251,7 @@ class ScreenScreenshotTest {
 
     @Test
     fun syncLogEmpty() {
-        val viewModel = SyncLogViewModel(SyncLogRepository(db), clock)
+        val viewModel = track(SyncLogViewModel(SyncLogRepository(db), clock))
         show(dark = false) {
             val state by viewModel.state.collectAsState()
             SyncLogContent(state, onClear = {})
@@ -289,7 +289,7 @@ class ScreenScreenshotTest {
             )
         )
         runBlocking { entries.forEach { db.syncLogDao().insert(it) } }
-        val viewModel = SyncLogViewModel(SyncLogRepository(db), clock)
+        val viewModel = track(SyncLogViewModel(SyncLogRepository(db), clock))
         val firstId = runBlocking { db.syncLogDao().observeAll().first().first().id }
         show(dark) {
             val state by viewModel.state.collectAsState()
@@ -301,15 +301,17 @@ class ScreenScreenshotTest {
 
     private fun home(dark: Boolean, name: String? = "home_today") {
         val viewModel =
-            HomeViewModel(
-                tasks,
-                TemplateRepository(db, tasks, clock),
-                accounts,
-                features,
-                ListHolds(),
-                testListOrder(tasks, accounts),
-                testPinnedLists(tasks, accounts),
-                clock
+            track(
+                HomeViewModel(
+                    tasks,
+                    TemplateRepository(db, tasks, clock),
+                    accounts,
+                    features,
+                    ListHolds(),
+                    testListOrder(tasks, accounts),
+                    testPinnedLists(tasks, accounts),
+                    clock
+                )
             )
         val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show(dark) {
@@ -338,17 +340,19 @@ class ScreenScreenshotTest {
     private fun list(dark: Boolean, reorder: Boolean = false) {
         val id = runBlocking { tasks.listSummaries().first().first { it.title == "Errands" }.localId }
         val viewModel =
-            ListViewModel(
-                SavedStateHandle(mapOf("id" to id)),
-                tasks,
-                TemplateRepository(db, tasks, clock),
-                testListShades(tasks, accounts),
-                accounts,
-                features,
-                ListHolds(),
-                testListOrder(tasks, accounts),
-                testPinnedLists(tasks, accounts),
-                clock
+            track(
+                ListViewModel(
+                    SavedStateHandle(mapOf("id" to id)),
+                    tasks,
+                    TemplateRepository(db, tasks, clock),
+                    testListShades(tasks, accounts),
+                    accounts,
+                    features,
+                    ListHolds(),
+                    testListOrder(tasks, accounts),
+                    testPinnedLists(tasks, accounts),
+                    clock
+                )
             )
         viewModel.toggleCompletedGroup()
         if (reorder) viewModel.startReorder()
@@ -366,14 +370,16 @@ class ScreenScreenshotTest {
     private fun detail(dark: Boolean, reorder: Boolean = false, editing: Boolean = false) {
         val id = runBlocking { tasks.tasksDueBy(clock.instant().atZone(clock.zone).toLocalDate().plusDays(1)).first() }
             .first { it.task.title == "Call the vet" }.task.localId
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf("id" to id)),
-            tasks,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            accounts,
-            clock
+        val viewModel = track(
+            TaskDetailViewModel(
+                SavedStateHandle(mapOf("id" to id)),
+                tasks,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                accounts,
+                clock
+            )
         )
         show(dark) {
             val state by viewModel.state.collectAsState()

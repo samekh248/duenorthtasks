@@ -79,7 +79,7 @@ class ThemeScreenshotTest {
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test
@@ -143,6 +143,18 @@ class ThemeScreenshotTest {
     fun styleSlateListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Slate)
 
     @Test
+    fun styleTonalSettingsLight() = styledSettings(MetroStyle.Tonal, dark = false)
+
+    @Test
+    fun styleTonalListsLight() = shadedLists(Accent.Magenta, dark = false, style = MetroStyle.Tonal)
+
+    @Test
+    fun styleTonalSettingsDark() = styledSettings(MetroStyle.Tonal, dark = true)
+
+    @Test
+    fun styleTonalListsDark() = shadedLists(Accent.Magenta, dark = true, style = MetroStyle.Tonal)
+
+    @Test
     fun listShadeLight() = listShade(dark = false)
 
     @Test
@@ -195,15 +207,17 @@ class ThemeScreenshotTest {
 
     /** The lists section with Errands two shades lighter and Work two darker. */
     private fun shadedLists(accent: Accent, dark: Boolean, style: MetroStyle? = null) {
-        val viewModel = HomeViewModel(
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            accounts,
-            ServiceFeatures(accounts) { FakeProvider() },
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            testPinnedLists(tasks, accounts),
-            clock
+        val viewModel = track(
+            HomeViewModel(
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                accounts,
+                ServiceFeatures(accounts) { FakeProvider() },
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
+                clock
+            )
         )
         val actions = HomeActions(openTask = {}, openList = {}, search = {})
         show(dark, accent, demoShades(), style ?: MetroStyle.Default) {
@@ -230,17 +244,19 @@ class ThemeScreenshotTest {
     private fun shadedListPage(dark: Boolean) {
         val shades = demoShades()
         val id = runBlocking { tasks.listSummaries().first().first { it.title == "Errands" }.localId }
-        val viewModel = ListViewModel(
-            SavedStateHandle(mapOf("id" to id)),
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            testListShades(tasks, accounts),
-            accounts,
-            ServiceFeatures(accounts) { FakeProvider() },
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            testPinnedLists(tasks, accounts),
-            clock
+        val viewModel = track(
+            ListViewModel(
+                SavedStateHandle(mapOf("id" to id)),
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                testListShades(tasks, accounts),
+                accounts,
+                ServiceFeatures(accounts) { FakeProvider() },
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
+                clock
+            )
         )
         viewModel.toggleCompletedGroup()
         show(dark, Accent.Magenta, shades) {

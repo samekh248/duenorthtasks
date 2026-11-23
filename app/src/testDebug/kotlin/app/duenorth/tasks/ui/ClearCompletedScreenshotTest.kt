@@ -82,23 +82,25 @@ class ClearCompletedScreenshotTest {
             }
             home
         }
-        viewModel = ListViewModel(
-            SavedStateHandle(mapOf("id" to home)),
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            testListShades(tasks, accounts),
-            accounts,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            testPinnedLists(tasks, accounts),
-            clock
+        viewModel = track(
+            ListViewModel(
+                SavedStateHandle(mapOf("id" to home)),
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                testListShades(tasks, accounts),
+                accounts,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
+                clock
+            )
         )
     }
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test

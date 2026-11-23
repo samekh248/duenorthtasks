@@ -30,9 +30,11 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.duenorth.tasks.design.theme.LocalAppAccent
 import app.duenorth.tasks.design.theme.MetroSurface
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.Relief
+import app.duenorth.tasks.design.theme.TonalTones
 
 /** A corner large enough to make any shape a circle or a pill. */
 val PillCorner: Dp = 999.dp
@@ -44,14 +46,36 @@ object LayerCorner {
     val Floating = 12.dp
 }
 
+/** The tonal style's corners, a step rounder than frost's: a card, a control, and a floating sheet. */
+object TonalCorner {
+    val Card = 20.dp
+    val Control = 14.dp
+    val Floating = 24.dp
+}
+
 /**
- * The shape of a surface under the current style: rounded by [corner] under frost, square under every other style,
- * as Metro draws everything.
+ * [corner], one of frost's [LayerCorner]s, as this surface's style draws it: the same under frost, the matching
+ * [TonalCorner] under tonal. A pill stays a pill.
+ */
+fun MetroSurface.corner(corner: Dp): Dp = if (!style.tonal) {
+    corner
+} else {
+    when (corner) {
+        LayerCorner.Card -> TonalCorner.Card
+        LayerCorner.Control -> TonalCorner.Control
+        LayerCorner.Floating -> TonalCorner.Floating
+        else -> corner
+    }
+}
+
+/**
+ * The shape of a surface under the current style: rounded by [corner] under frost (a step rounder under tonal),
+ * square under every other style, as Metro draws everything.
  */
 @Composable
 @ReadOnlyComposable
 fun layerShape(corner: Dp = LayerCorner.Card): Shape =
-    if (MetroTheme.style.layers) RoundedCornerShape(corner) else RectangleShape
+    if (MetroTheme.style.layers) RoundedCornerShape(MetroTheme.surface.corner(corner)) else RectangleShape
 
 /**
  * Draws a relief surface behind the content: a panel ([small] false) or a control ([small] true), in the style's
@@ -68,9 +92,11 @@ fun Modifier.relief(
     val surface = MetroTheme.surface
     if (!surface.style.relief) return this
     val radius = when {
+        // Tonal keeps a pill a pill: round app-bar buttons, chips and buttons.
+        surface.style.tonal && corner == PillCorner -> PillCorner
         // Frost rounds everything a little, and turns the app bar's round buttons into rounded squares too.
         surface.style.layers && (corner == null || corner == PillCorner) ->
-            if (small) LayerCorner.Control else LayerCorner.Card
+            surface.corner(if (small) LayerCorner.Control else LayerCorner.Card)
         else -> corner ?: 0.dp
     }
     return drawBehind { drawRelief(surface, relief, size, radius.toPx(), fill, small) }
@@ -122,7 +148,7 @@ fun Modifier.groupSurface(position: GroupPosition, relief: Relief = Relief.Raise
         val reach = surface.blur.toPx() * 3 + surface.depth.toPx()
         val above = if (position.top) 0f else reach
         val below = if (position.bottom) 0f else reach
-        val radius = if (style.layers) LayerCorner.Card.toPx() else 0f
+        val radius = if (style.layers) surface.corner(LayerCorner.Card).toPx() else 0f
         clipRect(
             -reach,
             if (position.top) -reach else 0f,
@@ -226,15 +252,39 @@ private fun DrawScope.drawLayer(surface: MetroSurface, relief: Relief, size: Siz
     }
 }
 
+/**
+ * Tonal's text box, as Material's filled text field: a tone deeper than the cards around it, its top corners
+ * rounded and its bottom square, over a 1dp line in the variant ink that becomes a 2dp accent line while typing.
+ */
+@Composable
+fun Modifier.tonalField(focused: Boolean): Modifier {
+    val fill = TonalTones.field(LocalAppAccent.current, MetroTheme.colors.isDark)
+    val line = if (focused) MetroTheme.accent.fill else MetroTheme.colors.secondary
+    return drawBehind {
+        val r = CornerRadius(TonalFieldCorner.toPx())
+        drawPath(
+            ComposePath().apply {
+                addRoundRect(
+                    RoundRect(0f, 0f, size.width, size.height, topLeftCornerRadius = r, topRightCornerRadius = r)
+                )
+            },
+            fill
+        )
+        val thick = (if (focused) 2.dp else 1.dp).toPx()
+        drawRect(line, Offset(0f, size.height - thick), Size(size.width, thick))
+    }
+}
+
 /** Frost's mark of a field in use: a 2dp accent line along the bottom, over the resting underline. */
 @Composable
 fun Modifier.layerFocusLine(on: Boolean): Modifier {
     val accent = MetroTheme.accent.fill
+    val surface = MetroTheme.surface
     return drawWithContent {
         drawContent()
         if (on) {
             val line = 2.dp.toPx()
-            val inset = LayerCorner.Control.toPx() / 2
+            val inset = surface.corner(LayerCorner.Control).toPx() / 2
             drawRect(accent, Offset(inset, size.height - line), Size(size.width - 2 * inset, line))
         }
     }
@@ -285,7 +335,7 @@ fun LayerCheckBox(checked: Boolean, enabled: Boolean, modifier: Modifier = Modif
 
 /** A floating acrylic sheet (frost's app bar): the acrylic tint with a soft drop shadow, rounded and edged. */
 fun Modifier.acrylicSheet(surface: MetroSurface): Modifier = drawBehind {
-    val r = LayerCorner.Floating.toPx()
+    val r = surface.corner(LayerCorner.Floating).toPx()
     drawIntoCanvas { canvas ->
         val rect = RectF(0f, surface.depth.toPx(), size.width, size.height + surface.depth.toPx())
         canvas.nativeCanvas.drawRoundRect(rect, r, r, blurred(surface.shade, surface.blur.toPx()))
@@ -305,3 +355,6 @@ private fun blurred(color: Color, blur: Float): Paint = Paint(Paint.ANTI_ALIAS_F
     this.color = color.toArgb()
     maskFilter = BlurMaskFilter(blur, BlurMaskFilter.Blur.NORMAL)
 }
+
+/** Tonal's text box corner: half a control's, as Material keeps a filled field's top corners small. */
+private val TonalFieldCorner = 7.dp

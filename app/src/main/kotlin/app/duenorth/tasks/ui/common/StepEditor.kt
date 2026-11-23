@@ -142,7 +142,12 @@ fun StepRow(
 
 @Composable
 fun AddStepField(onAdd: (String) -> Unit, modifier: Modifier = Modifier) {
-    MetroQuickAddField(placeholder = "add a step", onAdd = onAdd, modifier = modifier.fillMaxWidth())
+    MetroQuickAddField(
+        placeholder = "add a step",
+        onAdd = onAdd,
+        modifier = modifier.fillMaxWidth(),
+        standalone = false
+    )
 }
 
 /** Reorder steps mode (specs/003-reordering US3): the steps get the page; done or back ends it. */

@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import app.duenorth.tasks.design.components.MetroIcon
 import app.duenorth.tasks.design.components.MetroIconGlyph
 import app.duenorth.tasks.design.components.MetroText
+import app.duenorth.tasks.design.components.PillCorner
 import app.duenorth.tasks.design.components.relief
 import app.duenorth.tasks.design.motion.metroTilt
 import app.duenorth.tasks.design.theme.MetroDimens
@@ -41,7 +42,12 @@ fun Chip(text: String, modifier: Modifier = Modifier, icon: MetroIcon? = null, o
                 .heightIn(min = 32.dp)
                 .then(
                     if (raised) {
-                        Modifier.relief(Relief.Raised, small = true)
+                        // Tonal rounds it into a pill, as a Material chip.
+                        Modifier.relief(
+                            Relief.Raised,
+                            small = true,
+                            corner = if (MetroTheme.style.tonal) PillCorner else null
+                        )
                     } else {
                         Modifier.border(2.dp, MetroTheme.colors.outline)
                     }

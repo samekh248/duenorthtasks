@@ -46,7 +46,7 @@ fun MetroTheme(
     style: MetroStyle = MetroStyle.Default,
     content: @Composable () -> Unit
 ) {
-    val colors = remember(style, darkTheme) { StylePalettes.colors(style, darkTheme) }
+    val colors = remember(style, darkTheme, accent) { StylePalettes.colors(style, darkTheme, accent) }
     val accentColors = remember(accent, colors) {
         // A tinted page can pull an accent's text under 4.5:1, so it moves just far enough to read again.
         accent.colors(darkTheme).let { it.copy(text = Contrast.ensure(it.text, colors.background)) }
@@ -62,7 +62,7 @@ fun MetroTheme(
         LocalAppAccent provides accent,
         LocalListShades provides listShades,
         LocalMetroTypography provides lightAware,
-        LocalMetroSurface provides remember(style, darkTheme) { MetroSurface.of(style, darkTheme) },
+        LocalMetroSurface provides remember(style, darkTheme, accent) { MetroSurface.of(style, darkTheme, accent) },
         LocalTextSelectionColors provides selection,
         LocalAnimationsEnabled provides rememberAnimationsEnabled(),
         content = content

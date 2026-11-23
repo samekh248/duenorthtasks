@@ -75,20 +75,22 @@ class AddStepClearsTest {
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test
     fun taskStepBoxClearsBetweenQuickAdds() {
         val taskId = runBlocking { tasks.createTask(tasks.defaultListIdOrCreate(), "Pack") }
-        val viewModel = TaskDetailViewModel(
-            SavedStateHandle(mapOf("id" to taskId)),
-            tasks,
-            features,
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            accounts,
-            clock
+        val viewModel = track(
+            TaskDetailViewModel(
+                SavedStateHandle(mapOf("id" to taskId)),
+                tasks,
+                features,
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                accounts,
+                clock
+            )
         )
         compose.setContent {
             val state by viewModel.state.collectAsState()
@@ -102,7 +104,7 @@ class AddStepClearsTest {
     @Test
     fun templateStepBoxClearsBetweenQuickAdds() {
         val templateId = runBlocking { templates.createTemplateTask("Pack") }
-        val viewModel = TemplateTaskViewModel(SavedStateHandle(mapOf("id" to templateId)), templates, features)
+        val viewModel = track(TemplateTaskViewModel(SavedStateHandle(mapOf("id" to templateId)), templates, features))
         compose.setContent {
             val state by viewModel.state.collectAsState()
             MetroTheme(darkTheme = false) { TemplateTaskContent(state, viewModel) }

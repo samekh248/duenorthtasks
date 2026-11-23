@@ -133,7 +133,7 @@ private fun LayerDialog(
             .fillMaxWidth()
             .padding(horizontal = MetroDimens.Gutter * 2)
             .acrylicSheet(surface)
-            .clip(RoundedCornerShape(LayerCorner.Floating))
+            .clip(RoundedCornerShape(surface.corner(LayerCorner.Floating)))
     ) {
         Column(
             Modifier.padding(horizontal = MetroDimens.Grid, vertical = MetroDimens.Grid),

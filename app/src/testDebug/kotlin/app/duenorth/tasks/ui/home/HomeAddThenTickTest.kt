@@ -26,8 +26,10 @@ import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.settings.testPinnedLists
 import app.duenorth.tasks.sync.ListHolds
+import app.duenorth.tasks.ui.closeAfterViewModels
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TickLinger
+import app.duenorth.tasks.ui.track
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -79,15 +81,17 @@ class HomeAddThenTickTest {
             accounts.connect(ProviderKind.FAKE, "demo", null)
             listId = tasks.createList("Tasks", isDefault = true)
         }
-        viewModel = HomeViewModel(
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            accounts,
-            ServiceFeatures(accounts) { FakeProvider() },
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            testPinnedLists(tasks, accounts),
-            clock
+        viewModel = track(
+            HomeViewModel(
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                accounts,
+                ServiceFeatures(accounts) { FakeProvider() },
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
+                clock
+            )
         )
         val actions = HomeActions(openTask = {}, openList = {}, search = {})
         compose.setContent {
@@ -99,7 +103,7 @@ class HomeAddThenTickTest {
     @After
     fun tearDown() {
         reads.open()
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test

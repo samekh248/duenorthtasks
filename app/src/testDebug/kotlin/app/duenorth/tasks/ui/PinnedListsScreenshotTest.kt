@@ -82,21 +82,23 @@ class PinnedListsScreenshotTest {
         accounts = AccountRepository(db)
         runBlocking { DemoSeeder(accounts, tasks, clock).connect() }
         pins = testPinnedLists(tasks, accounts)
-        viewModel = HomeViewModel(
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            accounts,
-            ServiceFeatures(accounts) { FakeProvider() },
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            pins,
-            clock
+        viewModel = track(
+            HomeViewModel(
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                accounts,
+                ServiceFeatures(accounts) { FakeProvider() },
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                pins,
+                clock
+            )
         )
     }
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test
@@ -189,17 +191,19 @@ class PinnedListsScreenshotTest {
 
     private fun listPageMenu(dark: Boolean) {
         val id = runBlocking { tasks.listSummaries().first().first { it.title == "Errands" }.localId }
-        val list = ListViewModel(
-            SavedStateHandle(mapOf("id" to id)),
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            testListShades(tasks, accounts),
-            accounts,
-            ServiceFeatures(accounts) { FakeProvider() },
-            ListHolds(),
-            testListOrder(tasks, accounts),
-            pins,
-            clock
+        val list = track(
+            ListViewModel(
+                SavedStateHandle(mapOf("id" to id)),
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                testListShades(tasks, accounts),
+                accounts,
+                ServiceFeatures(accounts) { FakeProvider() },
+                ListHolds(),
+                testListOrder(tasks, accounts),
+                pins,
+                clock
+            )
         )
         show(dark) {
             val state by list.state.collectAsState()

@@ -38,8 +38,10 @@ import app.duenorth.tasks.provider.fake.FakeProvider
 import app.duenorth.tasks.settings.testListOrder
 import app.duenorth.tasks.settings.testPinnedLists
 import app.duenorth.tasks.sync.ListHolds
+import app.duenorth.tasks.ui.closeAfterViewModels
 import app.duenorth.tasks.ui.common.ServiceFeatures
 import app.duenorth.tasks.ui.common.TickLinger
+import app.duenorth.tasks.ui.track
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -82,15 +84,17 @@ class HomeFlowTest {
         tasks = TaskRepository(db, clock)
         val accounts = AccountRepository(db)
         runBlocking { accounts.connect(ProviderKind.FAKE, "demo", null) }
-        viewModel = HomeViewModel(
-            tasks,
-            TemplateRepository(db, tasks, clock),
-            accounts,
-            ServiceFeatures(accounts) { FakeProvider() },
-            holds,
-            testListOrder(tasks, accounts),
-            testPinnedLists(tasks, accounts),
-            clock
+        viewModel = track(
+            HomeViewModel(
+                tasks,
+                TemplateRepository(db, tasks, clock),
+                accounts,
+                ServiceFeatures(accounts) { FakeProvider() },
+                holds,
+                testListOrder(tasks, accounts),
+                testPinnedLists(tasks, accounts),
+                clock
+            )
         )
         val actions = HomeActions(openTask = { opened += it }, openList = {}, search = {})
         compose.setContent {
@@ -101,7 +105,7 @@ class HomeFlowTest {
 
     @After
     fun tearDown() {
-        db.close()
+        closeAfterViewModels(db)
     }
 
     @Test
