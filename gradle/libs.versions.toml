@@ -35,6 +35,7 @@ androidxTestExt = "1.3.0"
 androidxTestCore = "1.7.0"
 ktlintPlugin = "13.1.0"
 aboutLibraries = "13.2.1"
+bouncycastle = "1.80"
 
 [libraries]
 # Compose (foundation only, no Material: constitution Principle I)
@@ -85,6 +86,9 @@ profileinstaller = { module = "androidx.profileinstaller:profileinstaller", vers
 benchmark-macro = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 metrics-performance = { module = "androidx.metrics:metrics-performance", version.ref = "metricsPerformance" }
+
+# Share by tap (spec 011): X25519, Ed25519, ChaCha20-Poly1305, SHA-256 in pure Java
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 
 # Tests
 junit4 = { module = "junit:junit", version.ref = "junit4" }
