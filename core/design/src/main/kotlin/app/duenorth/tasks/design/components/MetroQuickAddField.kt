@@ -1,5 +1,6 @@
 package app.duenorth.tasks.design.components
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
@@ -8,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.dp
+import app.duenorth.tasks.design.theme.MetroTheme
 
 /**
  * A one-line text box that adds what was typed when the keyboard's done key is pressed, then
@@ -24,7 +27,8 @@ fun MetroQuickAddField(
     MetroTextField(
         state = state,
         placeholder = placeholder,
-        modifier = modifier,
+        // Tonal's filled box would otherwise sit flush against the first card under it.
+        modifier = if (MetroTheme.style.tonal) modifier.padding(bottom = 12.dp) else modifier,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Sentences,
             imeAction = ImeAction.Done
