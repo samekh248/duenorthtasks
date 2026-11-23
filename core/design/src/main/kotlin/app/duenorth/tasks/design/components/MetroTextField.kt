@@ -137,6 +137,7 @@ private fun MetroFieldBox(
             .heightIn(min = MetroDimens.TouchTarget)
             .then(
                 when {
+                    style.tonal -> Modifier.tonalField(look.focused)
                     style.layers -> Modifier.relief(Relief.Inset, small = true).layerFocusLine(look.focused)
                     style.relief -> Modifier.relief(Relief.Inset, small = true)
                     else -> Modifier.background(look.fill).border(2.dp, look.outline)

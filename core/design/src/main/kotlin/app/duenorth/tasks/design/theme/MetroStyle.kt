@@ -177,6 +177,10 @@ object TonalTones {
     fun layer(accent: Accent, dark: Boolean): Color =
         lerp(Color(if (dark) 0xFF201B1E else 0xFFFFFFFF), accent.fill(dark), if (dark) 0.11f else 0.09f)
 
+    /** A text box: a step deeper still than the card, so it reads as somewhere to type, as Material's filled field. */
+    fun field(accent: Accent, dark: Boolean): Color =
+        lerp(Color(if (dark) 0xFF2A2328 else 0xFFFFFFFF), accent.fill(dark), if (dark) 0.2f else 0.17f)
+
     fun bar(accent: Accent, dark: Boolean): Color =
         lerp(Color(if (dark) 0xFF262024 else 0xFFFFFFFF), accent.fill(dark), if (dark) 0.16f else 0.14f)
 }

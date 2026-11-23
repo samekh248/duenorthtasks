@@ -30,9 +30,11 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.duenorth.tasks.design.theme.LocalAppAccent
 import app.duenorth.tasks.design.theme.MetroSurface
 import app.duenorth.tasks.design.theme.MetroTheme
 import app.duenorth.tasks.design.theme.Relief
+import app.duenorth.tasks.design.theme.TonalTones
 
 /** A corner large enough to make any shape a circle or a pill. */
 val PillCorner: Dp = 999.dp
@@ -250,6 +252,29 @@ private fun DrawScope.drawLayer(surface: MetroSurface, relief: Relief, size: Siz
     }
 }
 
+/**
+ * Tonal's text box, as Material's filled text field: a tone deeper than the cards around it, its top corners
+ * rounded and its bottom square, over a 1dp line in the variant ink that becomes a 2dp accent line while typing.
+ */
+@Composable
+fun Modifier.tonalField(focused: Boolean): Modifier {
+    val fill = TonalTones.field(LocalAppAccent.current, MetroTheme.colors.isDark)
+    val line = if (focused) MetroTheme.accent.fill else MetroTheme.colors.secondary
+    return drawBehind {
+        val r = CornerRadius(TonalFieldCorner.toPx())
+        drawPath(
+            ComposePath().apply {
+                addRoundRect(
+                    RoundRect(0f, 0f, size.width, size.height, topLeftCornerRadius = r, topRightCornerRadius = r)
+                )
+            },
+            fill
+        )
+        val thick = (if (focused) 2.dp else 1.dp).toPx()
+        drawRect(line, Offset(0f, size.height - thick), Size(size.width, thick))
+    }
+}
+
 /** Frost's mark of a field in use: a 2dp accent line along the bottom, over the resting underline. */
 @Composable
 fun Modifier.layerFocusLine(on: Boolean): Modifier {
@@ -330,3 +355,6 @@ private fun blurred(color: Color, blur: Float): Paint = Paint(Paint.ANTI_ALIAS_F
     this.color = color.toArgb()
     maskFilter = BlurMaskFilter(blur, BlurMaskFilter.Blur.NORMAL)
 }
+
+/** Tonal's text box corner: half a control's, as Material keeps a filled field's top corners small. */
+private val TonalFieldCorner = 7.dp
