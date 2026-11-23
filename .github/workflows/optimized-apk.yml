@@ -1,14 +1,22 @@
 name: Optimized APK
 
 # Builds the "optimized" (benchmarkRelease) APK people sideload, signed with the shared debug key
-# whose hashes are registered with Google and Microsoft sign-in. Runs only when started by hand.
+# whose hashes are registered with Google and Microsoft sign-in. Runs on every push to main (so
+# every merged pull request gets a build) and when started by hand. Each build gets a growing
+# versionCode (100 + run number) so it installs over the previous one, and is published as a
+# pre-release named "Build <n>" with the APK attached, besides being attached to the run.
 # Repository secrets it reads (Settings > Secrets and variables > Actions):
 #   DEBUG_KEYSTORE_BASE64                                 (due-north-debug.keystore, base64 -w0)
 #   GOOGLE_WEBCLIENTID, MSAL_CLIENTID, MSAL_SIGNATUREHASH  (sign-in; the hash is the debug key's)
 # See docs/release/README.md.
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 concurrency:
   group: optimized-apk
@@ -52,12 +60,14 @@ jobs:
           fi
           echo "Debug key SHA-1: $sha1"
           echo "DEBUG_SHA1=$sha1" >> "$GITHUB_ENV"
+          # Sideloaded builds must grow their versionCode to install over the previous one.
+          echo "APP_VERSIONCODE=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
       - name: Build the APK
         run: ./gradlew :app:assembleBenchmarkRelease
       - name: Name the APK and show its signer
         run: |
           version=$(sed -n 's/.*versionName = "\(.*\)"/\1/p' app/build.gradle.kts)
-          apk="due-north-optimized-$version-$(date -u +%Y%m%d).apk"
+          apk="due-north-optimized-$version-build$GITHUB_RUN_NUMBER-$(date -u +%Y%m%d).apk"
           cp app/build/outputs/apk/benchmarkRelease/app-benchmarkRelease.apk "$apk"
           apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
           "$apksigner" verify --print-certs "$apk" | tee signer.txt | grep -E "SHA-1|SHA-256"
@@ -66,8 +76,23 @@ jobs:
             exit 1
           fi
           echo "APK=$apk" >> "$GITHUB_ENV"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
       - name: Upload the APK
         uses: actions/upload-artifact@v4
         with:
           name: optimized-apk
           path: ${{ env.APK }}
+      - name: Publish the build as a pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # build-<n> tags never match the Release workflow's v* trigger.
+          tag="build-$GITHUB_RUN_NUMBER"
+          subject=$(git log -1 --format=%s "$GITHUB_SHA")
+          notes=$(printf '%s\n\n%s\n\nCommit %s, versionCode %s. Signed with the shared debug key; installs over earlier optimized APKs.' \
+            "Optimized APK $VERSION, build $GITHUB_RUN_NUMBER." "$subject" "${GITHUB_SHA::7}" "$APP_VERSIONCODE")
+          gh release create "$tag" "$APK" \
+            --target "$GITHUB_SHA" \
+            --title "Build $GITHUB_RUN_NUMBER ($VERSION)" \
+            --notes "$notes" \
+            --prerelease
